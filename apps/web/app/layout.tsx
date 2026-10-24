@@ -7,7 +7,7 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Hallway",
-  description: "What should you do next at the conference?",
+  description: "Plan your conference around who you are: people to meet, sessions and side events.",
   appleWebApp: { capable: true, title: "Hallway", statusBarStyle: "black-translucent" },
 };
 
