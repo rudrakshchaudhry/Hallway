@@ -310,7 +310,7 @@ The invite page shows only the requester's name, headline, reason and slot.
 - **Research subagents** read external docs before code depends on them.
 - **Worktree-isolated subagents** for mechanical fan-out (MCP tool handlers, normalisers).
 - The **reviewer** subagent reviews every diff.
-- The **ui-verifier** checks UI at 390×844, and `/stage` at 1440×900. It needs a browser tool (Claude in Chrome or a Playwright MCP).
+- The **ui-verifier** checks UI at 390×844, and `/stage` at 1440×900, through the **Playwright MCP** in `.mcp.json` (`@playwright/mcp@0.0.83`, headless Chromium, 390×844 default viewport; use `browser_resize` for 1440×900). Browsers are installed on the laptop with `npx -y @playwright/mcp@0.0.83 install-browser chrome-for-testing`. Screenshots land in the working directory and root-level `*.png` is gitignored.
 
 **Git:**
 - Never commit to `main`; it's protected.

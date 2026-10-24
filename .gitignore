@@ -27,3 +27,7 @@ data/live/
 
 # next
 next-env.d.ts
+
+# playwright mcp output (screenshots land in the cwd)
+.playwright-mcp/
+/*.png
