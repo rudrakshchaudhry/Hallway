@@ -26,6 +26,7 @@ export const EdgeType = z.enum([
   "ORGANIZES",
   "WITH",
   "MET",
+  "HAS_BLOCK",
 ]);
 export type EdgeType = z.infer<typeof EdgeType>;
 
@@ -55,6 +56,7 @@ export const EDGE_RULES: Record<EdgeType, { from: NodeLabel[]; to: NodeLabel[] }
   ORGANIZES: { from: ["Person"], to: ["Meeting"] },
   WITH: { from: ["Meeting"], to: ["Person"] },
   MET: { from: ["Person"], to: ["Person"] },
+  HAS_BLOCK: { from: ["Person"], to: ["CalendarBlock"] },
 };
 
 const at = z.number().int();

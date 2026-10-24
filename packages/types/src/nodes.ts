@@ -30,6 +30,8 @@ export const Conference = z.object({
   end: isoDate,
   city: z.string().optional(),
   venue: z.string().optional(),
+  /** IANA time zone of the venue, e.g. "America/Los_Angeles"; conference hours use it. */
+  tz: z.string().default("America/Los_Angeles"),
   url: z.url().optional(),
   source: z.enum(["snapshot", "live"]),
   status: z.enum(["ready", "ingesting", "failed"]).default("ready"),
@@ -98,20 +100,34 @@ export const Skill = z.object({ label: z.literal("Skill"), id, name: z.string() 
 export const Topic = z.object({ label: z.literal("Topic"), id, name: z.string() });
 export const Goal = z.object({ label: z.literal("Goal"), id, name: z.string(), goal: GoalId });
 
-export const MeetingStatus = z.enum(["pending", "accepted", "declined"]);
+export const MeetingStatus = z.enum(["pending", "accepted", "declined", "met"]);
 
 export const Meeting = z.object({
   label: z.literal("Meeting"),
   id,
   /** sha256 of the invite token; the token itself is never stored. */
   tokenHash: z.string(),
-  start: isoDate,
-  end: isoDate,
+  /** Up to 3 start times the requester offers; the invitee picks one when accepting. */
+  proposed: z.array(isoDate).min(1).max(3),
+  durationMinutes: z.number().int().positive().default(30),
+  /** Set when accepted (the picked slot). */
+  start: isoDate.optional(),
+  end: isoDate.optional(),
   place: z.string(),
   note: z.string().default(""),
   status: MeetingStatus,
   createdAt: z.number().int(),
   respondedAt: z.number().int().optional(),
+});
+
+/** A busy block imported from the user's own calendar (Google Calendar secret iCal address). */
+export const CalendarBlock = z.object({
+  label: z.literal("CalendarBlock"),
+  id,
+  start: isoDate,
+  end: isoDate,
+  title: z.string().default("Busy"),
+  source: z.enum(["gcal-ics"]),
 });
 
 export const Node = z.discriminatedUnion("label", [
@@ -127,6 +143,7 @@ export const Node = z.discriminatedUnion("label", [
   Topic,
   Goal,
   Meeting,
+  CalendarBlock,
 ]);
 
 export const NodeLabel = z.enum([
@@ -142,6 +159,7 @@ export const NodeLabel = z.enum([
   "Topic",
   "Goal",
   "Meeting",
+  "CalendarBlock",
 ]);
 
 export type Person = z.infer<typeof Person>;
@@ -159,6 +177,7 @@ export type Topic = z.infer<typeof Topic>;
 export type Goal = z.infer<typeof Goal>;
 export type MeetingStatus = z.infer<typeof MeetingStatus>;
 export type Meeting = z.infer<typeof Meeting>;
+export type CalendarBlock = z.infer<typeof CalendarBlock>;
 export type Node = z.infer<typeof Node>;
 export type NodeLabel = z.infer<typeof NodeLabel>;
 
@@ -172,6 +191,8 @@ export function nodeName(node: Node): string {
       return node.title;
     case "Meeting":
       return `Meeting at ${node.place}`;
+    case "CalendarBlock":
+      return node.title;
     default:
       return node.name;
   }

@@ -3,6 +3,9 @@ import { EdgeType } from "./edges.ts";
 import { GraphPath } from "./graph-path.ts";
 import { Conference, GoalId, Meeting, MeetingStatus, NodeLabel, PastTalk, Person, SideEvent, Talk } from "./nodes.ts";
 
+export const Slot = z.object({ start: z.iso.datetime({ offset: true }), end: z.iso.datetime({ offset: true }) });
+const PropValue = z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]);
+
 const isoDate = z.iso.datetime({ offset: true });
 
 export const HealthResponse = z.object({ ok: z.literal(true), time: isoDate });
@@ -12,7 +15,8 @@ export const HealthResponse = z.object({ ok: z.literal(true), time: isoDate });
 export const CalendarItem = z.object({
   /** The Talk, SideEvent or Meeting node id. */
   id: z.string(),
-  kind: z.enum(["talk", "event", "meeting"]),
+  /** "busy" = a block imported from the user's own calendar. */
+  kind: z.enum(["talk", "event", "meeting", "busy"]),
   title: z.string(),
   start: isoDate,
   end: isoDate,
@@ -63,10 +67,13 @@ export const MeetingPublic = Meeting.omit({ tokenHash: true });
 
 export const RequestSent = z.object({ meeting: MeetingPublic, person: Person });
 
+/** GET /api/invites/suggest?personId=: what the invite sheet is prefilled with. */
+export const InviteSuggestion = z.object({ slots: z.array(Slot).max(3), place: z.string(), note: z.string() });
+
 export const InviteCreateRequest = z.object({
   personId: z.string(),
-  start: isoDate,
-  end: isoDate,
+  /** Up to 3 slots offered; the invitee picks one. */
+  slots: z.array(Slot).min(1).max(3),
   place: z.string().min(1),
   note: z.string().max(500).default(""),
 });
@@ -82,14 +89,17 @@ export const InviteCreateResponse = z.object({
 export const InvitePublicView = z.object({
   requester: z.object({ name: z.string(), headline: z.string().optional(), avatar: z.url().optional() }),
   reason: z.string(),
-  start: isoDate,
-  end: isoDate,
+  slots: z.array(Slot).min(1),
+  /** The picked slot once accepted. */
+  picked: Slot.optional(),
   place: z.string(),
   note: z.string(),
   status: MeetingStatus,
 });
 
-export const InviteRespondRequest = z.object({ decision: z.enum(["accept", "decline"]) });
+export const InviteRespondRequest = z
+  .object({ decision: z.enum(["accept", "decline"]), slot: Slot.optional() })
+  .refine((v) => v.decision === "decline" || v.slot, "accepting needs a slot");
 export const InviteRespondResponse = z.object({ status: MeetingStatus, gcalUrl: z.url().optional(), icsUrl: z.string().optional() });
 
 export const MeetingActionResponse = z.object({ meeting: MeetingPublic });
@@ -113,7 +123,8 @@ export const AgendaResponse = z.object({ conference: Conference, items: z.array(
 
 export const ExploreItem = z.object({
   event: SideEvent,
-  hosts: z.array(Person),
+  hosts: z.array(z.object({ id: z.string(), label: z.enum(["Person", "Company"]), name: z.string(), headline: z.string().optional() })),
+  topics: z.array(z.string()),
   score: z.number(),
   reasons: z.array(z.string()),
   planned: z.boolean(),
@@ -139,6 +150,8 @@ export const FeedSuggestion = z.discriminatedUnion("kind", [
 ]);
 
 export const FeedResponse = z.object({
+  /** The target conference: dates and venue time zone for the day strip. */
+  conference: Conference,
   calendar: z.array(CalendarItem),
   clashes: z.array(Clash),
   confirmed: z.array(FeedCard),
@@ -149,7 +162,18 @@ export const FeedResponse = z.object({
 // ---------- Past graph and stage (Track A) ----------
 
 export const PastGraphResponse = z.object({
-  nodes: z.array(z.object({ id: z.string(), label: NodeLabel, name: z.string(), at: z.number().int().optional() })),
+  nodes: z.array(
+    z.object({
+      id: z.string(),
+      label: NodeLabel,
+      name: z.string(),
+      at: z.number().int().optional(),
+      /** For "filter by conference". */
+      conferenceId: z.string().optional(),
+      /** Node properties for the detail sheet (e.g. Meeting status colours the WITH edge). */
+      props: z.record(z.string(), PropValue).optional(),
+    }),
+  ),
   edges: z.array(
     z.object({
       id: z.string(),
@@ -214,6 +238,21 @@ export const SaveProfileRequest = z.object({
 });
 export const SaveProfileResponse = z.object({ personId: z.string(), handle: z.string() });
 
+/** The fixed classification prompt's result for a free-text "what I want". */
+export const Intent = z.object({
+  goals: z.array(GoalId).min(1),
+  /** Only topic names that exist in the graph for this conference. */
+  topics: z.array(z.string()),
+  /** The parsed line shown back to the user, e.g. "Networking + Learn · AI, devtools". */
+  summary: z.string(),
+});
+
+export const ConnectCalendarRequest = z.object({
+  /** Google Calendar → Settings → "Secret address in iCal format". */
+  icsUrl: z.url().refine((u) => u.startsWith("https://calendar.google.com/"), "use the Google Calendar secret iCal address"),
+});
+export const ConnectCalendarResponse = z.object({ blocks: z.number().int() });
+
 export const Chip = z.object({ id: z.string(), label: z.string() });
 
 export const ChatRequest = z.object({
@@ -228,6 +267,7 @@ export const ChatEvent = z.discriminatedUnion("type", [
   z.object({ type: z.literal("chips"), chips: z.array(Chip), multi: z.boolean() }),
   z.object({ type: z.literal("input"), accept: z.enum(["text", "url", "pdf"]), placeholder: z.string() }),
   z.object({ type: z.literal("profile_draft"), draft: ProfileDraft }),
+  z.object({ type: z.literal("intent"), intent: Intent }),
   z.object({ type: z.literal("ingest_progress"), job: IngestJobStatus }),
   z.object({ type: z.literal("step"), id: z.string(), tool: z.string(), status: z.enum(["running", "done", "error"]), summary: z.string() }),
   z.object({ type: z.literal("path"), path: GraphPath }),
@@ -265,6 +305,7 @@ export type SwipeRequest = z.infer<typeof SwipeRequest>;
 export type SwipeResponse = z.infer<typeof SwipeResponse>;
 export type MeetingPublic = z.infer<typeof MeetingPublic>;
 export type RequestSent = z.infer<typeof RequestSent>;
+export type InviteSuggestion = z.infer<typeof InviteSuggestion>;
 export type InviteCreateRequest = z.infer<typeof InviteCreateRequest>;
 export type InviteCreateResponse = z.infer<typeof InviteCreateResponse>;
 export type InvitePublicView = z.infer<typeof InvitePublicView>;
@@ -289,7 +330,11 @@ export type ProfileSource = z.infer<typeof ProfileSource>;
 export type ProfileDraft = z.infer<typeof ProfileDraft>;
 export type SaveProfileRequest = z.infer<typeof SaveProfileRequest>;
 export type SaveProfileResponse = z.infer<typeof SaveProfileResponse>;
+export type Intent = z.infer<typeof Intent>;
+export type ConnectCalendarRequest = z.infer<typeof ConnectCalendarRequest>;
+export type ConnectCalendarResponse = z.infer<typeof ConnectCalendarResponse>;
 export type Chip = z.infer<typeof Chip>;
+export type Slot = z.infer<typeof Slot>;
 export type ChatRequest = z.infer<typeof ChatRequest>;
 export type ChatEvent = z.infer<typeof ChatEvent>;
 export type ApprovalDecision = z.infer<typeof ApprovalDecision>;

@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
 // "Me" for every API route. Write routes never take the user from the request body
@@ -6,8 +6,12 @@ import { cookies } from "next/headers";
 // what "Use demo profile" means in this single-laptop demo.
 export const IDENTITY_COOKIE = "hallway_user";
 
+// Without COOKIE_SECRET, a random per-process secret: cookies reset on restart, but nobody
+// can forge one from the source code.
+const fallbackSecret = randomBytes(32).toString("hex");
+
 function sign(personId: string): string {
-  const secret = process.env.COOKIE_SECRET || "dev-only-secret";
+  const secret = process.env.COOKIE_SECRET || fallbackSecret;
   return createHmac("sha256", secret).update(personId).digest("base64url");
 }
 

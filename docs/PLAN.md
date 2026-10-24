@@ -17,12 +17,13 @@ Every recommendation is backed by a walk through one FalkorDB graph, and the app
 A full-screen chat. **The onboarding flow is a deterministic step machine on the server** (`/api/chat`: conference → goals → identity → confirm), so it works even if the agent is down. The LLM (`gpt-5-mini`) is used only to understand free-text answers and to extract profiles. Quick-reply chips for every question, so nobody has to type on stage.
 
 1. **"Which conference are you focusing on?"** Chips: GitHub Universe 2026 (pre-ingested), plus free text. A conference we don't have triggers a **live ingest** (section 7.3). The chat streams its progress ("Found 84 sessions… 31 speakers… 18 side events…") and keeps asking questions meanwhile.
-2. **"What do you want out of it?"** Multi-select goal chips: Networking, Learn a topic, Find a job, Hire, Find collaborators, Fundraise. Follow-ups depend on the goals: which topics, what role, which companies.
+2. **"What do you want out of it?"** Multi-select goal chips (Networking, Learn a topic, Find a job, Hire, Find collaborators, Fundraise), **or their own words**. Free text goes through **one fixed classification prompt** (`gpt-5-mini`, never rewritten per user): it returns `Intent {goals, topics, summary}` as JSON, with topics restricted to names that exist in the graph for this conference. The chat shows the parsed line ("Networking + Learn · AI, devtools") with **Edit**. Only the parsed result is stored, never the raw sentence.
 3. **"Who are you?"** Any of:
    - LinkedIn profile URL, scraped live via Bright Data
    - LinkedIn PDF export upload, parsed by the LLM
    - GitHub username, via the REST API: repos, languages, dependencies
    - If none of these: "Tell me about yourself" in free text, which the LLM extracts into a profile
+   - **Optional: connect Google Calendar** by pasting the calendar's *secret address in iCal format* (Google Calendar → Settings → your calendar → Integrate calendar). We read busy blocks for the conference days into My Feed's calendar, the clash checks and the free-slot suggestions. Read-only, no OAuth: OAuth needs a fixed redirect URL, which the changing tunnel URL can't provide.
 4. The agent shows a **profile summary card** (role, skills, topics, goals) with Edit and Looks good. Confirming writes the profile to the graph and moves to the main app.
 
 "Use demo profile" skips everything on stage. A floating **chat button** on every tab opens the **Hallway agent** (TrueForge + OpenAI, tools in 5.2) for open questions ("find me more Go people", "what clashes tomorrow?").
@@ -38,13 +39,13 @@ A full-screen chat. **The onboarding flow is a deterministic step machine on the
 
 ### 2.3 Invites: right swipe → request → accept → calendar
 
-1. A right swipe opens an **invite sheet** with:
-   - a suggested slot: the first free 30-minute gap during conference hours (09:00–18:00 venue time on conference days) that overlaps neither your calendar (query 5) nor the person's own talks (`SPEAKS_AT`). Computed in TS
+1. A right swipe opens an **invite sheet** (prefilled from `GET /api/invites/suggest`) with:
+   - **up to 3 suggested slots:** free 30-minute gaps during conference hours (09:00–18:00 venue time, from `Conference.tz`) that overlap neither your calendar (query 5, including imported Google Calendar blocks) nor the person's own talks (`SPEAKS_AT`). Computed with `freeSlots` from `packages/graph`
    - a place: the venue lobby or near their session
    - an editable intro note
 2. **Send request** creates a `Meeting` (status `pending`) and a short **invite link** (`PUBLIC_URL/invite/<token>`). The sheet shows **Copy link**, **Share** (the Web Share API, so it opens LinkedIn, Messages or email) and **Open LinkedIn**. Hallway never sends anything by itself.
-3. The invitee opens the link on their phone. A public page shows who's asking, why, and when, with **Accept** and **Decline**. Accepting sets the meeting to `accepted` (the WITH edge turns green in the Past graph). Only then does it appear in the requester's calendar. Both sides get an **Add to Google Calendar** link (a prefilled `calendar.google.com/calendar/render?action=TEMPLATE…` URL) and an `.ics` download.
-4. After the meeting, **Mark as met** on its card writes a `MET` edge.
+3. The invitee opens the link on their phone. A public page shows who's asking and why, with the offered slots. **The invitee picks a slot and taps Accept**, or Decline. Accepting sets the meeting to `accepted` with the picked `start`/`end` (the WITH edge turns green in the Past graph). Only then does it appear in the requester's calendar. Both sides get an **Add to Google Calendar** link (a prefilled `calendar.google.com/calendar/render?action=TEMPLATE…` URL) and an `.ics` download.
+4. After the meeting, **Mark as met** on its card writes a `MET` edge and sets the meeting status to `met`.
 5. **Fallback (if the invite page slips):** a **Mark accepted** button on the request card in My Feed does the same state change.
 
 On stage, a judge accepts from their own phone and the meeting appears in the calendar, and its edge turns green in the graph.
@@ -148,10 +149,11 @@ Each tool returns its answer plus a `GraphPath` where one applies.
 | `POST /api/chat` [Main] | Onboarding step machine, NDJSON `ChatEvent` stream. After onboarding, proxies to the TrueForge agent |
 | `POST /api/chat/approve` [Main] | Approve or deny an agent tool call |
 | `POST /api/profile/pdf` [Main] | LinkedIn PDF upload → text → draft profile |
+| `POST /api/profile/calendar` [Main] | Connect Google Calendar via secret iCal URL → `CalendarBlock`s for the conference days |
 | `POST /api/profile` [Main] | Save the confirmed profile, goals and conference; sets the identity cookie |
 | `GET /api/feed` [A] | Calendar items, confirmed cards, requests sent, suggestions |
 | `GET /api/people?tag=` [B] · `POST /api/people/swipe` [B] | Deck cards; swipe (writes SWIPED and PREFERS) |
-| `POST /api/invites` [B] · `GET/POST /api/invites/[token]` [B] | Create an invite; public view; accept or decline |
+| `GET /api/invites/suggest?personId=` [B] · `POST /api/invites` [B] · `GET/POST /api/invites/[token]` [B] | Create an invite; public view; accept or decline |
 | `POST /api/meetings/[id]/accepted` · `/met` [B] (buttons live on A's feed cards) | Manual accept fallback; mark as met |
 | `GET /api/agenda` [A] · `GET /api/explore` [B] · `POST /api/calendar` [Main] | Prioritised sessions; explore items; add to calendar (clash returned; shared by A and B) |
 | `GET /api/past` [A] | The user's past subgraph for the canvas |
@@ -167,13 +169,15 @@ Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${fr
 
 ```
 (:Person {id, handle, name, role, headline, avatar, linkedin, github, about, optedIn, isUser})
-(:Conference {id, name, start, end, city, venue, url, source: 'snapshot'|'live', status})
+(:Conference {id, name, start, end, city, venue, tz, url, source: 'snapshot'|'live', status})  // tz: IANA venue time zone
 (:Talk {id, title, abstract, kind: 'talk'|'workshop'|'keynote'|'panel'|'other', start, end, room})
 (:PastTalk {id, title, conf, year, url})
 (:SideEvent {id, name, start, end, venue, url, source})       // Luma etc.
 (:Company {id, name, funding, booth})  // booth: optional, unused by v2 UI   (:Repo {id, fullName, stars})   (:Package {id, name, ecosystem})
 (:Skill {id, name})   (:Topic {id, name})   (:Goal {id, name})
-(:Meeting {id, tokenHash, start, end, place, note, status: 'pending'|'accepted'|'declined', createdAt, respondedAt})
+(:Meeting {id, tokenHash, proposed: [iso…≤3], durationMinutes, start?, end?, place, note,
+           status: 'pending'|'accepted'|'declined'|'met', createdAt, respondedAt})  // start/end = picked slot
+(:CalendarBlock {id, start, end, title, source: 'gcal-ics'})       // imported busy time
 
 (Talk)-[:PART_OF]->(Conference)        (SideEvent)-[:NEAR]->(Conference)
 (Person)-[:SPEAKS_AT]->(Talk)          (Person)-[:GAVE]->(PastTalk)      (Talk)-[:SIMILAR_TO {score}]->(PastTalk)
@@ -188,6 +192,7 @@ Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${fr
 (Person)-[:PREFERS {weight}]->(Topic|Skill|Company|Goal)        // learned from swipes
 (Person)-[:ORGANIZES]->(Meeting)-[:WITH]->(Person)
 (Person)-[:MET {at, via}]->(Person)
+(Person)-[:HAS_BLOCK]->(CalendarBlock)
 ```
 
 ### 6.1 Ingest-time facts
@@ -211,7 +216,7 @@ Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${fr
    - Hire / Find collaborators / Fundraise → talks about the user's topics by speakers at companies in their space
 3. **Clash check:** an interval overlap of a candidate item against the user's `PLANS` items and accepted Meetings. Done in TS over one query's results.
 4. **Explore:** `SideEvent -[:NEAR]-> Conference`, scored by `PREFERS`, topic and host fit.
-5. **Calendar:** `PLANS` targets plus `Meeting {status:'accepted'}` for the user, ordered by start.
+5. **Calendar:** `PLANS` targets, `Meeting {status:'accepted'}` (organised or invited), and `HAS_BLOCK` busy blocks, ordered by start. Implemented once in `packages/graph/src/calendar.ts` (`getCalendar`, `findClashes`, `freeSlots`, `conferenceDays`, `itemEnd`).
 6. **Past graph:** the user's subgraph. Every node within 2 hops via `TARGETS | PLANS | SWIPED | ORGANIZES | WITH | MET | HAS_GOAL | PREFERS`, capped at 200 nodes.
 7. **Writes**, each a single parameterised `MERGE` that sets `id`:
    - **profile:** the user's Person (`isUser: true`), `SKILLED_IN`, `INTERESTED_IN`, `WORKS_AT`, `WORKED_AT`, `OWNS`/`DEPENDS_ON` for their repos
@@ -258,6 +263,7 @@ The invite page shows only the requester's name, headline, reason and slot.
 | Speakers' past talks | YouTube | Bright Data YouTube videos dataset (discover by keyword) | Rerun tag |
 | Sponsor hiring | LinkedIn jobs | Bright Data LinkedIn jobs dataset (discover by keyword + company) | "Hiring" tag, job-goal ranking |
 | Side events | Luma city and calendar pages, sponsor event pages | Web Unlocker; public event data and hosts only (never guest lists) | Explore, feed |
+| User's busy time | Google Calendar secret iCal address (pasted by the user) | `fetch` + `node-ical` (expands recurring events), conference days only | Calendar, clashes, free slots |
 | User profile (`packages/ingest` exports `fetchLinkedInProfile`, `parseLinkedInPdf`, `fetchGitHubProfile`, `extractProfileFromText`; the profile routes and tools call them) | LinkedIn URL / PDF / GitHub / free text | LinkedIn dataset (live, by URL) · PDF text → `gpt-5-mini` extraction · GitHub REST API · free text → `gpt-5-mini` extraction | Profile, deck |
 
 ### 7.2 Offline snapshot (GitHub Universe 2026)
@@ -310,6 +316,10 @@ Two people, each with their own Claude Code, plus this main session. Ownership i
 - **Merging:** either human may merge a PR once Qodo's findings are fixed or answered and checks pass, but not a PR from their own track without a glance from the other human, when there's time.
 - **The demo runs on Rudraksh's laptop.** Track A's work arrives by PRs merged to `main`.
 
+### 8.0 Reconciling PR #5
+
+PR #5 (merged before the track split) added a separate `frontend/` app, `backend/` type stubs, `docs/FEATURES.md` and `docs/DATABASE.md` from an earlier one-screen "Today" design. **Plan v2 is the single spec.** Its best ideas are folded in above: free-text goals through a fixed prompt (2.1), Google Calendar connect (2.1, via iCal), and the invitee picking the time (2.3). The sponsorship follow-up is dropped: we have no data on which companies sponsor. `FEATURES.md` and `DATABASE.md` are removed. **Track A's first PR ports `frontend/app/TodayFeed.tsx` and `today.module.css` into `apps/web/app/(app)/feed` against `FeedResponse`, then deletes `frontend/` and `backend/`.** Until then, lint ignores those folders.
+
 ### 8.1 Teammate setup (Track A, own laptop, about 15 minutes)
 
 1. Accept the GitHub collaborator invite for `rudrakshchaudhry/Hallway`, then clone it.
@@ -340,7 +350,7 @@ Two people, each with their own Claude Code, plus this main session. Ownership i
 - Every route validates input and output with `packages/types` zod schemas.
 - Every graph query has a fixture test including its path.
 - UI is verified at 390 px with no console errors.
-- No dependency outside the CLAUDE.md stack without asking the human. Already approved for v2: `pdf-parse` (LinkedIn PDF text) and `ics` (calendar files).
+- No dependency outside the CLAUDE.md stack without asking the human. Already approved for v2: `pdf-parse` (LinkedIn PDF text), `ics` (calendar files) and `node-ical` (reading the user's Google Calendar iCal feed).
 
 **Stop and ask when:**
 - an external API differs from this doc (report with a link; don't switch libraries)
@@ -371,8 +381,9 @@ Two people, each with their own Claude Code, plus this main session. Ownership i
 2. jobs and hiring signals
 3. rerun tag
 4. LinkedIn PDF upload
-5. live ingest for other conferences (keep Universe; say "coming soon")
-6. the public invite page (use **Mark accepted**)
+5. Google Calendar connect
+6. live ingest for other conferences (keep Universe; say "coming soon")
+7. the public invite page (use **Mark accepted**)
 
 **Never cut:** chat onboarding, My Feed calendar + cards, swipe deck with learning, Agenda Now with clash warnings, the Past graph, the Qodo PR history.
 

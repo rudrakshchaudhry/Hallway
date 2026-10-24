@@ -1,4 +1,4 @@
 export { close, getDb, getGraph, graphName } from "./client.ts";
-export { loadSnapshot, seedGraph } from "./seed.ts";
 export { upsertSnapshot } from "./upsert.ts";
-export { conferenceDays, findClashes, freeSlots, getCalendar } from "./calendar.ts";
+export { DEFAULT_EVENT_MINUTES, conferenceDays, findClashes, freeSlots, getCalendar, itemEnd } from "./calendar.ts";
+// Seeding reads the filesystem; import it from "@hallway/graph/seed" in scripts and tests only.

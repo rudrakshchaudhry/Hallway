@@ -73,7 +73,8 @@
    "venue": "Fort Mason Center",
    "url": "https://githubuniverse.com",
    "source": "snapshot",
-   "status": "ready"
+   "status": "ready",
+   "tz": "America/Los_Angeles"
   },
   {
    "label": "Conference",
@@ -84,7 +85,8 @@
    "city": "San Francisco",
    "venue": "Fort Mason Center",
    "source": "snapshot",
-   "status": "ready"
+   "status": "ready",
+   "tz": "America/Los_Angeles"
   },
   {
    "label": "Repo",
@@ -292,12 +294,23 @@
    "label": "Meeting",
    "id": "meeting:fixture-marco",
    "tokenHash": "0000000000000000000000000000000000000000000000000000000000000000",
-   "start": "2026-10-28T16:30:00-07:00",
-   "end": "2026-10-28T17:00:00-07:00",
    "place": "Fort Mason lobby",
    "note": "Would love to chat about fastify plugins.",
    "status": "pending",
-   "createdAt": 1793210000000
+   "createdAt": 1793210000000,
+   "proposed": [
+    "2026-10-28T16:30:00-07:00",
+    "2026-10-29T11:00:00-07:00"
+   ],
+   "durationMinutes": 30
+  },
+  {
+   "label": "CalendarBlock",
+   "id": "block:demo-standup",
+   "start": "2026-10-28T08:30:00-07:00",
+   "end": "2026-10-28T09:00:00-07:00",
+   "title": "Team standup",
+   "source": "gcal-ics"
   }
  ],
  "edges": [
@@ -607,6 +620,11 @@
     "at": 1761700000000,
     "via": "fixture"
    }
+  },
+  {
+   "type": "HAS_BLOCK",
+   "from": "person:demo",
+   "to": "block:demo-standup"
   }
  ]
 }
