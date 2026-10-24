@@ -6,7 +6,7 @@ Spec and runbook for the coding agents building Hallway today. One human reviews
 
 ## 1. The product
 
-**Hallway** is a mobile-first PWA (Next.js) that plans your conference around who you are. You open it to a chat. It asks which conference you're targeting and what you want out of it (networking, learning a topic, jobs, hiring, fundraising...). It reads your LinkedIn and GitHub, or lets you describe yourself. Then it builds you a plan across four tabs: your feed and calendar, people to meet (swipe cards), things to explore nearby, and an agenda that remembers everything you've done.
+**Hallway** is a mobile-first PWA (Next.js) that plans your conference around who you are. You open it to a chat. It asks which conference you're targeting and what you want out of it (networking, learning a topic, jobs, hiring, fundraising...). It reads your LinkedIn and GitHub, or lets you describe yourself. Then it builds you a plan across four tabs: your feed and calendar, people to meet (swipe cards), side events to explore, and an agenda that remembers everything you've done.
 
 Every recommendation is backed by a walk through one FalkorDB graph, and the app shows that walk as proof. A PWA because judges scan a QR code and try it on their own phones in seconds; native iOS is not possible in a day.
 
@@ -31,9 +31,9 @@ A full-screen chat. **The onboarding flow is a deterministic step machine on the
 
 | Tab | What it shows | Priority |
 | --- | --- | --- |
-| **My Feed** | The top is **my calendar**: a day-strip timeline of everything confirmed (added sessions, Luma events and places; accepted meetings), with clash markers. Below it, **detailed cards** for each confirmed item, then a **"Requests sent"** section (people you right-swiped, with invite status pending, accepted or declined; query 8), then **suggested next items** (the top 3 not yet acted on from queries 1, 2 and 4). | Must |
+| **My Feed** | The top is **my calendar**: a day-strip timeline of everything confirmed (added sessions and side events; accepted meetings), with clash markers. Below it, **detailed cards** for each confirmed item, then a **"Requests sent"** section (people you right-swiped, with invite status pending, accepted or declined; query 8), then **suggested next items** (the top 3 not yet acted on from queries 1, 2 and 4). | Must |
 | **People** | **Swipe deck**, Tinder style. Each card shows a person, **category tags** (e.g. "Shared stack", "Speaker", "Hiring", "Same topic", "Ex-colleague network"), the reason with its graph path, and where they'll be. Right swipe: an invite sheet. Left swipe: pass. **The deck re-ranks from your choices** (section 6.3). A filter row of tag chips. | Must |
-| **Explore** | Luma side events and local attractions near the venue. Each has Add to calendar, with a clash warning. Places ask for a time when added. Not in the scripted demo. | Should |
+| **Explore** | Luma and sponsor side events around the conference (parties, meetups, breakfasts), ranked for you. Each has Add to calendar, with a clash warning. Not in the scripted demo. | Should |
 | **Agenda** | Two panes you **swipe between**. **Now:** the target conference's talks, presentations, workshops and keynotes in suggested priority order, each with **+** to add to the calendar, a **clash warning** if it overlaps, and a **Rerun** tag when the speaker gave it before. **Past:** your FalkorDB graph (`@falkordb/canvas`) of everything you've done in Hallway, across visits and conferences: conferences targeted, sessions added, people swiped and met, invites accepted. Tap a node for details. | Must |
 
 ### 2.3 Invites: right swipe → request → accept → calendar
@@ -71,7 +71,7 @@ On stage, a judge accepts from their own phone and the meeting appears in the ca
 | People deck | Stacked cards, drag to swipe, ✓ / ✕ buttons for accessibility, tag filter chips | "Learning from your picks" toast after 3 swipes; tags reorder |
 | Invite sheet | Slot, place, note, Copy / Share / LinkedIn | Shows the exact message that will be shared |
 | Invite page (public) | Requester card, reason, slot, Accept / Decline | Works without onboarding; minimal data shown |
-| Explore | List of Luma events and places with category chips | Distance or "5 min walk" when known |
+| Explore | List of side events with host, time and topic chips | "Hosted by" shows the host and why they fit you |
 | Agenda / Now | Sessions by priority, + button, kind label (Talk, Workshop, Keynote, Panel) | Clash warning inline when + would overlap |
 | Agenda / Past | `@falkordb/canvas` graph, legend, node detail sheet | Newest nodes glow; filter by conference |
 | Stage view (`/stage`, desktop) | Phone frame on the left, live graph on the right | Nodes light up as the agent walks them |
@@ -82,7 +82,7 @@ On stage, a judge accepts from their own phone and the meeting appears in the ca
 
 FalkorDB is the memory. Every user action is a graph write with a timestamp:
 - targeting a conference
-- adding a session, event or place
+- adding a session or side event
 - swiping
 - requesting or accepting a meeting
 - marking someone met
@@ -135,10 +135,10 @@ Each tool returns its answer plus a `GraphPath` where one applies.
 | `save_profile` | Writes the confirmed profile, goals and target conference to the graph | — |
 | `suggest_people` | Ranked candidates with tags and paths (section 6.3) | — |
 | `plan_sessions` | Prioritised sessions with clash flags | — |
-| `suggest_explore` | Ranked side events and places | — |
+| `suggest_explore` | Ranked side events | — |
 | `check_calendar` | Calendar for a day with clashes | — |
 | `explain_path` | Human-readable proof for a recommendation | — |
-| `add_to_calendar` | Adds a session, event or place (PLANS edge) | **yes** |
+| `add_to_calendar` | Adds a session or side event (PLANS edge) | **yes** |
 | `create_invite` | Creates a pending Meeting and its invite link | **yes** |
 
 ### 5.3 API routes (zod-validated in and out; owner in brackets)
@@ -171,12 +171,11 @@ Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${fr
 (:Talk {id, title, abstract, kind: 'talk'|'workshop'|'keynote'|'panel'|'other', start, end, room})
 (:PastTalk {id, title, conf, year, url})
 (:SideEvent {id, name, start, end, venue, url, source})       // Luma etc.
-(:Place {id, name, category, address, url, rating, lat, lng})  // local attractions
 (:Company {id, name, funding, booth})  // booth: optional, unused by v2 UI   (:Repo {id, fullName, stars})   (:Package {id, name, ecosystem})
 (:Skill {id, name})   (:Topic {id, name})   (:Goal {id, name})
 (:Meeting {id, tokenHash, start, end, place, note, status: 'pending'|'accepted'|'declined', createdAt, respondedAt})
 
-(Talk)-[:PART_OF]->(Conference)        (SideEvent|Place)-[:NEAR]->(Conference)
+(Talk)-[:PART_OF]->(Conference)        (SideEvent)-[:NEAR]->(Conference)
 (Person)-[:SPEAKS_AT]->(Talk)          (Person)-[:GAVE]->(PastTalk)      (Talk)-[:SIMILAR_TO {score}]->(PastTalk)
 (Person|Company)-[:HOSTS]->(SideEvent) (Person)-[:ATTENDING]->(SideEvent|Conference)
 (Person)-[:WORKS_AT]->(Company)        (Person)-[:WORKED_AT {from, to}]->(Company)
@@ -184,7 +183,7 @@ Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${fr
 (Person)-[:SKILLED_IN]->(Skill)        (Company)-[:HIRING_FOR]->(Skill)
 (Talk)-[:ABOUT]->(Topic)               (Person)-[:INTERESTED_IN]->(Topic)
 (Person)-[:HAS_GOAL]->(Goal)           (Person)-[:TARGETS {at}]->(Conference)
-(Person)-[:PLANS {at, start?, end?}]->(Talk|SideEvent|Place)  // start/end required for Places
+(Person)-[:PLANS {at}]->(Talk|SideEvent)
 (Person)-[:SWIPED {dir: 'right'|'left', at}]->(Person)
 (Person)-[:PREFERS {weight}]->(Topic|Skill|Company|Goal)        // learned from swipes
 (Person)-[:ORGANIZES]->(Meeting)-[:WITH]->(Person)
@@ -211,7 +210,7 @@ Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${fr
    - Find a job → talks whose speaker `WORKS_AT` a Company `HIRING_FOR` the user's skills
    - Hire / Find collaborators / Fundraise → talks about the user's topics by speakers at companies in their space
 3. **Clash check:** an interval overlap of a candidate item against the user's `PLANS` items and accepted Meetings. Done in TS over one query's results.
-4. **Explore:** `SideEvent|Place -[:NEAR]-> Conference`, scored by `PREFERS` and topic.
+4. **Explore:** `SideEvent -[:NEAR]-> Conference`, scored by `PREFERS`, topic and host fit.
 5. **Calendar:** `PLANS` targets plus `Meeting {status:'accepted'}` for the user, ordered by start.
 6. **Past graph:** the user's subgraph. Every node within 2 hops via `TARGETS | PLANS | SWIPED | ORGANIZES | WITH | MET | HAS_GOAL | PREFERS`, capped at 200 nodes.
 7. **Writes**, each a single parameterised `MERGE` that sets `id`:
@@ -259,7 +258,6 @@ The invite page shows only the requester's name, headline, reason and slot.
 | Speakers' past talks | YouTube | Bright Data YouTube videos dataset (discover by keyword) | Rerun tag |
 | Sponsor hiring | LinkedIn jobs | Bright Data LinkedIn jobs dataset (discover by keyword + company) | "Hiring" tag, job-goal ranking |
 | Side events | Luma city and calendar pages, sponsor event pages | Web Unlocker; public event data and hosts only (never guest lists) | Explore, feed |
-| Local attractions | Google Maps places near the venue | Bright Data Google Maps dataset (discover by keyword + location) | Explore |
 | User profile (S2 exports `fetchLinkedInProfile`, `parseLinkedInPdf`, `fetchGitHubProfile`, `extractProfileFromText` from `packages/ingest`; S1's routes and tools call them) | LinkedIn URL / PDF / GitHub / free text | LinkedIn dataset (live, by URL) · PDF text → `gpt-5-mini` extraction · GitHub REST API · free text → `gpt-5-mini` extraction | Profile, deck |
 
 ### 7.2 Offline snapshot (GitHub Universe 2026)
@@ -276,13 +274,11 @@ The invite page shows only the requester's name, headline, reason and slot.
    - **sessions:** Unlocker on the agenda page, then `gpt-5-mini` extraction into Talk records
    - **speakers:** LinkedIn search by name and company, capped
    - **side events:** Luma search for the city and dates
-   - **attractions:** Google Maps near the venue
 3. Each stage writes through the same normalisers and upserts into FalkorDB as it finishes, so the app fills in progressively. Each stage has its own timeout and a stage failure is skipped, never fatal.
 4. **Caps per live conference (lenient, about $5):**
    - 150 sessions
    - 80 speaker profiles
    - 30 side events
-   - 20 places
    - 3 past-talk searches per speaker for the first 30 speakers
 5. Results are cached as `data/live/<conf>.json` (gitignored). A second request for the same conference is instant.
 
@@ -339,7 +335,7 @@ The invite page shows only the requester's name, headline, reason and slot.
 
 | Time | Session 1 (main) | Session 2 (data) | Session 3 (UI) | Human |
 | --- | --- | --- | --- | --- |
-| 13:50–14:30 | **PR A:** this plan v2. **PR B:** types v2, fixtures v2, `upsertSnapshot`, seed carry-over, deps and scripts | Start after PR A merges: Universe raw scrapes (sessions via Unlocker, 3-record samples first) | Start after PR A merges: tab shell, tab bar, chat UI, swipe deck on local mocks (5.3); switch to `packages/types` when PR B merges | Merge A then B; start sessions 2 and 3; get the Google Maps dataset id |
+| 13:50–14:30 | **PR A:** this plan v2. **PR B:** types v2, fixtures v2, `upsertSnapshot`, seed carry-over, deps and scripts | Start after PR A merges: Universe raw scrapes (sessions via Unlocker, 3-record samples first) | Start after PR A merges: tab shell, tab bar, chat UI, swipe deck on local mocks (5.3); switch to `packages/types` when PR B merges | Merge A then B; start sessions 2 and 3 |
 | 14:30–16:15 | Queries 1–8 with tests; API routes (5.3); onboarding step machine; invite backend; then MCP tools + TrueForge agent for the chat button | **In this order:** (1) Universe snapshot committed by 15:00; (2) profile fetchers (LinkedIn URL, PDF, GitHub, free text); (3) live ingest pipeline + `/api/conferences` (may slip; cut item 5) | Chat onboarding; My Feed + calendar; swipe deck + invite sheet; Agenda Now/Past; invite page; Explore | Review and merge PRs; phone-test through the tunnel |
 | **15:15 gate** | Universe data seeded; chips-only onboarding → deck works end to end without the agent | | | Cut decision |
 | 16:15–16:45 | **Integrate:** run the section 12 demo path in the browser and on a phone; `DEMO_CACHE=1`; `pnpm demo:check` | ends | ends | Merge order |
@@ -356,7 +352,6 @@ The invite page shows only the requester's name, headline, reason and slot.
 4. LinkedIn PDF upload
 5. live ingest for other conferences (keep Universe; say "coming soon")
 6. the public invite page (use **Mark accepted**)
-7. Explore attractions (keep Luma events)
 
 **Never cut:** chat onboarding, My Feed calendar + cards, swipe deck with learning, Agenda Now with clash warnings, the Past graph, the Qodo PR history.
 

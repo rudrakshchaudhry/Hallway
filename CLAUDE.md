@@ -1,7 +1,7 @@
 # Hallway
 Mobile-first PWA that plans a conference around you: a chat onboarding (target conference,
 goals, LinkedIn/GitHub/self-description), then My Feed (calendar + confirmed cards), People
-(swipe deck that learns, invite links), Explore (Luma events, attractions) and Agenda (Now:
+(swipe deck that learns, invite links), Explore (Luma and side events) and Agenda (Now:
 sessions with clash warnings; Past: your FalkorDB memory graph). Every recommendation shows
 its graph path. Full spec and runbook: @docs/PLAN.md (v2). Read sections 1–9 and your row in
 section 10 before starting.
