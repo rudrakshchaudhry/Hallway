@@ -141,25 +141,25 @@ Each tool returns its answer plus a `GraphPath` where one applies.
 | `add_to_calendar` | Adds a session or side event (PLANS edge) | **yes** |
 | `create_invite` | Creates a pending Meeting and its invite link | **yes** |
 
-### 5.3 API routes (zod-validated in and out; owner in brackets)
+### 5.3 API routes (zod-validated in and out; owning track in brackets, see section 8)
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/chat` [S1] | Onboarding step machine, NDJSON `ChatEvent` stream. After onboarding, proxies to the TrueForge agent |
-| `POST /api/chat/approve` [S1] | Approve or deny an agent tool call |
-| `POST /api/profile/pdf` [S1] | LinkedIn PDF upload → text → draft profile |
-| `POST /api/profile` [S1] | Save the confirmed profile, goals and conference; sets the identity cookie |
-| `GET /api/feed` [S1] | Calendar items, confirmed cards, requests sent, suggestions |
-| `GET /api/people?tag=` [S1] · `POST /api/people/swipe` [S1] | Deck cards; swipe (writes SWIPED and PREFERS) |
-| `POST /api/invites` [S1] · `GET/POST /api/invites/[token]` [S1] | Create an invite; public view; accept or decline |
-| `POST /api/meetings/[id]/accepted` · `/met` [S1] | Manual accept fallback; mark as met |
-| `GET /api/agenda` [S1] · `GET /api/explore` [S1] · `POST /api/calendar` [S1] | Prioritised sessions; explore items; add to calendar (clash returned) |
-| `GET /api/past` [S1] | The user's past subgraph for the canvas |
-| `GET /api/stage/last-path` [S1] | The latest path walked, polled by `/stage` |
-| `GET /api/health` [S1] | Health |
-| `POST /api/conferences` · `GET /api/conferences` · `GET /api/conferences/jobs/[id]` [S2] | Start a live ingest, list conferences, job status |
+| `POST /api/chat` [Main] | Onboarding step machine, NDJSON `ChatEvent` stream. After onboarding, proxies to the TrueForge agent |
+| `POST /api/chat/approve` [Main] | Approve or deny an agent tool call |
+| `POST /api/profile/pdf` [Main] | LinkedIn PDF upload → text → draft profile |
+| `POST /api/profile` [Main] | Save the confirmed profile, goals and conference; sets the identity cookie |
+| `GET /api/feed` [A] | Calendar items, confirmed cards, requests sent, suggestions |
+| `GET /api/people?tag=` [B] · `POST /api/people/swipe` [B] | Deck cards; swipe (writes SWIPED and PREFERS) |
+| `POST /api/invites` [B] · `GET/POST /api/invites/[token]` [B] | Create an invite; public view; accept or decline |
+| `POST /api/meetings/[id]/accepted` · `/met` [B] (buttons live on A's feed cards) | Manual accept fallback; mark as met |
+| `GET /api/agenda` [A] · `GET /api/explore` [B] · `POST /api/calendar` [Main] | Prioritised sessions; explore items; add to calendar (clash returned; shared by A and B) |
+| `GET /api/past` [A] | The user's past subgraph for the canvas |
+| `GET /api/stage/last-path` [A] | The latest path walked, polled by `/stage` |
+| `GET /api/health` [Main] | Health |
+| `POST /api/conferences` · `GET /api/conferences` · `GET /api/conferences/jobs/[id]` [Main] | Start a live ingest, list conferences, job status |
 
-Session 3 builds against these shapes from `packages/types` (PR B). Until PR B merges, it uses local mocks shaped by this table.
+Tracks A and B build against these shapes from `packages/types` (PR B). Until PR B merges, they use local mocks shaped by this table.
 
 ## 6. Graph schema and queries
 
@@ -245,7 +245,7 @@ The invite page shows only the requester's name, headline, reason and slot.
 **Public-tunnel rules:**
 - **Identity:** the server identifies the user by an httpOnly cookie set at onboarding (`DEMO_HANDLE` for the demo profile). Write routes never take "me" from the request body.
 - **Invite tokens:** 128-bit random. Store only their hash. Accept and decline are idempotent, and a request can be answered once.
-- **Rate limits:** credit-spending routes (`/api/chat`, live ingest, LinkedIn fetch) get a per-IP rate limit (`apps/web/lib/ratelimit.ts`, S1) and the global budget guard (section 7.4). Over the limit, they return cached results instead of errors.
+- **Rate limits:** credit-spending routes (`/api/chat`, live ingest, LinkedIn fetch) get a per-IP rate limit (`apps/web/lib/ratelimit.ts`, Main) and the global budget guard (section 7.4). Over the limit, they return cached results instead of errors.
 
 ## 7. Data
 
@@ -258,7 +258,7 @@ The invite page shows only the requester's name, headline, reason and slot.
 | Speakers' past talks | YouTube | Bright Data YouTube videos dataset (discover by keyword) | Rerun tag |
 | Sponsor hiring | LinkedIn jobs | Bright Data LinkedIn jobs dataset (discover by keyword + company) | "Hiring" tag, job-goal ranking |
 | Side events | Luma city and calendar pages, sponsor event pages | Web Unlocker; public event data and hosts only (never guest lists) | Explore, feed |
-| User profile (S2 exports `fetchLinkedInProfile`, `parseLinkedInPdf`, `fetchGitHubProfile`, `extractProfileFromText` from `packages/ingest`; S1's routes and tools call them) | LinkedIn URL / PDF / GitHub / free text | LinkedIn dataset (live, by URL) · PDF text → `gpt-5-mini` extraction · GitHub REST API · free text → `gpt-5-mini` extraction | Profile, deck |
+| User profile (`packages/ingest` exports `fetchLinkedInProfile`, `parseLinkedInPdf`, `fetchGitHubProfile`, `extractProfileFromText`; the profile routes and tools call them) | LinkedIn URL / PDF / GitHub / free text | LinkedIn dataset (live, by URL) · PDF text → `gpt-5-mini` extraction · GitHub REST API · free text → `gpt-5-mini` extraction | Profile, deck |
 
 ### 7.2 Offline snapshot (GitHub Universe 2026)
 
@@ -290,17 +290,34 @@ The invite page shows only the requester's name, headline, reason and slot.
 - **Budget guard:** `packages/ingest` exports `budget.reserve(usd, label)` (throws past the limit) and `budget.status()`. It is a persisted counter in `data/live/budget.json` with limit `BRIGHTDATA_BUDGET_USD` (default 40). Every Bright Data call reserves first. Status shows in the chat.
 - **Never buy anything** from the Dataset Marketplace, and never start collections from the dashboard.
 
-## 8. Sessions and ownership
+## 8. Team, tracks and ownership
 
-| Session | Started with | Owns |
-| --- | --- | --- |
-| 1. Main | the existing session in the repo root | `packages/types`, `packages/graph`, `packages/mcp-hallway`, `apps/web/app/api` (except `api/conferences`), `apps/web/lib`, `apps/web/package.json`, `data/fixtures`, `data/cache`, `scripts/`, `docs/` (except the shared `QODO_CATCHES.md`), root config (incl. root `package.json` scripts) |
-| 2. Data | `claude --worktree data` | `packages/ingest` (profile fetchers, normalisers, live pipeline, budget guard), `data/clean`, `data/raw`, `data/live`, `apps/web/app/api/conferences` |
-| 3. UI | `claude --worktree ui` | `apps/web/app/(app)`, `apps/web/app/invite`, `apps/web/app/stage`, `apps/web/app/page.tsx`, `apps/web/app/layout.tsx`, `providers.tsx`, `manifest.ts`, `globals.css`, icons, `apps/web/components`, `apps/web/styles` |
+Two people, each with their own Claude Code, plus this main session. Ownership is **by feature, full stack**: each track owns its screens, API routes and graph queries, in separate files, so tracks rarely touch the same file.
 
-**Dependencies:** PR B adds every approved runtime dependency to `apps/web/package.json` (`@falkordb/canvas`, `@truefoundry/trueforge-sdk`, `@modelcontextprotocol/sdk`, `ics`, `pdf-parse`, plus `@hallway/graph` and `@hallway/ingest`), so worktrees never edit the lockfile for them. A session that needs another dependency asks the human. The root scripts `ingest:check`, `mcp`, `agent:setup` and `tunnel` are added by Session 1 and call package scripts.
+| Track | Who | Where | Owns |
+| --- | --- | --- | --- |
+| **Main** | this Claude session (repo root, presenting laptop) | Rudraksh's laptop | **Shared core:** `packages/types` (the contract), `packages/graph/src/{client,seed,upsert,calendar}.ts` (schema, seed, `upsertSnapshot`, calendar query 5, clash check 3 and free-slot helper), `packages/mcp-hallway`, `packages/ingest` (Universe snapshot, profile fetchers, live pipeline, budget guard: run via worktree-isolated subagents), `data/` (all of it), app shell (`app/layout.tsx`, `providers.tsx`, `manifest.ts`, `globals.css`, icons, `app/page.tsx` chat onboarding, `components/shell/` tab bar + chat button), API `chat`, `profile`, `calendar`, `conferences`, `health`, `apps/web/lib` (agent, cache, ratelimit, identity cookie), `apps/web/package.json`, `scripts/`, `docs/`, root config |
+| **A: Feed & My events** | teammate + their Claude Code | teammate's laptop (own clone) | `app/(app)/feed`, `app/(app)/agenda` (Now + Past panes), `app/stage`, `components/feed/`, `components/agenda/`, API `feed`, `agenda`, `past`, `stage`, `packages/graph/src/queries/{feed,agenda,past}.ts` (queries 2, 6, 8 and feed suggestions) + their tests |
+| **B: Whom to meet & Explore** | Rudraksh + a Claude Code worktree session (`claude --worktree people`) | Rudraksh's laptop | `app/(app)/people`, `app/(app)/explore`, `app/invite`, `components/people/`, `components/explore/`, API `people`, `invites`, `meetings`, `explore`, `packages/graph/src/queries/{people,invites,explore}.ts` (query 1, swipe learning 6.3, Meeting writes, query 4) + their tests |
 
-`docs/QODO_CATCHES.md` is append-only and shared. Only Session 1 edits `packages/types`. Worktree sessions that need a type change ask Session 1 through the human. Sessions 2 and 3 end once their last PR merges. After 16:15, only Session 1 stays open.
+**Rules between tracks:**
+- **Only Main edits `packages/types`.** A track that needs a type change asks Main (through its human). Main ships it as a small PR within minutes.
+- **Shared helpers are Main's.** Calendar items, clash detection and free slots live in `packages/graph/src/calendar.ts`. A uses them for the feed calendar and agenda clashes; B uses them for invite slots and Explore clashes. `POST /api/calendar` is Main's and both tracks call it.
+- **Cross-track UI:** the feed's "Requests sent" cards (A) render Meetings created by B, and call B's `meetings/[id]/accepted` and `/met` routes. Agree on the shapes in `packages/types` (`RequestSent`), not by reading each other's code.
+- **Dependencies:** PR B adds every approved runtime dependency to `apps/web/package.json` (`@falkordb/canvas`, `@truefoundry/trueforge-sdk`, `@modelcontextprotocol/sdk`, `ics`, `pdf-parse`, `@hallway/graph`, `@hallway/ingest`), so tracks never edit the lockfile for them. A track that needs another dependency asks Main.
+- `docs/QODO_CATCHES.md` is append-only and shared.
+- **Pull `main` before starting each task;** contract PRs land often today.
+- **Merging:** either human may merge a PR once Qodo's findings are fixed or answered and checks pass, but not a PR from their own track without a glance from the other human, when there's time.
+- **The demo runs on Rudraksh's laptop.** Track A's work arrives by PRs merged to `main`.
+
+### 8.1 Teammate setup (Track A, own laptop, about 15 minutes)
+
+1. Accept the GitHub collaborator invite for `rudrakshchaudhry/Hallway`, then clone it.
+2. Install Node 22.14+, pnpm, Docker Desktop, `gh` (`gh auth login`) and Claude Code.
+3. `cp .env.example .env`. For Track A work, only `FALKORDB_URL`, `GRAPH_NAME` and `DEMO_HANDLE=demo` are needed, since fixtures cover feed and agenda. Get any API keys from Rudraksh via a password manager share, **never in chat or git**.
+4. `pnpm install && docker compose up -d && pnpm seed && pnpm dev` → http://localhost:3000.
+5. `npx -y @playwright/mcp@0.0.83 install-browser chrome-for-testing`. Start `claude --permission-mode plan` in the repo and approve the `falkordb` and `playwright` MCP servers when asked.
+6. Paste the Track A prompt from section 10.
 
 ## 9. Agent operating manual (Claude Code)
 
@@ -331,17 +348,21 @@ The invite page shows only the requester's name, headline, reason and slot.
 - a scrape would exceed the caps in section 7
 - a worktree session needs a `packages/types` change
 
-## 10. Runbook (from 13:50)
+## 10. Runbook (from 14:15)
 
-| Time | Session 1 (main) | Session 2 (data) | Session 3 (UI) | Human |
+| Time | Main (this session) | Track A: Feed & My events | Track B: Whom to meet & Explore | Humans |
 | --- | --- | --- | --- | --- |
-| 13:50–14:30 | **PR A:** this plan v2. **PR B:** types v2, fixtures v2, `upsertSnapshot`, seed carry-over, deps and scripts | Start after PR A merges: Universe raw scrapes (sessions via Unlocker, 3-record samples first) | Start after PR A merges: tab shell, tab bar, chat UI, swipe deck on local mocks (5.3); switch to `packages/types` when PR B merges | Merge A then B; start sessions 2 and 3 |
-| 14:30–16:15 | Queries 1–8 with tests; API routes (5.3); onboarding step machine; invite backend; then MCP tools + TrueForge agent for the chat button | **In this order:** (1) Universe snapshot committed by 15:00; (2) profile fetchers (LinkedIn URL, PDF, GitHub, free text); (3) live ingest pipeline + `/api/conferences` (may slip; cut item 5) | Chat onboarding; My Feed + calendar; swipe deck + invite sheet; Agenda Now/Past; invite page; Explore | Review and merge PRs; phone-test through the tunnel |
-| **15:15 gate** | Universe data seeded; chips-only onboarding → deck works end to end without the agent | | | Cut decision |
-| 16:15–16:45 | **Integrate:** run the section 12 demo path in the browser and on a phone; `DEMO_CACHE=1`; `pnpm demo:check` | ends | ends | Merge order |
-| 16:45–17:15 | **Polish only;** backup video at 17:00 | | | Record video; submit 17:15; rehearse |
+| 14:15–14:45 | **PR A** (this plan) → **PR B:** types v2, fixtures v2, `calendar.ts`, `upsertSnapshot`, seed carry-over, deps, scripts. In parallel, a worktree subagent starts the Universe scrape (3-record samples first) | Teammate setup (8.1); plan the feed and agenda on mocks shaped by 5.3 | Start `claude --worktree people`; plan the deck, invite sheet and Explore on mocks | Merge PR A, then PR B; collaborator invite |
+| 14:45–16:15 | Onboarding step machine + chat UI; app shell + tab bar; profile fetchers; Universe snapshot committed by 15:15; then the TrueForge agent for the chat button; live ingest last (may slip) | Queries 2, 6, 8 + routes; My Feed calendar + cards + Requests sent; Agenda Now (+, clash) and Past (canvas) | Query 1 + swipe learning + routes; swipe deck + tags; invite sheet + invite page + accept; Explore | Review and merge PRs; phone-test through the tunnel |
+| **15:15 gate** | Universe data seeded; chips-only onboarding → feed works on real data | Feed + Agenda Now render from real routes | Deck renders from real routes; a swipe re-ranks | Cut decision |
+| 16:15–16:45 | **Integrate** on the presenting laptop: section 12 demo path in the browser and on a phone; `DEMO_CACHE=1`; `pnpm demo:check` | Last fixes; final PR merged by 16:30 | Last fixes; final PR merged by 16:30 | Merge order |
+| 16:45–17:15 | **Polish only;** backup video at 17:00 | Help rehearse | Help rehearse | Record video; submit 17:15; rehearse |
 
-**DEMO_CACHE:** `DEMO_CACHE=record` saves responses for the scripted chat chips, the demo LinkedIn fetch and live-ingest stages to `data/cache/<key>.json`, keyed by chip id or URL. `DEMO_CACHE=1` replays them. Session 1 owns the cache module.
+**Track prompts** (paste into each track's Claude Code; the plan is the spec):
+- **Track A:** "You are Track A (Feed & My events). Read docs/PLAN.md v2 sections 1–9, especially section 8, then your row in section 10. Stay inside Track A's files. Plan first, then ship small PRs with ship-pr."
+- **Track B:** "You are Track B (Whom to meet & Explore). Read docs/PLAN.md v2 sections 1–9, especially section 8, then your row in section 10. Stay inside Track B's files. Plan first, then ship small PRs with ship-pr."
+
+**DEMO_CACHE:** `DEMO_CACHE=record` saves responses for the scripted chat chips, the demo LinkedIn fetch and live-ingest stages to `data/cache/<key>.json`, keyed by chip id or URL. `DEMO_CACHE=1` replays them. Main owns the cache module.
 
 **Phase prompts:** the human pastes a short prompt ("Phase v2, Session N. Read docs/PLAN.md v2 sections 1–9 and your row in section 10. Plan first, then ship small PRs with ship-pr."). The plan is the spec; prompts don't repeat it.
 
@@ -365,8 +386,8 @@ hallway/
   docs/PLAN.md              this document
   docs/QODO_CATCHES.md      real Qodo findings fixed (for the demo)
   apps/web/                 Next.js PWA: app/(app) tabs, app/invite, app/stage, app/api, lib/agent
-  packages/types/           zod contract (Session 1 only)
-  packages/graph/           FalkorDB client, seed, queries, tests
+  packages/types/           zod contract (Main only)
+  packages/graph/           client, seed, upsert, calendar (Main); queries/{feed,agenda,past} (A); queries/{people,invites,explore} (B)
   packages/mcp-hallway/     MCP server for the TrueForge agent
   packages/ingest/          Bright Data + GitHub + LinkedIn ingest, normalisers, live pipeline, budget guard
   data/fixtures/            hand-written test graph

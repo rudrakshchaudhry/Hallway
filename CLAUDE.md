@@ -17,8 +17,9 @@ section 10 before starting.
 - Graph view: @falkordb/canvas.
 
 ## Rules
-- packages/types is the contract. Only the main session edits it.
-- Stay inside the folders your session owns (PLAN.md section 8).
+- packages/types is the contract. Only the Main session edits it.
+- Two humans work in feature tracks (Main, A: Feed & My events, B: Whom to meet & Explore).
+  Stay inside your track's files (PLAN.md section 8); ask Main for type or shared-helper changes.
 - API routes return data validated by their zod schema. Recommendations include a GraphPath.
 - Scrapers never run in request handlers, except the live ingest job routes under
   /api/conferences and the onboarding LinkedIn fetch: both capped, time-limited, budget-guarded
@@ -35,4 +36,4 @@ section 10 before starting.
 
 ## Commands
 pnpm dev | pnpm seed | pnpm test | pnpm typecheck | pnpm lint | pnpm demo:check
-docker compose up -d | pnpm ingest:check (Session 2 adds it)
+docker compose up -d | pnpm ingest:check (Main adds it)
