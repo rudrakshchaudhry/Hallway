@@ -1,7 +1,10 @@
 # Hallway
-Mobile-first PWA that tells a GitHub Universe attendee what to do next: who to meet,
-which talks are reruns, which booths fit them. Every recommendation shows its graph path.
-Full spec and runbook: @docs/PLAN.md. Read sections 1–11 before starting any phase.
+Mobile-first PWA that plans a conference around you: a chat onboarding (target conference,
+goals, LinkedIn/GitHub/self-description), then My Feed (calendar + confirmed cards), People
+(swipe deck that learns, invite links), Explore (Luma events, attractions) and Agenda (Now:
+sessions with clash warnings; Past: your FalkorDB memory graph). Every recommendation shows
+its graph path. Full spec and runbook: @docs/PLAN.md (v2). Read sections 1–9 and your row in
+section 10 before starting.
 
 ## Stack (do not substitute)
 - Next.js App Router + TypeScript, pnpm workspaces, vitest
@@ -17,8 +20,13 @@ Full spec and runbook: @docs/PLAN.md. Read sections 1–11 before starting any p
 - packages/types is the contract. Only the main session edits it.
 - Stay inside the folders your session owns (PLAN.md section 8).
 - API routes return data validated by their zod schema. Recommendations include a GraphPath.
-- Scrapers never run in request handlers, except /api/refresh-events (8 s timeout, cached fallback).
-- /api/ask streams NDJSON over a chunked fetch response, never SSE (the quick tunnel blocks SSE).
+- Scrapers never run in request handlers, except the live ingest job routes under
+  /api/conferences and the onboarding LinkedIn fetch: both capped, time-limited, budget-guarded
+  (PLAN.md 7.3–7.4), with cached fallback.
+- Streaming routes (/api/chat, ingest progress) use NDJSON over a chunked fetch response, never
+  SSE (the quick tunnel blocks SSE).
+- "Me" always comes from the server-set cookie, never the request body. Invite tokens are random,
+  stored hashed. Nothing leaves the app without a confirmation sheet.
 - Secrets come only from process.env. Never print, log or commit them.
 - Plan mode first for any change touching more than 3 files.
 - Ship through the ship-pr skill. Never push to main. Never merge.
@@ -27,4 +35,4 @@ Full spec and runbook: @docs/PLAN.md. Read sections 1–11 before starting any p
 
 ## Commands
 pnpm dev | pnpm seed | pnpm test | pnpm typecheck | pnpm lint | pnpm demo:check
-docker compose up -d | pnpm ingest:check
+docker compose up -d | pnpm ingest:check (Session 2 adds it)
