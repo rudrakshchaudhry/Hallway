@@ -133,8 +133,8 @@ One graph, eight node types. Every feature is a different walk through it, which
 ```cypher
 MATCH path = (me:Person {handle: $me})-[:OWNS]->(:Repo)-[:DEPENDS_ON]->(pkg:Package)<-[:MAINTAINS]-(p:Person)
 WHERE p <> me AND NOT (me)-[:MET]->(p)
-OPTIONAL MATCH (p)-[:SPEAKS_AT|ATTENDING]->(where)
-RETURN p, collect(DISTINCT pkg.name) AS sharedPkgs, collect(DISTINCT where) AS findThem, collect(path)[0] AS proof
+OPTIONAL MATCH (p)-[:SPEAKS_AT|ATTENDING]->(loc)
+RETURN p, collect(DISTINCT pkg.name) AS sharedPkgs, collect(DISTINCT loc) AS findThem, collect(path)[0] AS proof
 ORDER BY size(sharedPkgs) DESC LIMIT 10
 ```
 
@@ -155,6 +155,8 @@ RETURN c.name, c.booth, collect(sk.name) AS matches, collect(path) AS proof
 ORDER BY size(matches) DESC
 ```
 
+This covers the hiring signal only. If Expo survives the cut list, extend the ranking with "uses your stack" (shared `Package` via staff repos) and funding, so booths without a `HIRING_FOR` match still appear.
+
 **4. Record a meeting (memory across sessions)**
 
 ```cypher
@@ -164,6 +166,11 @@ ON CREATE SET m.at = timestamp(), m.via = 'button'
 ```
 
 The `SIMILAR_TO` score is computed once during ingest (OpenAI embeddings of title + abstract, cosine similarity), not at query time, so the Schedule tab loads instantly.
+
+**Public-tunnel rules (the app is reachable by anyone with the URL):**
+
+- Write routes never take the caller's identity from the request. `POST /api/met/[handle]` always uses `DEMO_HANDLE` (or the opted-in onboarding profile from a server-set cookie) as `me`; only `them` comes from the path.
+- `/api/ask` and `/api/refresh-events` spend paid credits, so both get a simple in-memory rate limit per IP (for example 10 asks and 3 refreshes per minute) and a global daily cap; over the limit, return the `DEMO_CACHE` answer or the snapshot instead of an error.
 
 **Privacy rule:** the graph only holds people who are public in this context (speakers, event hosts, package maintainers, sponsor staff on public pages) plus attendees who opt in through onboarding. Say this on stage; judges notice.
 
@@ -210,9 +217,11 @@ The human is the product owner and reviewer; three Claude Code sessions are the 
 
 | Session | Started with | Owns (folders) | Morning (to 12 PM) | Afternoon (to 3 PM) |
 | --- | --- | --- | --- | --- |
-| 1. Main | `claude` in the repo root | `packages/types`, `packages/graph`, `packages/mcp-hallway`, `apps/web/app/api`, `apps/web/lib/agent` | Scaffold, shared types, graph schema, seed, query 1 | MCP tools, TrueForge agent, `/api/ask` streaming, approvals |
-| 2. Data | `claude --worktree data` | `packages/ingest`, `data/` | Bright Data + GitHub ingest, clean snapshots | Embeddings, rerun scores, booth data, live refresh endpoint |
+| 1. Main | `claude` in the repo root | `packages/types`, `packages/graph`, `packages/mcp-hallway`, `apps/web/app/api` (except `refresh-events`), `apps/web/lib/agent`, `data/fixtures` | Scaffold, shared types, graph schema, seed, query 1 | MCP tools, TrueForge agent, `/api/ask` streaming, approvals |
+| 2. Data | `claude --worktree data` | `packages/ingest`, `data/clean`, `data/raw`, `apps/web/app/api/refresh-events` | Bright Data + GitHub ingest, clean snapshots | Embeddings, rerun scores, booth data, live refresh endpoint |
 | 3. UI | `claude --worktree ui` | `apps/web/app/(app)`, `apps/web/components`, `apps/web/styles` | Primer shell, tab bar, onboarding, Today feed on fixtures | Sheets, path view, Schedule, Ask UI, Mark as met, stage view |
+
+`docs/QODO_CATCHES.md` is append-only and shared: any session may add rows to it. Everything else in `docs/` belongs to Session 1.
 
 After 3 PM only Session 1 stays open: it merges, integrates and polishes. Sessions 2 and 3 end once their last PR is merged.
 
@@ -389,7 +398,8 @@ phone UI on the left and a live graph on the right. Verify with ui-verifier.
 ### Phase 3: Integrate (15:00–16:00, Session 1 only)
 
 ```text
-Phase 3. Merge all open work. Run the full demo path from section 12 in the browser
+Phase 3. List every open PR in merge order and hand it to the human to merge (agents never
+merge). After each merge, pull main and fix integration breaks in small PRs. Run the full demo path from section 12 in the browser
 tool and fix every break, then repeat it on a real phone through PUBLIC_URL. Add DEMO_CACHE=1: cached answers for the three suggested
 questions and the booth query. Write `pnpm demo:check` that calls every route the
 demo uses and fails if any takes over 2 s or fails schema validation.
