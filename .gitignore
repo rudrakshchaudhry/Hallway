@@ -1,0 +1,25 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# deps and builds
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+coverage/
+
+# data
+data/raw/
+
+# claude code
+.claude/worktrees/
+.claude/settings.local.json
+
+# misc
+.DS_Store
+*.log
+.vercel
