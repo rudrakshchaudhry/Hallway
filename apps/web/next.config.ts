@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 // scripts symlink it to apps/web/.env so Next loads it natively in every worker.
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@hallway/types", "@hallway/graph"],
+  transpilePackages: ["@hallway/types", "@hallway/graph", "@hallway/ingest"],
   // The falkordb client is Node-only; keep it out of the bundle.
   serverExternalPackages: ["falkordb"],
   // Lets phones reach the dev server through the Cloudflare quick tunnel.
