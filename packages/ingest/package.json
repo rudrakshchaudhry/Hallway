@@ -6,6 +6,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "ingest": "tsx --env-file-if-exists=../../.env src/cli.ts",
     "budget": "tsx --env-file-if-exists=../../.env src/budget-cli.ts",
     "sample:sessions": "tsx --env-file-if-exists=../../.env src/samples/sessions.ts",
     "sample:speakers": "tsx --env-file-if-exists=../../.env src/samples/speakers.ts",
@@ -20,6 +21,8 @@
     "@hallway/types": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5"
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.5"
   }
 }

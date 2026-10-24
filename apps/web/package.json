@@ -11,6 +11,7 @@
   "dependencies": {
     "@falkordb/canvas": "^0.3.3",
     "@hallway/graph": "workspace:*",
+    "@hallway/ingest": "workspace:*",
     "@hallway/types": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@next/env": "^16.4.3",

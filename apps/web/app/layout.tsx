@@ -16,11 +16,12 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-color-mode="dark" data-dark-theme="dark">
+    <html lang="en" data-color-mode="dark" data-dark-theme="dark" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
       </body>

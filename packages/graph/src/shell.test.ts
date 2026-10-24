@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getCalendar } from "./calendar.ts";
 import { close, getDb } from "./client.ts";
 import { getConference, listConferences } from "./conferences.ts";
-import { addPlan } from "./plans.ts";
+import { addPlan, removePlan } from "./plans.ts";
 import { SHARED_PROFILE_LABELS, buildProfileSnapshot } from "./profile.ts";
 import { FIXTURE_SNAPSHOT, loadSnapshot, seedGraph } from "./seed.ts";
 import { upsertSnapshot } from "./upsert.ts";
@@ -37,6 +37,9 @@ describe("addPlan", () => {
     expect(await addPlan(graph, "person:ghost", "talk:keynote")).toBe(false);
     const ids = (await getCalendar(graph, "person:demo")).map((i) => i.id);
     expect(ids.filter((id) => id === "talk:graph-search")).toHaveLength(1);
+    expect(await removePlan(graph, "person:demo", "talk:graph-search")).toBe(true);
+    expect(await removePlan(graph, "person:demo", "talk:graph-search")).toBe(false);
+    expect((await getCalendar(graph, "person:demo")).map((i) => i.id)).not.toContain("talk:graph-search");
   });
 });
 

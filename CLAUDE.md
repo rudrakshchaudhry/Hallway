@@ -35,5 +35,6 @@ section 10 before starting.
 - If reality contradicts PLAN.md, stop and tell me with a docs link.
 
 ## Commands
+pnpm --filter web build && pnpm --filter web start (demo; next dev reload-loops in browsers here)
 pnpm dev | pnpm seed | pnpm test | pnpm typecheck | pnpm lint | pnpm demo:check
 docker compose up -d | pnpm ingest:check (Main adds it)
