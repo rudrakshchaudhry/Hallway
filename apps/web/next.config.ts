@@ -1,0 +1,14 @@
+import path from "node:path";
+import { loadEnvConfig } from "@next/env";
+import type { NextConfig } from "next";
+
+// One .env at the repo root is shared by every package and session.
+loadEnvConfig(path.resolve(import.meta.dirname, "../.."));
+
+const nextConfig: NextConfig = {
+  transpilePackages: ["@hallway/types"],
+  // Lets phones reach the dev server through the Cloudflare quick tunnel.
+  allowedDevOrigins: ["*.trycloudflare.com"],
+};
+
+export default nextConfig;
