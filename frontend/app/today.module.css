@@ -1,0 +1,214 @@
+.screen {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 20px 16px 40px;
+  background: var(--bgColor-default);
+  color: var(--fgColor-default);
+}
+
+.kicker {
+  margin: 0;
+  color: var(--fgColor-muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.summary {
+  margin: 8px 0 0;
+  color: var(--fgColor-muted);
+}
+
+.note {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--borderColor-muted);
+  border-radius: var(--borderRadius-medium);
+  background: var(--bgColor-muted);
+  color: var(--fgColor-muted);
+  font-size: 13px;
+}
+
+.section {
+  margin-top: 28px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.block,
+.card,
+.person {
+  border: 1px solid var(--borderColor-default);
+  border-radius: var(--borderRadius-medium);
+  background: var(--bgColor-muted);
+}
+
+.block {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.time {
+  color: var(--fgColor-muted);
+  font-size: 13px;
+}
+
+.block strong,
+.card strong,
+.person strong {
+  display: block;
+  font-weight: 500;
+}
+
+.detail {
+  margin: 4px 0 0;
+  color: var(--fgColor-muted);
+  font-size: 13px;
+}
+
+.tag {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bgColor-accent-muted);
+  color: var(--fgColor-accent);
+  font-size: 12px;
+}
+
+.tagGoogle {
+  background: var(--bgColor-neutral-muted);
+  color: var(--fgColor-muted);
+}
+
+.tagMeet {
+  background: var(--bgColor-success-muted);
+  color: var(--fgColor-success);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.card {
+  padding: 12px;
+  min-height: 148px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card p,
+.person p {
+  margin: 6px 0 0;
+  color: var(--fgColor-muted);
+  font-size: 13px;
+}
+
+.card button,
+.person button,
+.sheet button,
+.actions button {
+  border: 0;
+  border-radius: var(--borderRadius-medium);
+  background: var(--bgColor-accent-emphasis);
+  color: var(--fgColor-onEmphasis);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  min-height: 44px;
+}
+
+.card button {
+  margin-top: auto;
+}
+
+.card button[data-added="true"] {
+  background: var(--bgColor-success-emphasis);
+}
+
+.person {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--bgColor-neutral-muted);
+  color: var(--fgColor-default);
+  font-size: 14px;
+}
+
+.person button {
+  margin-top: 0;
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  background: var(--bgColor-backdrop, rgba(0, 0, 0, 0.6));
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+
+.sheet form {
+  width: min(430px, 100%);
+  margin: 0;
+  padding: 16px 16px 24px;
+  border-radius: 16px 16px 0 0;
+  background: var(--bgColor-default);
+  border: 1px solid var(--borderColor-default);
+}
+
+.sheet textarea {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 120px;
+  padding: 12px;
+  border-radius: var(--borderRadius-medium);
+  border: 1px solid var(--borderColor-default);
+  background: var(--bgColor-inset);
+  color: var(--fgColor-default);
+  font: inherit;
+  font-size: 15px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions button {
+  flex: 1;
+}
+
+.ghost {
+  background: transparent !important;
+  color: var(--fgColor-default) !important;
+  border: 1px solid var(--borderColor-default) !important;
+}
