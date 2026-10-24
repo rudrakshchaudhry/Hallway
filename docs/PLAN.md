@@ -182,7 +182,7 @@ Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${fr
 (Talk)-[:PART_OF]->(Conference)        (SideEvent)-[:NEAR]->(Conference)
 (Person)-[:SPEAKS_AT]->(Talk)          (Person)-[:GAVE]->(PastTalk)      (Talk)-[:SIMILAR_TO {score}]->(PastTalk)
 (Person|Company)-[:HOSTS]->(SideEvent) (Person)-[:ATTENDING]->(SideEvent|Conference)
-(Person)-[:WORKS_AT]->(Company)        (Person)-[:WORKED_AT {from, to}]->(Company)
+(Person)-[:WORKS_AT]->(Company)        (Person)-[:WORKED_AT {from?, to?}]->(Company)  // dates when known
 (Person|Company)-[:OWNS]->(Repo)-[:DEPENDS_ON]->(Package)<-[:MAINTAINS]-(Person)
 (Person)-[:SKILLED_IN]->(Skill)        (Company)-[:HIRING_FOR]->(Skill)
 (Talk)-[:ABOUT]->(Topic)               (Person)-[:INTERESTED_IN]->(Topic)

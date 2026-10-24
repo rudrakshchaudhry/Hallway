@@ -128,15 +128,16 @@ export function freeSlots(
   const slots: { start: string; end: string }[] = [];
   for (const w of windows) {
     const wEnd = Date.parse(w.end);
-    let t = Math.max(Date.parse(w.start), Math.ceil(notBefore / step) * step);
+    const align = (ms: number) => Math.ceil(ms / step) * step;
+    let t = align(Math.max(Date.parse(w.start), notBefore));
     while (t + length <= wEnd && slots.length < limit) {
       const clash = blocks.find(([s, e]) => t < e && t + length > s);
       if (clash) {
-        t = Math.ceil(clash[1] / step) * step;
+        t = align(clash[1]);
         continue;
       }
       slots.push({ start: new Date(t).toISOString(), end: new Date(t + length).toISOString() });
-      t += length;
+      t = align(t + length);
     }
   }
   return slots;

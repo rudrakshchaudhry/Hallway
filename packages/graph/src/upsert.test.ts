@@ -32,4 +32,17 @@ describe("upsertSnapshot", () => {
     const res = await (await getDb()).selectGraph(NAME).query<{ t: string }>("MATCH (t:Talk {id: 'talk:live-1'}) RETURN t.title AS t");
     expect(res.data?.[0]?.t).toBe("Renamed");
   });
+
+  it("does not overwrite stored fields the input leaves out", async () => {
+    const db = await getDb();
+    await upsertSnapshot(db, NAME, { nodes: [conf, { ...talk, abstract: "Real abstract" }], edges: [] } as never);
+    await upsertSnapshot(db, NAME, { nodes: [conf, { label: "Talk", id: "talk:live-1", title: "Renamed again", start: talk.start, end: talk.end }], edges: [] } as never);
+    const res = await db.selectGraph(NAME).query<{ a: string }>("MATCH (t:Talk {id: 'talk:live-1'}) RETURN t.abstract AS a");
+    expect(res.data?.[0]?.a).toBe("Real abstract");
+  });
+
+  it("rejects an id that already belongs to a node with another label", async () => {
+    const clash = { label: "Topic", id: "talk:live-1", name: "Oops" };
+    await expect(upsertSnapshot(await getDb(), NAME, { nodes: [clash], edges: [] } as never)).rejects.toThrow(/already exists as a Talk/);
+  });
 });
