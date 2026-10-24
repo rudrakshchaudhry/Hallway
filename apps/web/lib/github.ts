@@ -1,4 +1,3 @@
-import "./env";
 import { ProfileDraft } from "@hallway/types";
 import { cached } from "./cache";
 

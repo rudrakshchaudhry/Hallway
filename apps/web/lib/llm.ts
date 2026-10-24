@@ -1,4 +1,3 @@
-import "./env";
 import { z } from "zod";
 import { GoalId, Intent, ProfileDraft } from "@hallway/types";
 import { cached } from "./cache";

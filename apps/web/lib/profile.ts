@@ -1,4 +1,3 @@
-import "./env";
 import { randomBytes } from "node:crypto";
 import {
   SHARED_PROFILE_LABELS,

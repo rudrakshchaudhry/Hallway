@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node -e \"const f=require('fs');try{f.unlinkSync('.env')}catch{}f.symlinkSync('../../.env','.env')\" && next dev",
+    "build": "node -e \"const f=require('fs');try{f.unlinkSync('.env')}catch{}f.symlinkSync('../../.env','.env')\" && next build",
+    "start": "node -e \"const f=require('fs');try{f.unlinkSync('.env')}catch{}f.symlinkSync('../../.env','.env')\" && next start",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
