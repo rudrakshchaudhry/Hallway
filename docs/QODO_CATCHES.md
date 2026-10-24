@@ -10,3 +10,6 @@ Real findings from Qodo's PR reviews that we fixed. Used in the demo (section 12
 | [#1](https://github.com/rudrakshchaudhry/Hallway/pull/1) | Session ownership blocked Session 1 from creating fixtures and gave the refresh route no owner | Session 1 owns `data/fixtures`; Session 2 owns `api/refresh-events` |
 | [#1](https://github.com/rudrakshchaudhry/Hallway/pull/1) | Phase 3 told the agent to merge, contradicting "never merge" | Agent lists PRs in merge order; human merges |
 | [#1](https://github.com/rudrakshchaudhry/Hallway/pull/1) | ship-pr skipped the UI verifier, so UI PRs could ship without phone-width checks | ship-pr runs ui-verifier for UI changes |
+| [#2](https://github.com/rudrakshchaudhry/Hallway/pull/2) | FalkorDB volume mounted at `/data`, but the image stores data in `/var/lib/falkordb/data`: the whole graph (including MET edges) would vanish on container recreate | Mount at the real data path; verified with a force-recreate |
+| [#2](https://github.com/rudrakshchaudhry/Hallway/pull/2) | MCP "read-only" is only a default that `query_graph` callers can override, so the agent could write or delete the graph | Agent gets an explicit read-only tool allowlist |
+| [#2](https://github.com/rudrakshchaudhry/Hallway/pull/2) | MCP healthcheck passed on any HTTP response, even a broken endpoint | Healthcheck requires a successful MCP initialize |
