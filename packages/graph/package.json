@@ -1,0 +1,20 @@
+{
+  "name": "@hallway/graph",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "seed": "tsx --env-file-if-exists=../../.env src/seed-cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hallway/types": "workspace:*",
+    "falkordb": "^6.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "vitest": "^5.0.5"
+  }
+}
