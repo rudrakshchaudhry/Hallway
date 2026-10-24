@@ -12,7 +12,12 @@
     "sample:past-talks": "tsx --env-file-if-exists=../../.env src/samples/past-talks.ts",
     "sample:side-events": "tsx --env-file-if-exists=../../.env src/samples/side-events.ts",
     "sample:jobs": "tsx --env-file-if-exists=../../.env src/samples/jobs.ts",
+    "normalise": "tsx --env-file-if-exists=../../.env src/normalise/index.ts",
+    "check": "tsx src/normalise/check.ts",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hallway/types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.5"

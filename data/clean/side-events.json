@@ -1,0 +1,1542 @@
+{
+  "nodes": [
+    {
+      "label": "Conference",
+      "id": "conf:universe-2026",
+      "name": "GitHub Universe 2026",
+      "start": "2026-10-28T09:00:00-07:00",
+      "end": "2026-10-29T18:00:00-07:00",
+      "city": "San Francisco",
+      "venue": "Fort Mason Center",
+      "tz": "America/Los_Angeles",
+      "url": "https://githubuniverse.com",
+      "source": "snapshot",
+      "status": "ready"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-wuoe9ul2",
+      "name": "SEV0 - The reliability conference (SF)",
+      "start": "2026-10-27T09:00:00-07:00",
+      "end": "2026-10-27T19:30:00-07:00",
+      "venue": "SFJAZZ, 201 Franklin St, San Francisco, CA 94102, USA",
+      "url": "https://luma.com/wuoe9ul2",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-incident-io",
+      "handle": "luma-incident-io",
+      "name": "incident.io",
+      "linkedin": "https://www.linkedin.com/in/katie-pirone"
+    },
+    {
+      "label": "Company",
+      "id": "company:incident-io-us",
+      "name": "incident.io US"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-ff7g7tys",
+      "name": "How Partners Build on Lovable w/ Dan O'Leary",
+      "start": "2026-10-27T17:00:00-07:00",
+      "end": "2026-10-27T20:00:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/ff7g7tys",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:franzschrepf",
+      "handle": "franzschrepf",
+      "name": "Franz Schrepf",
+      "linkedin": "https://www.linkedin.com/in/franz-josef-schrepf"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-south-park-commons",
+      "handle": "luma-south-park-commons",
+      "name": "South Park Commons"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-5ng6bniy",
+      "name": "San Francisco Syntax Meetup",
+      "start": "2026-10-27T17:00:00-07:00",
+      "end": "2026-10-27T19:00:00-07:00",
+      "venue": "Barebottle Beer Garden at Salesforce Park, Salesforce Park 4th Level, 425 Mission St, San Francisco, CA 94105, USA",
+      "url": "https://luma.com/5ng6bniy",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:syntaxfm",
+      "handle": "syntaxfm",
+      "name": "Syntax FM"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-hsmpoyxa",
+      "name": "Catie Cuan // Physical AI: Giving AI a Robot Body",
+      "start": "2026-10-27T17:30:00-07:00",
+      "end": "2026-10-27T18:30:00-07:00",
+      "venue": "Jacobs Institute for Design Innovation, 2530 Ridge Rd, Berkeley, CA 94709, USA",
+      "url": "https://luma.com/hsmpoyxa",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:jacobsdesigncal",
+      "handle": "jacobsdesigncal",
+      "name": "Jacobs Institute for Design Innovation",
+      "linkedin": "https://www.linkedin.com/in/jacobs-institute-for-design-innovation"
+    },
+    {
+      "label": "Person",
+      "id": "person:berkeleymdes",
+      "handle": "berkeleymdes",
+      "name": "Berkeley MDes",
+      "linkedin": "https://www.linkedin.com/in/berkeleymdes"
+    },
+    {
+      "label": "Company",
+      "id": "company:design-field-notes",
+      "name": "Design Field Notes"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-cygp5fj9",
+      "name": "🏓 Ping Pong Night // Inference × Depot",
+      "start": "2026-10-27T17:30:00-07:00",
+      "end": "2026-10-27T20:30:00-07:00",
+      "venue": "SPIN San Francisco, 690 Folsom St #100, San Francisco, CA 94107, USA",
+      "url": "https://luma.com/cygp5fj9",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:victorialiao",
+      "handle": "victorialiao",
+      "name": "Victoria Liao",
+      "linkedin": "https://www.linkedin.com/in/liaovictoria"
+    },
+    {
+      "label": "Person",
+      "id": "person:samhogan",
+      "handle": "samhogan",
+      "name": "Sam Hogan",
+      "linkedin": "https://www.linkedin.com/in/samheutmaker"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-liz-metzler",
+      "handle": "luma-liz-metzler",
+      "name": "Liz Metzler",
+      "linkedin": "https://www.linkedin.com/in/lizbeth-metzler"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-depot",
+      "handle": "luma-depot",
+      "name": "Depot"
+    },
+    {
+      "label": "Company",
+      "id": "company:inference-net",
+      "name": "Inference.net"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-hzzpp5cn",
+      "name": "Remathau: People of the Ocean. Documentary film screening",
+      "start": "2026-10-27T17:30:00-07:00",
+      "end": "2026-10-27T21:00:00-07:00",
+      "venue": "Mackenzie Room, Jen-Hsun Huang Engineering Center Room 300, 475 Via Ortega 3rd Floor, Stanford, CA 94305, USA",
+      "url": "https://luma.com/hzzpp5cn",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-eric-hartge",
+      "handle": "luma-eric-hartge",
+      "name": "Eric Hartge"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-r8sy88tq",
+      "name": "Running Production with Agents w/ Rootly AI, NVIDIA, Replit, & WorkOS",
+      "start": "2026-10-27T17:30:00-07:00",
+      "end": "2026-10-27T20:30:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/r8sy88tq",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:rootly",
+      "handle": "rootly",
+      "name": "Rootly"
+    },
+    {
+      "label": "Company",
+      "id": "company:rootly",
+      "name": "Rootly"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-dtzhn1ux",
+      "name": "Who Controls the Future of AI Coding?",
+      "start": "2026-10-27T17:30:00-07:00",
+      "end": "2026-10-27T20:30:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/dtzhn1ux",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-openrouter",
+      "handle": "luma-openrouter",
+      "name": "OpenRouter"
+    },
+    {
+      "label": "Company",
+      "id": "company:openrouter-events",
+      "name": "OpenRouter Events"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-s1ltny2j",
+      "name": "Bay Area Biosecurity Lightning Talks 03",
+      "start": "2026-10-27T19:00:00-07:00",
+      "end": "2026-10-27T21:30:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/s1ltny2j",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:tessafyi",
+      "handle": "tessafyi",
+      "name": "Tessa Alexanian",
+      "linkedin": "https://www.linkedin.com/in/tessaalexanian"
+    },
+    {
+      "label": "Person",
+      "id": "person:joeyb",
+      "handle": "joeyb",
+      "name": "Joey Bream",
+      "linkedin": "https://www.linkedin.com/in/joseph-bream-"
+    },
+    {
+      "label": "Company",
+      "id": "company:bay-area-biosecurity",
+      "name": "Bay Area Biosecurity"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-em6z6v0a",
+      "name": "Kotaro Fukuma, Piano: Flagship Series",
+      "start": "2026-10-27T19:00:00-07:00",
+      "end": "2026-10-27T21:00:00-07:00",
+      "venue": "Community School of Music and Arts, 230 San Antonio Cir, Mountain View, CA 94040, USA",
+      "url": "https://luma.com/em6z6v0a",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:japansociety-sf",
+      "handle": "japansociety-sf",
+      "name": "Japan Society of Northern California"
+    },
+    {
+      "label": "Company",
+      "id": "company:japan-society-of-northern-california",
+      "name": "Japan Society of Northern California"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-factoryai-sdkw",
+      "name": "Women in AI | Factory x Sapienne x Sequoia",
+      "start": "2026-10-27T19:00:00-07:00",
+      "end": "2026-10-27T21:00:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/factoryai-sdkw",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-ashley-jepson",
+      "handle": "luma-ashley-jepson",
+      "name": "Ashley Jepson",
+      "linkedin": "https://www.linkedin.com/in/ashleyjepson"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-francesca-labianca",
+      "handle": "luma-francesca-labianca",
+      "name": "Francesca LaBianca",
+      "linkedin": "https://www.linkedin.com/in/francesca-labianca-a15563158"
+    },
+    {
+      "label": "Person",
+      "id": "person:elizabara",
+      "handle": "elizabara",
+      "name": "Eliza Bara",
+      "linkedin": "https://www.linkedin.com/in/eliza-bara"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-madison-faulkner",
+      "handle": "luma-madison-faulkner",
+      "name": "Madison Faulkner",
+      "linkedin": "https://www.linkedin.com/in/madisonhfaulkner"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-ann-bordetsky",
+      "handle": "luma-ann-bordetsky",
+      "name": "Ann Bordetsky"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-lauren-reeder",
+      "handle": "luma-lauren-reeder",
+      "name": "Lauren Reeder",
+      "linkedin": "https://www.linkedin.com/in/lauren-reeder"
+    },
+    {
+      "label": "Company",
+      "id": "company:factory-events",
+      "name": "Factory Events"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-gitblame-werewolf",
+      "name": "GitBlame: Werewolf Happy Hour @GitHub Universe",
+      "start": "2026-10-28T17:00:00-07:00",
+      "end": "2026-10-28T19:30:00-07:00",
+      "venue": "Lobalita, 2231 Chestnut St, San Francisco, CA 94123, USA",
+      "url": "https://luma.com/gitblame-werewolf",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-tom-drummond",
+      "handle": "luma-tom-drummond",
+      "name": "Tom Drummond",
+      "linkedin": "https://www.linkedin.com/in/tomdrummond"
+    },
+    {
+      "label": "Person",
+      "id": "person:chadmetcalf",
+      "handle": "chadmetcalf",
+      "name": "Chad Metcalf",
+      "linkedin": "https://www.linkedin.com/in/chadmetcalf"
+    },
+    {
+      "label": "Person",
+      "id": "person:jarod-sanity",
+      "handle": "jarod-sanity",
+      "name": "Jarod Reyes",
+      "linkedin": "https://www.linkedin.com/in/jarodreyes"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-evelina-wahlstrom",
+      "handle": "luma-evelina-wahlstrom",
+      "name": "Evelina Wahlström",
+      "linkedin": "https://www.linkedin.com/in/evelina-wahlstrom"
+    },
+    {
+      "label": "Person",
+      "id": "person:ishaansehgal",
+      "handle": "ishaansehgal",
+      "name": "Ishaan Sehgal",
+      "linkedin": "https://www.linkedin.com/in/ishaan-sehgal"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-heavybit",
+      "handle": "luma-heavybit",
+      "name": "Heavybit"
+    },
+    {
+      "label": "Company",
+      "id": "company:heavybit-events",
+      "name": "Heavybit Events"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-eqqxj3cq",
+      "name": "HAUNT FEST HALLOWEEN PARTY!",
+      "start": "2026-10-28T17:30:00-07:00",
+      "end": "2026-10-28T21:30:00-07:00",
+      "venue": "REI, 130 E El Camino Real, Sunnyvale, CA 94087, USA",
+      "url": "https://luma.com/eqqxj3cq",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:noworriesamigo",
+      "handle": "noworriesamigo",
+      "name": "No Worries Amigo Hiking Club"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-mintlify-entire-golf",
+      "name": "Builders on the Green",
+      "start": "2026-10-28T18:00:00-07:00",
+      "end": "2026-10-28T20:30:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/mintlify-entire-golf",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-lisa-radford",
+      "handle": "luma-lisa-radford",
+      "name": "Lisa Radford"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-lizzie-entire",
+      "handle": "luma-lizzie-entire",
+      "name": "Lizzie @ Entire",
+      "linkedin": "https://www.linkedin.com/in/elsiegle"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-lauren-volpi",
+      "handle": "luma-lauren-volpi",
+      "name": "Lauren Volpi",
+      "linkedin": "https://www.linkedin.com/in/laurenvolpi"
+    },
+    {
+      "label": "Person",
+      "id": "person:danwolk",
+      "handle": "danwolk",
+      "name": "Daniel Wolkowitz",
+      "linkedin": "https://www.linkedin.com/in/danielwolkowitz"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-entire",
+      "handle": "luma-entire",
+      "name": "Entire"
+    },
+    {
+      "label": "Company",
+      "id": "company:mintlify-events",
+      "name": "Mintlify Events"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-git-sum",
+      "name": "Git Sum Dim Sum w/ Databricks & Sentry",
+      "start": "2026-10-28T18:00:00-07:00",
+      "end": "2026-10-28T21:00:00-07:00",
+      "venue": "Palette Tea House, 900 North Point St, San Francisco, CA 94109, USA",
+      "url": "https://luma.com/git-sum",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:getsentry",
+      "handle": "getsentry",
+      "name": "Sentry"
+    },
+    {
+      "label": "Person",
+      "id": "person:databricks",
+      "handle": "databricks",
+      "name": "Databricks"
+    },
+    {
+      "label": "Company",
+      "id": "company:sentry",
+      "name": "Sentry"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-71c8ntml",
+      "name": "Love Potion Crafts Night",
+      "start": "2026-10-28T18:00:00-07:00",
+      "end": "2026-10-28T20:00:00-07:00",
+      "venue": "The Love Potion Library - Books, Tea, Wine, 284 Noe St, San Francisco, CA 94114, USA",
+      "url": "https://luma.com/71c8ntml",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:veenafromlpl",
+      "handle": "veenafromlpl",
+      "name": "Veena Patel"
+    },
+    {
+      "label": "Company",
+      "id": "company:the-love-potion-library",
+      "name": "The Love Potion Library"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-bz8x2v1s",
+      "name": "Drinks Around The Fire: Cartesia x Lorikeet x Speak",
+      "start": "2026-10-28T18:30:00-07:00",
+      "end": "2026-10-28T20:30:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/bz8x2v1s",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:cartesia",
+      "handle": "cartesia",
+      "name": "Cartesia Events"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-jonny-vaux",
+      "handle": "luma-jonny-vaux",
+      "name": "Jonny Vaux",
+      "linkedin": "https://www.linkedin.com/in/jonnyvaux"
+    },
+    {
+      "label": "Company",
+      "id": "company:cartesia",
+      "name": "Cartesia"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-1ieibldt",
+      "name": "What Poetry Can Teach Us About Being Human",
+      "start": "2026-10-28T18:30:00-07:00",
+      "end": "2026-10-28T21:00:00-07:00",
+      "venue": "Double Black, 925 Cole St, San Francisco, CA 94117, USA",
+      "url": "https://luma.com/1ieibldt",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-big-brain-bay-area",
+      "handle": "luma-big-brain-bay-area",
+      "name": "Big Brain Bay Area"
+    },
+    {
+      "label": "Company",
+      "id": "company:big-brain-lectures-bay-area",
+      "name": "Big Brain Lectures - Bay Area"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-5j93bc4c",
+      "name": "Scaling Intelligence —Modal x Gray Area Commissions — OPENING NIGHT",
+      "start": "2026-10-28T19:00:00-07:00",
+      "end": "2026-10-28T22:00:00-07:00",
+      "venue": "Gray Area / Grand Theater, 2665 Mission St, San Francisco, CA 94110, USA",
+      "url": "https://luma.com/5j93bc4c",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:grayarea",
+      "handle": "grayarea",
+      "name": "Gray Area"
+    },
+    {
+      "label": "Person",
+      "id": "person:modal-events",
+      "handle": "modal-events",
+      "name": "Modal Events"
+    },
+    {
+      "label": "Company",
+      "id": "company:gray-area",
+      "name": "Gray Area"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-0m8oub77",
+      "name": "Entire Espresso with Gergely Orosz and Thomas Dohmke",
+      "start": "2026-10-29T09:00:00-07:00",
+      "end": "2026-10-29T11:00:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/0m8oub77",
+      "source": "luma"
+    },
+    {
+      "label": "Company",
+      "id": "company:entire-events",
+      "name": "Entire Events"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-usecorgi-fda6",
+      "name": "Pancake AI x Corgi",
+      "start": "2026-10-29T17:00:00-07:00",
+      "end": "2026-10-29T22:00:00-07:00",
+      "venue": "Corgi Cafe, 9 Claude Ln, San Francisco, CA 94108, USA",
+      "url": "https://luma.com/usecorgi-fda6",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:jeanette-li",
+      "handle": "jeanette-li",
+      "name": "Jeanette Li",
+      "linkedin": "https://www.linkedin.com/in/jeanette-li-00353b218"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-erika-lee",
+      "handle": "luma-erika-lee",
+      "name": "Erika Lee",
+      "linkedin": "https://www.linkedin.com/in/erikavichilee"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-laura-dang",
+      "handle": "luma-laura-dang",
+      "name": "Laura Dang",
+      "linkedin": "https://www.linkedin.com/in/laura-t-dang"
+    },
+    {
+      "label": "Person",
+      "id": "person:tristancomte",
+      "handle": "tristancomte",
+      "name": "Tristan Comte",
+      "linkedin": "https://www.linkedin.com/in/tristan-comte"
+    },
+    {
+      "label": "Person",
+      "id": "person:hippodupac",
+      "handle": "hippodupac",
+      "name": "Hippolyte du Pac",
+      "linkedin": "https://www.linkedin.com/in/hippolyte-du-pac"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-guillaume",
+      "handle": "luma-guillaume",
+      "name": "Guillaume",
+      "linkedin": "https://www.linkedin.com/in/marquis-guillaume"
+    },
+    {
+      "label": "Person",
+      "id": "person:francois",
+      "handle": "francois",
+      "name": "Francois de Fitte",
+      "linkedin": "https://www.linkedin.com/in/francoisdefitte"
+    },
+    {
+      "label": "Person",
+      "id": "person:matthieuo",
+      "handle": "matthieuo",
+      "name": "Matthieu Ostertag",
+      "linkedin": "https://www.linkedin.com/in/matthieu-ostertag"
+    },
+    {
+      "label": "Person",
+      "id": "person:unfair",
+      "handle": "unfair",
+      "name": "unfair.so"
+    },
+    {
+      "label": "Company",
+      "id": "company:corgi",
+      "name": "Corgi"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-b3u04qyl",
+      "name": "Redwood Materials Open House",
+      "start": "2026-10-29T17:00:00-07:00",
+      "end": "2026-10-29T19:00:00-07:00",
+      "venue": "100 Hooper St, San Francisco, CA 94107, USA",
+      "url": "https://luma.com/b3u04qyl",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-redwood-materials",
+      "handle": "luma-redwood-materials",
+      "name": "Redwood Materials"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-assemb-42oc",
+      "name": "Text-to-Screech: Haunted TTS Launch Event",
+      "start": "2026-10-29T17:00:00-07:00",
+      "end": "2026-10-29T20:00:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/assemb-42oc",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-natalie-atkins",
+      "handle": "luma-natalie-atkins",
+      "name": "Natalie Atkins",
+      "linkedin": "https://www.linkedin.com/in/natalieatkins"
+    },
+    {
+      "label": "Company",
+      "id": "company:assemblyai",
+      "name": "AssemblyAI"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-u0l7j6iz",
+      "name": "Designers & Machines October 2026",
+      "start": "2026-10-29T18:30:00-07:00",
+      "end": "2026-10-29T21:30:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/u0l7j6iz",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:beni",
+      "handle": "beni",
+      "name": "Ben issen",
+      "linkedin": "https://www.linkedin.com/in/benissen"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-micka-touillaud",
+      "handle": "luma-micka-touillaud",
+      "name": "Micka Touillaud",
+      "linkedin": "https://www.linkedin.com/in/mickatouillaud"
+    },
+    {
+      "label": "Company",
+      "id": "company:designers-and-machines",
+      "name": "Designers & Machines"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-modal-48ev",
+      "name": "Inference as Instrument",
+      "start": "2026-10-29T19:00:00-07:00",
+      "end": "2026-10-29T21:00:00-07:00",
+      "venue": "Gray Area / Grand Theater, 2665 Mission St, San Francisco, CA 94110, USA",
+      "url": "https://luma.com/modal-48ev",
+      "source": "luma"
+    },
+    {
+      "label": "Company",
+      "id": "company:modal",
+      "name": "Modal"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-nighthack",
+      "name": "Night Hack by Founders, Inc.",
+      "start": "2026-10-30T16:00:00-07:00",
+      "end": "2026-10-30T23:00:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/nighthack",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-adrianna-lakatos",
+      "handle": "luma-adrianna-lakatos",
+      "name": "Adrianna Lakatos",
+      "linkedin": "https://www.linkedin.com/in/adriannalakatos"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-furqan-rydhan",
+      "handle": "luma-furqan-rydhan",
+      "name": "Furqan Rydhan"
+    },
+    {
+      "label": "Person",
+      "id": "person:hthieblot",
+      "handle": "hthieblot",
+      "name": "Hubert Thieblot",
+      "linkedin": "https://www.linkedin.com/in/hubertthieblot"
+    },
+    {
+      "label": "Person",
+      "id": "person:stavan",
+      "handle": "stavan",
+      "name": "Stavan Patel"
+    },
+    {
+      "label": "Person",
+      "id": "person:dante",
+      "handle": "dante",
+      "name": "Dante",
+      "linkedin": "https://www.linkedin.com/in/dantelentini"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-ruslan",
+      "handle": "luma-ruslan",
+      "name": "Ruslan"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-aiden-blumenstein",
+      "handle": "luma-aiden-blumenstein",
+      "name": "Aiden Blumenstein"
+    },
+    {
+      "label": "Person",
+      "id": "person:mdjshin",
+      "handle": "mdjshin",
+      "name": "Mike Shin",
+      "linkedin": "https://www.linkedin.com/in/dongjinmshin"
+    },
+    {
+      "label": "Person",
+      "id": "person:haseab",
+      "handle": "haseab",
+      "name": "haseab 🌵"
+    },
+    {
+      "label": "Person",
+      "id": "person:finc",
+      "handle": "finc",
+      "name": "Founders, Inc."
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-security-fort-mason",
+      "handle": "luma-security-fort-mason",
+      "name": "Security Fort Mason"
+    },
+    {
+      "label": "Company",
+      "id": "company:founders-inc-events",
+      "name": "Founders, Inc. Events"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-4zcbs4yk",
+      "name": "City Creatures: Evening Ticket",
+      "start": "2026-10-30T17:00:00-07:00",
+      "end": "2026-10-30T22:00:00-07:00",
+      "venue": "Terra Gallery & Event Venue, 511 Harrison St, San Francisco, CA 94105, USA",
+      "url": "https://luma.com/4zcbs4yk",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-pestec-ipm",
+      "handle": "luma-pestec-ipm",
+      "name": "Pestec IPM"
+    },
+    {
+      "label": "Company",
+      "id": "company:city-creatures",
+      "name": "City Creatures"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-spacexai-734u",
+      "name": "Cafe Compute: The Night Before RSI",
+      "start": "2026-10-30T18:30:00-07:00",
+      "end": "2026-10-30T23:00:00-07:00",
+      "venue": "San Francisco, CA",
+      "url": "https://luma.com/spacexai-734u",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-diyi-zhu",
+      "handle": "luma-diyi-zhu",
+      "name": "Diyi Zhu",
+      "linkedin": "https://www.linkedin.com/in/zhudiyi"
+    },
+    {
+      "label": "Person",
+      "id": "person:sarahchieng",
+      "handle": "sarahchieng",
+      "name": "Sarah Chieng",
+      "linkedin": "https://www.linkedin.com/in/sarah-chieng-888595139"
+    },
+    {
+      "label": "Company",
+      "id": "company:cerebras",
+      "name": "Cerebras"
+    },
+    {
+      "label": "SideEvent",
+      "id": "event:luma-pdgi6lzs",
+      "name": "ANNUAL MRC HALLOWEEN PARTY",
+      "start": "2026-10-30T19:30:00-07:00",
+      "end": "2026-10-31T01:30:00-07:00",
+      "venue": "Novela, 662 Mission St, San Francisco, CA 94105, USA",
+      "url": "https://luma.com/pdgi6lzs",
+      "source": "luma"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-sarah-tobin",
+      "handle": "luma-sarah-tobin",
+      "name": "Sarah Tobin",
+      "linkedin": "https://www.linkedin.com/in/sarahtobin"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-marina-run-club",
+      "handle": "luma-marina-run-club",
+      "name": "Marina Run Club"
+    },
+    {
+      "label": "Person",
+      "id": "person:luma-angie-nibbi",
+      "handle": "luma-angie-nibbi",
+      "name": "Angie Nibbi"
+    },
+    {
+      "label": "Company",
+      "id": "company:marina-run-club-events",
+      "name": "Marina Run Club Events"
+    }
+  ],
+  "edges": [
+    {
+      "type": "NEAR",
+      "from": "event:luma-wuoe9ul2",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-incident-io",
+      "to": "event:luma-wuoe9ul2"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:incident-io-us",
+      "to": "event:luma-wuoe9ul2"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-ff7g7tys",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:franzschrepf",
+      "to": "event:luma-ff7g7tys"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-south-park-commons",
+      "to": "event:luma-ff7g7tys"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-5ng6bniy",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:syntaxfm",
+      "to": "event:luma-5ng6bniy"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-hsmpoyxa",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:jacobsdesigncal",
+      "to": "event:luma-hsmpoyxa"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:berkeleymdes",
+      "to": "event:luma-hsmpoyxa"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:design-field-notes",
+      "to": "event:luma-hsmpoyxa"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-cygp5fj9",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:victorialiao",
+      "to": "event:luma-cygp5fj9"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:samhogan",
+      "to": "event:luma-cygp5fj9"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-liz-metzler",
+      "to": "event:luma-cygp5fj9"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-depot",
+      "to": "event:luma-cygp5fj9"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:inference-net",
+      "to": "event:luma-cygp5fj9"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-hzzpp5cn",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-eric-hartge",
+      "to": "event:luma-hzzpp5cn"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-r8sy88tq",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:rootly",
+      "to": "event:luma-r8sy88tq"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:rootly",
+      "to": "event:luma-r8sy88tq"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-dtzhn1ux",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-openrouter",
+      "to": "event:luma-dtzhn1ux"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:openrouter-events",
+      "to": "event:luma-dtzhn1ux"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-s1ltny2j",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:tessafyi",
+      "to": "event:luma-s1ltny2j"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:joeyb",
+      "to": "event:luma-s1ltny2j"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:bay-area-biosecurity",
+      "to": "event:luma-s1ltny2j"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-em6z6v0a",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:japansociety-sf",
+      "to": "event:luma-em6z6v0a"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:japan-society-of-northern-california",
+      "to": "event:luma-em6z6v0a"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-factoryai-sdkw",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-ashley-jepson",
+      "to": "event:luma-factoryai-sdkw"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-francesca-labianca",
+      "to": "event:luma-factoryai-sdkw"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:elizabara",
+      "to": "event:luma-factoryai-sdkw"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-madison-faulkner",
+      "to": "event:luma-factoryai-sdkw"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-ann-bordetsky",
+      "to": "event:luma-factoryai-sdkw"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-lauren-reeder",
+      "to": "event:luma-factoryai-sdkw"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:factory-events",
+      "to": "event:luma-factoryai-sdkw"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-gitblame-werewolf",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-tom-drummond",
+      "to": "event:luma-gitblame-werewolf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:chadmetcalf",
+      "to": "event:luma-gitblame-werewolf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:jarod-sanity",
+      "to": "event:luma-gitblame-werewolf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-evelina-wahlstrom",
+      "to": "event:luma-gitblame-werewolf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:ishaansehgal",
+      "to": "event:luma-gitblame-werewolf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-heavybit",
+      "to": "event:luma-gitblame-werewolf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:heavybit-events",
+      "to": "event:luma-gitblame-werewolf"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-eqqxj3cq",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:noworriesamigo",
+      "to": "event:luma-eqqxj3cq"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-mintlify-entire-golf",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-lisa-radford",
+      "to": "event:luma-mintlify-entire-golf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-lizzie-entire",
+      "to": "event:luma-mintlify-entire-golf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-lauren-volpi",
+      "to": "event:luma-mintlify-entire-golf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:danwolk",
+      "to": "event:luma-mintlify-entire-golf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-entire",
+      "to": "event:luma-mintlify-entire-golf"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:mintlify-events",
+      "to": "event:luma-mintlify-entire-golf"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-git-sum",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:getsentry",
+      "to": "event:luma-git-sum"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:databricks",
+      "to": "event:luma-git-sum"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:sentry",
+      "to": "event:luma-git-sum"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-71c8ntml",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:veenafromlpl",
+      "to": "event:luma-71c8ntml"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:the-love-potion-library",
+      "to": "event:luma-71c8ntml"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-bz8x2v1s",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:cartesia",
+      "to": "event:luma-bz8x2v1s"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-jonny-vaux",
+      "to": "event:luma-bz8x2v1s"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:cartesia",
+      "to": "event:luma-bz8x2v1s"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-1ieibldt",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-big-brain-bay-area",
+      "to": "event:luma-1ieibldt"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:big-brain-lectures-bay-area",
+      "to": "event:luma-1ieibldt"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-5j93bc4c",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:grayarea",
+      "to": "event:luma-5j93bc4c"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:modal-events",
+      "to": "event:luma-5j93bc4c"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:gray-area",
+      "to": "event:luma-5j93bc4c"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-0m8oub77",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-entire",
+      "to": "event:luma-0m8oub77"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:entire-events",
+      "to": "event:luma-0m8oub77"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-usecorgi-fda6",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:jeanette-li",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-erika-lee",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-laura-dang",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:tristancomte",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:hippodupac",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-guillaume",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:francois",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:matthieuo",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:unfair",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:corgi",
+      "to": "event:luma-usecorgi-fda6"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-b3u04qyl",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-redwood-materials",
+      "to": "event:luma-b3u04qyl"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-assemb-42oc",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-natalie-atkins",
+      "to": "event:luma-assemb-42oc"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:assemblyai",
+      "to": "event:luma-assemb-42oc"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-u0l7j6iz",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:beni",
+      "to": "event:luma-u0l7j6iz"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-micka-touillaud",
+      "to": "event:luma-u0l7j6iz"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:designers-and-machines",
+      "to": "event:luma-u0l7j6iz"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-modal-48ev",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:modal-events",
+      "to": "event:luma-modal-48ev"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:grayarea",
+      "to": "event:luma-modal-48ev"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:modal",
+      "to": "event:luma-modal-48ev"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-nighthack",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-adrianna-lakatos",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-furqan-rydhan",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:hthieblot",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:stavan",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:dante",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-ruslan",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-aiden-blumenstein",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:mdjshin",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:haseab",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:finc",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-security-fort-mason",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:founders-inc-events",
+      "to": "event:luma-nighthack"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-4zcbs4yk",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-pestec-ipm",
+      "to": "event:luma-4zcbs4yk"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:city-creatures",
+      "to": "event:luma-4zcbs4yk"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-spacexai-734u",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-diyi-zhu",
+      "to": "event:luma-spacexai-734u"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:sarahchieng",
+      "to": "event:luma-spacexai-734u"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:cerebras",
+      "to": "event:luma-spacexai-734u"
+    },
+    {
+      "type": "NEAR",
+      "from": "event:luma-pdgi6lzs",
+      "to": "conf:universe-2026"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-sarah-tobin",
+      "to": "event:luma-pdgi6lzs"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-marina-run-club",
+      "to": "event:luma-pdgi6lzs"
+    },
+    {
+      "type": "HOSTS",
+      "from": "person:luma-angie-nibbi",
+      "to": "event:luma-pdgi6lzs"
+    },
+    {
+      "type": "HOSTS",
+      "from": "company:marina-run-club-events",
+      "to": "event:luma-pdgi6lzs"
+    }
+  ]
+}

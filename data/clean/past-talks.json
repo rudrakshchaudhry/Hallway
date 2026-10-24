@@ -1,0 +1,247 @@
+{
+  "nodes": [
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-YBQdpJfWBCA",
+      "title": "Ep 5 - Ed Summers - Head of Accessibility, GitHub",
+      "conf": "YouTube @A11yGenAI",
+      "year": 2025,
+      "url": "https://www.youtube.com/watch?v=YBQdpJfWBCA"
+    },
+    {
+      "label": "Person",
+      "id": "person:edsummersnc",
+      "handle": "edsummersnc",
+      "name": "Ed Summers",
+      "headline": "Head of Accessibility",
+      "linkedin": "https://www.linkedin.com/in/edsummersnc/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1686657637413001PuMJ/attprofile/Ed%20Summers_1786068796244001XV4y.jpeg"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-KayJHywRync",
+      "title": "Michael Fairchild Trailer",
+      "conf": "YouTube @photochild1",
+      "year": 2014,
+      "url": "https://www.youtube.com/watch?v=KayJHywRync"
+    },
+    {
+      "label": "Person",
+      "id": "person:michael-fairchild-15381928",
+      "handle": "michael-fairchild-15381928",
+      "name": "Michael Fairchild",
+      "headline": "Accessibility engineer",
+      "linkedin": "https://www.linkedin.com/in/michael-fairchild-15381928/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1777682948173001RCCS/attprofile/Michael%20Fairchild_1786068425423001BY0B.jpeg"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-fNvvhHMt8PQ",
+      "title": "Maya Shavin @ ReactNext '26 | You Don’t Need to Worry About Accessibility with AI (Or Do You?)",
+      "conf": "YouTube @ReactNext",
+      "year": 2026,
+      "url": "https://www.youtube.com/watch?v=fNvvhHMt8PQ"
+    },
+    {
+      "label": "Person",
+      "id": "person:mayashavin",
+      "handle": "mayashavin",
+      "name": "Maya Shavin",
+      "headline": "Staff Software Engineer",
+      "linkedin": "https://www.linkedin.com/in/mayashavin/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1686645252066001oKBi/attprofile/Maya_2020_1777549414160001yKza.JPG"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-T-cNFTTd1PQ",
+      "title": "Modern software development | Nick Liffen | The DEVOPS Conference 2022",
+      "conf": "YouTube @Eficode-oy",
+      "year": 2022,
+      "url": "https://www.youtube.com/watch?v=T-cNFTTd1PQ"
+    },
+    {
+      "label": "Person",
+      "id": "person:nickliffen",
+      "handle": "nickliffen",
+      "name": "Nick Liffen",
+      "headline": "GTM Strategy",
+      "linkedin": "https://www.linkedin.com/in/nickliffen/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1685628214607001rF1d/attprofile/Jul%2023%202025%203_1785955728722001TFjg.jpg"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-v7VLpCoOUqE",
+      "title": "Building a Secure Open Source Project on GitHub - Philip Holleran",
+      "conf": "YouTube @FINOS",
+      "year": 2023,
+      "url": "https://www.youtube.com/watch?v=v7VLpCoOUqE"
+    },
+    {
+      "label": "Person",
+      "id": "person:philip-holleran",
+      "handle": "philip-holleran",
+      "name": "Philip Holleran",
+      "headline": "Field CTO",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1745520780302001vyrp/attprofile/E01DLHH5JM6-U0D39H3DF-bed45fe167ba-512_1789138269505001mV0C.png"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-t6OONjICzSw",
+      "title": "Spezialfolge : An outlook on development with Pierre Tempel",
+      "conf": "YouTube @programmierbar",
+      "year": 2026,
+      "url": "https://www.youtube.com/watch?v=t6OONjICzSw"
+    },
+    {
+      "label": "Person",
+      "id": "person:pierre-tempel",
+      "handle": "pierre-tempel",
+      "name": "Pierre Tempel",
+      "headline": "Director, Product Management",
+      "linkedin": "https://www.linkedin.com/in/pierre-tempel/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1695047674656001ZiRw/attprofile/cheeky%20suit%201_1777569591357001qjuJ.jpeg"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-FIGi0geZOMo",
+      "title": "Bitcoin Core vs. XT Fork as seen from the Future",
+      "conf": "YouTube @w.landoncox2453",
+      "year": 2015,
+      "url": "https://www.youtube.com/watch?v=FIGi0geZOMo"
+    },
+    {
+      "label": "Person",
+      "id": "person:landon-cox-6727363",
+      "handle": "landon-cox-6727363",
+      "name": "Landon Cox",
+      "headline": "Senior Principle Researcher",
+      "linkedin": "https://www.linkedin.com/in/landon-cox-6727363/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1777673854269001pz9T/attprofile/Landon%20Cox_1792464062560001jrkl.jpg"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-TX9Aqnba4oo",
+      "title": "Code in the Classroom with Dr. Peli de Halleux",
+      "conf": "YouTube @MicrosoftResearch",
+      "year": 2018,
+      "url": "https://www.youtube.com/watch?v=TX9Aqnba4oo"
+    },
+    {
+      "label": "Person",
+      "id": "person:pelidehalleux",
+      "handle": "pelidehalleux",
+      "name": "Peli de Halleux",
+      "headline": "Agentic Engineer, GitHub Next",
+      "linkedin": "https://www.linkedin.com/in/pelidehalleux/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1777450204317001zcJY/attprofile/Peli_1786068200969001wq5a.png"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-6MSYAndGwMg",
+      "title": "Crossing the Enterprise Chasm - Michael Grinich (2024)",
+      "conf": "YouTube @WorkOS",
+      "year": 2024,
+      "url": "https://www.youtube.com/watch?v=6MSYAndGwMg"
+    },
+    {
+      "label": "Person",
+      "id": "person:grinich",
+      "handle": "grinich",
+      "name": "Michael Grinich",
+      "headline": "CEO",
+      "linkedin": "https://www.linkedin.com/in/grinich/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1759265517921001S428/attprofile/m2TFWGlC_400x400-1_1786029450086001Oo0E.jpg"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt--KuPQ3wbg08",
+      "title": "618: Github's Tim Rogers",
+      "conf": "YouTube @coderradio",
+      "year": 2025,
+      "url": "https://www.youtube.com/watch?v=-KuPQ3wbg08"
+    },
+    {
+      "label": "Person",
+      "id": "person:timrogers1",
+      "handle": "timrogers1",
+      "name": "Tim Rogers",
+      "headline": "Principal Product Manager",
+      "linkedin": "https://www.linkedin.com/in/timrogers1/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1697183379437001R4Y9/attprofile/Tim%20Rogers_1792537647715001ajAZ.jpeg"
+    },
+    {
+      "label": "PastTalk",
+      "id": "pasttalk:yt-p2DMSHnPF7I",
+      "title": "Global AI Bootcamp Malmö - Simona Toader & Goran Vuksic",
+      "conf": "YouTube @FooCafeOrgMalmo",
+      "year": 2024,
+      "url": "https://www.youtube.com/watch?v=p2DMSHnPF7I"
+    },
+    {
+      "label": "Person",
+      "id": "person:simona-toader",
+      "handle": "simona-toader",
+      "name": "Simona Toader",
+      "headline": "Sr Software Global Black Belt",
+      "linkedin": "https://www.linkedin.com/in/simona-toader/",
+      "avatar": "https://static.rainfocus.com/github/universe26/att/1776788371460001opj5/attprofile/Simona-Toader_1786027305737001LZ2O.jpg"
+    }
+  ],
+  "edges": [
+    {
+      "type": "GAVE",
+      "from": "person:edsummersnc",
+      "to": "pasttalk:yt-YBQdpJfWBCA"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:michael-fairchild-15381928",
+      "to": "pasttalk:yt-KayJHywRync"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:mayashavin",
+      "to": "pasttalk:yt-fNvvhHMt8PQ"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:nickliffen",
+      "to": "pasttalk:yt-T-cNFTTd1PQ"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:philip-holleran",
+      "to": "pasttalk:yt-v7VLpCoOUqE"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:pierre-tempel",
+      "to": "pasttalk:yt-t6OONjICzSw"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:landon-cox-6727363",
+      "to": "pasttalk:yt-FIGi0geZOMo"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:pelidehalleux",
+      "to": "pasttalk:yt-TX9Aqnba4oo"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:grinich",
+      "to": "pasttalk:yt-6MSYAndGwMg"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:timrogers1",
+      "to": "pasttalk:yt--KuPQ3wbg08"
+    },
+    {
+      "type": "GAVE",
+      "from": "person:simona-toader",
+      "to": "pasttalk:yt-p2DMSHnPF7I"
+    }
+  ]
+}

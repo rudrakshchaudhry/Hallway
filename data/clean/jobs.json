@@ -1,0 +1,561 @@
+{
+  "nodes": [
+    {
+      "label": "Company",
+      "id": "company:dynatrace",
+      "name": "Dynatrace"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:javascript",
+      "name": "JavaScript"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:go",
+      "name": "Go"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:java",
+      "name": "Java"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:kubernetes",
+      "name": "Kubernetes"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:security",
+      "name": "Security"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:ai-ml",
+      "name": "AI/ML"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:devops",
+      "name": "DevOps"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:cloud",
+      "name": "Cloud"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:observability",
+      "name": "Observability"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:python",
+      "name": "Python"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:data",
+      "name": "Data"
+    },
+    {
+      "label": "Company",
+      "id": "company:workos",
+      "name": "WorkOS"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:typescript",
+      "name": "TypeScript"
+    },
+    {
+      "label": "Company",
+      "id": "company:rubrik",
+      "name": "Rubrik"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:distributed-systems",
+      "name": "Distributed systems"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:react",
+      "name": "React"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:backend",
+      "name": "Backend"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:c",
+      "name": "C++"
+    },
+    {
+      "label": "Company",
+      "id": "company:insight",
+      "name": "Insight"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:rust",
+      "name": "Rust"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:frontend",
+      "name": "Frontend"
+    },
+    {
+      "label": "Company",
+      "id": "company:nvidia",
+      "name": "NVIDIA"
+    },
+    {
+      "label": "Company",
+      "id": "company:amplitude",
+      "name": "Amplitude"
+    },
+    {
+      "label": "Company",
+      "id": "company:tailscale",
+      "name": "Tailscale"
+    }
+  ],
+  "edges": [
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:javascript"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:go"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:java"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:kubernetes"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:security"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:devops"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:observability"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:python"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:dynatrace",
+      "to": "skill:data"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:typescript"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:python"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:go"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:java"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:python"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:java"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:security"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:distributed-systems"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:observability"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:javascript"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:react"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:backend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:distributed-systems"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:observability"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:go"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:kubernetes"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:backend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:devops"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:c"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:data"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:insight",
+      "to": "skill:kubernetes"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:insight",
+      "to": "skill:security"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:insight",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:insight",
+      "to": "skill:devops"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:insight",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:kubernetes"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:security"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:data"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:rubrik",
+      "to": "skill:rust"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:workos",
+      "to": "skill:frontend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:python"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:rust"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:c"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:python"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:java"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:c"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:backend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:data"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:distributed-systems"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:typescript"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:python"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:go"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:rust"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:security"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:observability"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:frontend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:javascript"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:react"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:go"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:kubernetes"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:security"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:backend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:devops"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:distributed-systems"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:nvidia",
+      "to": "skill:observability"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:typescript"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:devops"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:observability"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:kubernetes"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:devops"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:amplitude",
+      "to": "skill:security"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:frontend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:distributed-systems"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:backend"
+    },
+    {
+      "type": "HIRING_FOR",
+      "from": "company:tailscale",
+      "to": "skill:c"
+    }
+  ]
+}

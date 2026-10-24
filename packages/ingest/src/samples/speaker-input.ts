@@ -1,6 +1,6 @@
 import { readLatestRaw } from '../paths.ts';
 
-export interface SampleSpeaker {
+export interface CatalogSpeaker {
   name: string;
   title?: string;
   company?: string;
@@ -15,17 +15,43 @@ interface RfParticipant {
   linkedIn?: string;
 }
 
-/** Up to 3 distinct speakers from the latest sessions sample, preferring ones with a LinkedIn URL. */
-export async function sampleSpeakers(): Promise<SampleSpeaker[]> {
-  const raw = await readLatestRaw<{ sessions?: { participants?: RfParticipant[] }[] }>('sessions');
-  const seen = new Map<string, SampleSpeaker>();
-  for (const s of raw?.sessions ?? []) {
+export interface RfSession {
+  participants?: RfParticipant[];
+  attributevalues?: { attribute?: string; value?: string }[];
+}
+
+export async function latestSessions(): Promise<RfSession[]> {
+  return (await readLatestRaw<{ sessions?: RfSession[] }>('sessions'))?.sessions ?? [];
+}
+
+/** Distinct speakers in catalog order (first appearance). */
+export async function catalogSpeakers(): Promise<CatalogSpeaker[]> {
+  const seen = new Map<string, CatalogSpeaker>();
+  for (const s of await latestSessions()) {
     for (const p of s.participants ?? []) {
       if (!p.fullName || seen.has(p.fullName)) continue;
       const linkedin = p.linkedIn?.startsWith('https://www.linkedin.com/') ? p.linkedIn : undefined;
       seen.set(p.fullName, { name: p.fullName, title: p.jobTitle, company: p.companyName, linkedin });
     }
   }
-  const all = [...seen.values()];
-  return [...all.filter((s) => s.linkedin), ...all.filter((s) => !s.linkedin)].slice(0, 3);
+  return [...seen.values()];
+}
+
+/** Companies of speakers in sponsor sessions, by speaker count (ties keep catalog order). */
+export async function sponsorCompanies(): Promise<string[]> {
+  const counts = new Map<string, number>();
+  for (const s of await latestSessions()) {
+    if (!s.attributevalues?.some((a) => a.attribute === 'Sponsor Session?' && a.value === 'Yes')) continue;
+    for (const p of s.participants ?? []) {
+      if (p.companyName) counts.set(p.companyName, (counts.get(p.companyName) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
+}
+
+/** `--max N` from argv, else the given default. */
+export function maxArg(fallback: number): number {
+  const i = process.argv.indexOf('--max');
+  const n = i >= 0 ? Number(process.argv[i + 1]) : NaN;
+  return Number.isInteger(n) && n > 0 ? n : fallback;
 }

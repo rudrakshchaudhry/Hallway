@@ -1,0 +1,968 @@
+{
+  "nodes": [
+    {
+      "label": "Person",
+      "id": "person:tommaso-moro",
+      "handle": "tommaso-moro",
+      "name": "Tommaso Moro"
+    },
+    {
+      "label": "Person",
+      "id": "person:jeff-an",
+      "handle": "jeff-an",
+      "name": "Jeff An",
+      "about": "I'm the co-founder and CTO of Momentic, a startup backed by YCombinator, AI Grant…"
+    },
+    {
+      "label": "Person",
+      "id": "person:michael-fairchild-15381928",
+      "handle": "michael-fairchild-15381928",
+      "name": "Michael Fairchild",
+      "about": "I'm a full stack engineer, I specialize in making software accessible and inclusive, and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:greggcochran",
+      "handle": "greggcochran",
+      "name": "Gregg Cochran"
+    },
+    {
+      "label": "Person",
+      "id": "person:alexander-androncik-4bab33349",
+      "handle": "alexander-androncik-4bab33349",
+      "name": "Alexander Androncik",
+      "about": "I’m passionate about helping engineers, teams, and organizations transform the way they…"
+    },
+    {
+      "label": "Person",
+      "id": "person:gracevorreuter",
+      "handle": "gracevorreuter",
+      "name": "Grace Vorreuter"
+    },
+    {
+      "label": "Person",
+      "id": "person:kartik-ram-bharath",
+      "handle": "kartik-ram-bharath",
+      "name": "Kartik Bharath",
+      "about": "Currently working as a Solutions Engineer at Tailscale, helping customers with their…"
+    },
+    {
+      "label": "Person",
+      "id": "person:alejandrocarderera",
+      "handle": "alejandrocarderera",
+      "name": "Alejandro Carderera"
+    },
+    {
+      "label": "Person",
+      "id": "person:aaron-reich",
+      "handle": "aaron-reich",
+      "name": "Aaron Reich"
+    },
+    {
+      "label": "Person",
+      "id": "person:james-fletcher-1853a4159",
+      "handle": "james-fletcher-1853a4159",
+      "name": "James Fletcher",
+      "about": "Product manager, Data and security products."
+    },
+    {
+      "label": "Person",
+      "id": "person:cooper-nederhood-b2a70072",
+      "handle": "cooper-nederhood-b2a70072",
+      "name": "Cooper Nederhood"
+    },
+    {
+      "label": "Person",
+      "id": "person:nickliffen",
+      "handle": "nickliffen",
+      "name": "Nick Liffen",
+      "about": "Nick Liffen is a hands on technical leader with a blend of experience across Engineering,…"
+    },
+    {
+      "label": "Person",
+      "id": "person:kwstubbs",
+      "handle": "kwstubbs",
+      "name": "Kevin Stubbings",
+      "about": "Security Researcher at Github."
+    },
+    {
+      "label": "Person",
+      "id": "person:steven-ewing",
+      "handle": "steven-ewing",
+      "name": "Steven Ewing",
+      "about": "Experienced Software Engineer skilled in Python, Perl, C++, Agile Methodologies, and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:kt-savage",
+      "handle": "kt-savage",
+      "name": "Katie Savage"
+    },
+    {
+      "label": "Person",
+      "id": "person:carlincherry",
+      "handle": "carlincherry",
+      "name": "Carlin Cherry",
+      "about": "I am currently a Senior Product Manager at GitHub. I previously worked as a software…"
+    },
+    {
+      "label": "Person",
+      "id": "person:allielaabs",
+      "handle": "allielaabs",
+      "name": "Allie Laabs",
+      "about": "I'm a Product Manager and technologist with 25 years building platforms, tools, and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:andre-landgraf",
+      "handle": "andre-landgraf",
+      "name": "Andre Landgraf"
+    },
+    {
+      "label": "Person",
+      "id": "person:ying-chang-187b6045",
+      "handle": "ying-chang-187b6045",
+      "name": "Ying Chang"
+    },
+    {
+      "label": "Person",
+      "id": "person:nhudo",
+      "handle": "nhudo",
+      "name": "Nhu Do"
+    },
+    {
+      "label": "Person",
+      "id": "person:gwgriffiths4",
+      "handle": "gwgriffiths4",
+      "name": "Grant Griffiths",
+      "about": "Founding Engineer - Infra & GTM @ NeuBird AI Interested in GTM, AI, and Infra.…"
+    },
+    {
+      "label": "Person",
+      "id": "person:jeffrey-opdam",
+      "handle": "jeffrey-opdam",
+      "name": "Jeffrey Opdam"
+    },
+    {
+      "label": "Person",
+      "id": "person:jukasper",
+      "handle": "jukasper",
+      "name": "Julia Kasper",
+      "about": "I’m a Product Manager working on Visual Studio Code and GitHub Copilot, focused on…"
+    },
+    {
+      "label": "Person",
+      "id": "person:maggieappleton",
+      "handle": "maggieappleton",
+      "name": "Maggie Appleton",
+      "about": "👋 I'm not on LinkedIn much. If you want to get in touch quickly, DM me on X…"
+    },
+    {
+      "label": "Person",
+      "id": "person:jocelynvelarde",
+      "handle": "jocelynvelarde",
+      "name": "Jocelyn Velarde",
+      "about": "Hello! I'm a third year student in Robotics and Digital Systems Engineering. I'm…"
+    },
+    {
+      "label": "Person",
+      "id": "person:christophecremon",
+      "handle": "christophecremon",
+      "name": "Christophe Crémon",
+      "about": "Most AI initiatives stall between demo and production. I close that gap. 20+ years in…"
+    },
+    {
+      "label": "Person",
+      "id": "person:jacobnewman",
+      "handle": "jacobnewman",
+      "name": "Jacob Newman",
+      "about": "I'm building Wave, an agent for self-improving products. It find problems, ships fixes…"
+    },
+    {
+      "label": "Person",
+      "id": "person:sid573",
+      "handle": "sid573",
+      "name": "Siddhant Sinha"
+    },
+    {
+      "label": "Person",
+      "id": "person:jennypatchen",
+      "handle": "jennypatchen",
+      "name": "Jenny Patchen",
+      "about": "As a digital product and technology leader, I get to live my passion every day of…"
+    },
+    {
+      "label": "Person",
+      "id": "person:romain-le-disez-870968137",
+      "handle": "romain-le-disez-870968137",
+      "name": "Romain Le Disez"
+    },
+    {
+      "label": "Person",
+      "id": "person:brendan-bergen-6176661",
+      "handle": "brendan-bergen-6176661",
+      "name": "Brendan Bergen"
+    },
+    {
+      "label": "Person",
+      "id": "person:jeremiahjordanisaacson",
+      "handle": "jeremiahjordanisaacson",
+      "name": "Jeremiah Isaacson"
+    },
+    {
+      "label": "Person",
+      "id": "person:jchatmas",
+      "handle": "jchatmas",
+      "name": "James Chatmas",
+      "about": "Experienced professional with 15+ years in the industry. I currently work to help…"
+    },
+    {
+      "label": "Person",
+      "id": "person:kkennedyusu",
+      "handle": "kkennedyusu",
+      "name": "Kevin Kennedy",
+      "about": "I am a Software Engineer with a love for software architecture, developing…"
+    },
+    {
+      "label": "Person",
+      "id": "person:acolombiadev",
+      "handle": "acolombiadev",
+      "name": "Andrea Griffiths",
+      "about": "Career technologist and community connector working at the intersection of AI, open…"
+    },
+    {
+      "label": "Person",
+      "id": "person:kaushaya",
+      "handle": "kaushaya",
+      "name": "Kaush Ganguly"
+    },
+    {
+      "label": "Person",
+      "id": "person:yanan-cai-6239a4ab",
+      "handle": "yanan-cai-6239a4ab",
+      "name": "Yanan Cai"
+    },
+    {
+      "label": "Person",
+      "id": "person:mariorodriguez3",
+      "handle": "mariorodriguez3",
+      "name": "Mario Rodriguez"
+    },
+    {
+      "label": "Person",
+      "id": "person:mitch-enderle-3831508",
+      "handle": "mitch-enderle-3831508",
+      "name": "Mitch Enderle"
+    },
+    {
+      "label": "Person",
+      "id": "person:tiffany-kitchen-product-manager",
+      "handle": "tiffany-kitchen-product-manager",
+      "name": "Tiffany Kitchen"
+    },
+    {
+      "label": "Person",
+      "id": "person:havenserin",
+      "handle": "havenserin",
+      "name": "Erin Havens"
+    },
+    {
+      "label": "Person",
+      "id": "person:michaelgamble",
+      "handle": "michaelgamble",
+      "name": "Michael Gamble",
+      "about": "I’m an AI builder, know a lot about 0-1 product development, and solving complex business…"
+    },
+    {
+      "label": "Person",
+      "id": "person:leonardovillarodriguez-productmanagement",
+      "handle": "leonardovillarodriguez-productmanagement",
+      "name": "Leonardo Esteban Villa",
+      "about": "Product Manager con más de 5 años de experiencia en el desarrollo de plataformas…"
+    },
+    {
+      "label": "Person",
+      "id": "person:yasuhiro-osaki-769025b2",
+      "handle": "yasuhiro-osaki-769025b2",
+      "name": "Yasuhiro Osaki",
+      "about": "# Public Speeches - 2025-11-26 https://gh.io/25recapm13 - 2025-06-12 https://sony.connpass.com/event/356950/ - 2017-11-28 https://enterprisezine.jp/article/detail/10168 - 2017-10-17 https://techplay.jp/event/636048 # Software Engineer Over 10 years experience in Development of Embedded Software. - Yocto Linux / RTOS (NuttX) / Android # Integration Expert (CI/CD) Over 10 years experience in CI/CD. - GitHub Actions / Azure DevOps Pipelines / AWS / Jenkins / Docker # Administrator Over 10 years experience in Administrator of services for developers - GitHub Enterprize Cloud - Slack - Azure - AWS - Datadog",
+      "role": "Software Engineer - Sony 2010年 - 現在"
+    },
+    {
+      "label": "Person",
+      "id": "person:tom-bisbee",
+      "handle": "tom-bisbee",
+      "name": "Tom Bisbee",
+      "about": "Hearing people, not just listening. Bias for action &amp; supporting others - Dad -…"
+    },
+    {
+      "label": "Person",
+      "id": "person:gregose",
+      "handle": "gregose",
+      "name": "Greg Ose"
+    },
+    {
+      "label": "Person",
+      "id": "person:grinich",
+      "handle": "grinich",
+      "name": "Michael Grinich",
+      "about": "Make your app Enterprise Ready."
+    },
+    {
+      "label": "Person",
+      "id": "person:snikjou",
+      "handle": "snikjou",
+      "name": "Said Nikjou"
+    },
+    {
+      "label": "Person",
+      "id": "person:pelidehalleux",
+      "handle": "pelidehalleux",
+      "name": "Peli de Halleux",
+      "about": "Founder of GitHub Agentic Workflows, Microsoft MakeCode (micro:bit, Minecraft, Circuit…"
+    },
+    {
+      "label": "Person",
+      "id": "person:jeffdoolittle",
+      "handle": "jeffdoolittle",
+      "name": "Jeff Doolittle",
+      "about": "Distinguished Engineer and Principal Architect at Trimble with CTO experience across…"
+    },
+    {
+      "label": "Person",
+      "id": "person:sglass1",
+      "handle": "sglass1",
+      "name": "Steve Glass"
+    },
+    {
+      "label": "Person",
+      "id": "person:anirudhdubey",
+      "handle": "anirudhdubey",
+      "name": "Anirudh Dubey",
+      "about": "Experienced professional with 10+ years in tech and consulting, driving product…"
+    },
+    {
+      "label": "Person",
+      "id": "person:pierre-tempel",
+      "handle": "pierre-tempel",
+      "name": "Pierre Tempel",
+      "about": "https://pierretempel.com"
+    },
+    {
+      "label": "Person",
+      "id": "person:jaredhatfield",
+      "handle": "jaredhatfield",
+      "name": "Jared Hatfield",
+      "about": "Principal Application Architect at UPS."
+    },
+    {
+      "label": "Person",
+      "id": "person:aprilyoho",
+      "handle": "aprilyoho",
+      "name": "April Yoho"
+    },
+    {
+      "label": "Person",
+      "id": "person:alexanderlichter",
+      "handle": "alexanderlichter",
+      "name": "Alexander Lichter"
+    },
+    {
+      "label": "Person",
+      "id": "person:ryanahecht",
+      "handle": "ryanahecht",
+      "name": "Ryan Hecht",
+      "about": "Product Manager and Technical Leader with a passion for empowering others and combining…"
+    },
+    {
+      "label": "Person",
+      "id": "person:david-losert",
+      "handle": "david-losert",
+      "name": "David Losert"
+    },
+    {
+      "label": "Person",
+      "id": "person:achocka",
+      "handle": "achocka",
+      "name": "Annamalai Chockalingam",
+      "about": "Making the power of generative AI easily accessible and delightful to developers."
+    },
+    {
+      "label": "Person",
+      "id": "person:beagandica",
+      "handle": "beagandica",
+      "name": "Bea Mendez Gandica"
+    },
+    {
+      "label": "Person",
+      "id": "person:steven-karis-62817a96",
+      "handle": "steven-karis-62817a96",
+      "name": "Steven Karis"
+    },
+    {
+      "label": "Person",
+      "id": "person:janice-niemeir",
+      "handle": "janice-niemeir",
+      "name": "Janice Niemeir",
+      "about": "Technical writer turned product manager"
+    },
+    {
+      "label": "Person",
+      "id": "person:frenck",
+      "handle": "frenck",
+      "name": "Franck Nijhof",
+      "about": "A Human. Being. Him/He. Dad. Open Sourcerer. Home Assistant dev. Passionate. Dedicated…"
+    },
+    {
+      "label": "Person",
+      "id": "person:pamela-s-fox",
+      "handle": "pamela-s-fox",
+      "name": "Pamela Fox",
+      "about": "I’m a Principal Cloud Advocate at Microsoft focused on Python and AI, where I help…"
+    },
+    {
+      "label": "Person",
+      "id": "person:vanessa-minik-47ab9410a",
+      "handle": "vanessa-minik-47ab9410a",
+      "name": "Vanessa Minik"
+    },
+    {
+      "label": "Person",
+      "id": "person:njennyhwang",
+      "handle": "njennyhwang",
+      "name": "Jenny Hwang",
+      "about": "I’m a Design researcher, strategist, and foresight practitioner looking to foster…"
+    },
+    {
+      "label": "Person",
+      "id": "person:hollenberry",
+      "handle": "hollenberry",
+      "name": "Eric Hollenberry",
+      "about": "I like to keep it fun, effective, and simple."
+    },
+    {
+      "label": "Person",
+      "id": "person:alexgorischek",
+      "handle": "alexgorischek",
+      "name": "Alex Gorischek"
+    },
+    {
+      "label": "Person",
+      "id": "person:david-benedic-bb21358b",
+      "handle": "david-benedic-bb21358b",
+      "name": "Dave Benedic",
+      "about": "Focused on DevOps, Cloud, and OSS"
+    },
+    {
+      "label": "Person",
+      "id": "person:mayashavin",
+      "handle": "mayashavin",
+      "name": "Maya Shavin",
+      "about": "I’m a Staff Fullstack Engineer who enjoys solving complex engineering problems that sit…"
+    },
+    {
+      "label": "Person",
+      "id": "person:andydkelly",
+      "handle": "andydkelly",
+      "name": "Andy Kelly",
+      "about": "Senior Software Executive with a number of diverse roles centred on DevOps, Platform…"
+    },
+    {
+      "label": "Person",
+      "id": "person:ericwbailey",
+      "handle": "ericwbailey",
+      "name": "Eric Bailey",
+      "about": "I’m a digital accessibility advocate, designer, writer, developer, and speaker."
+    },
+    {
+      "label": "Person",
+      "id": "person:xavier-rene-corail-2428431",
+      "handle": "xavier-rene-corail-2428431",
+      "name": "Xavier René-Corail",
+      "about": "I have 25 years of experience in software engineering, and more than 10 years driving…"
+    },
+    {
+      "label": "Person",
+      "id": "person:shvn",
+      "handle": "shvn",
+      "name": "Shravan Mahajan"
+    },
+    {
+      "label": "Person",
+      "id": "person:isambasu",
+      "handle": "isambasu",
+      "name": "Sam Basu"
+    },
+    {
+      "label": "Person",
+      "id": "person:jonathan-clements-b9441733",
+      "handle": "jonathan-clements-b9441733",
+      "name": "Jon Clements",
+      "about": "I started my career by working in the defense and space industry. During that time I…"
+    },
+    {
+      "label": "Person",
+      "id": "person:timrogers1",
+      "handle": "timrogers1",
+      "name": "Tim Rogers",
+      "about": "A product manager with 13 years of experience across software engineering, business…"
+    },
+    {
+      "label": "Person",
+      "id": "person:josh-scriven",
+      "handle": "josh-scriven",
+      "name": "Josh Scriven",
+      "about": "As the Vice President of Technology Services at Neudesic, I lead a team of talented…"
+    },
+    {
+      "label": "Person",
+      "id": "person:sai-gade-5a562330",
+      "handle": "sai-gade-5a562330",
+      "name": "Sai Gade"
+    },
+    {
+      "label": "Person",
+      "id": "person:landon-cox-6727363",
+      "handle": "landon-cox-6727363",
+      "name": "Landon Cox",
+      "about": "I work on Github Agentic Workflows (https://github.com/github/gh-aw). In my…"
+    },
+    {
+      "label": "Person",
+      "id": "person:jak-e",
+      "handle": "jak-e",
+      "name": "Jake Albaugh"
+    },
+    {
+      "label": "Person",
+      "id": "person:hrushiph",
+      "handle": "hrushiph",
+      "name": "Hrushikesh Pokala",
+      "about": "Experienced Senior Development Engineer with a demonstrated history of working in the…"
+    },
+    {
+      "label": "Person",
+      "id": "person:sumanth-mothkuri",
+      "handle": "sumanth-mothkuri",
+      "name": "Sumanth Mothkuri",
+      "about": "I build systems that don’t just stay online—they evolve. With over 4 years of…"
+    },
+    {
+      "label": "Person",
+      "id": "person:yunikaliu",
+      "handle": "yunikaliu",
+      "name": "Yunika Liu"
+    },
+    {
+      "label": "Person",
+      "id": "person:ankit-kumar-honey",
+      "handle": "ankit-kumar-honey",
+      "name": "Ankit Kumar Honey",
+      "about": "As a Senior Engineering Manager at GitHub, with over one year in the role and more than…"
+    },
+    {
+      "label": "Person",
+      "id": "person:jasonetco",
+      "handle": "jasonetco",
+      "name": "Jason Etcovitch",
+      "about": "Hello! I'm Jason, a software engineer. Outside of my work at GitHub, I maintain a few…"
+    },
+    {
+      "label": "Person",
+      "id": "person:cmcgalvin",
+      "handle": "cmcgalvin",
+      "name": "Caro Galvin",
+      "about": "I build developer tools with a particular interest in how teams keep confidence in their…"
+    },
+    {
+      "label": "Person",
+      "id": "person:idangazit",
+      "handle": "idangazit",
+      "name": "Idan Gazit",
+      "about": "Engineer/designer/product hybrid, Django core team alumni, data visualization geek…"
+    },
+    {
+      "label": "Person",
+      "id": "person:joshua-mcintosh-812aa311",
+      "handle": "joshua-mcintosh-812aa311",
+      "name": "Josh McIntosh"
+    },
+    {
+      "label": "Person",
+      "id": "person:shishir-tewari-36113514",
+      "handle": "shishir-tewari-36113514",
+      "name": "Shishir Tewari",
+      "about": "Passionate about leveraging data to solve complex problems and lead teams toward…"
+    },
+    {
+      "label": "Person",
+      "id": "person:evan-boyle-107a1445",
+      "handle": "evan-boyle-107a1445",
+      "name": "Evan Boyle"
+    },
+    {
+      "label": "Person",
+      "id": "person:javiermduran",
+      "handle": "javiermduran",
+      "name": "Javier Durán",
+      "about": "Experienced Technology, Cloud, and Information Security Manager with a demonstrated…"
+    },
+    {
+      "label": "Person",
+      "id": "person:simona-toader",
+      "handle": "simona-toader",
+      "name": "Simona Toader"
+    },
+    {
+      "label": "Person",
+      "id": "person:aymanbagabas",
+      "handle": "aymanbagabas",
+      "name": "Ayman Bagabas"
+    },
+    {
+      "label": "Person",
+      "id": "person:cameron-r-hamilton",
+      "handle": "cameron-r-hamilton",
+      "name": "Cameron Hamilton"
+    },
+    {
+      "label": "Person",
+      "id": "person:jorge-castro2112",
+      "handle": "jorge-castro2112",
+      "name": "Jorge Castro",
+      "about": "Experienced Community Engineer with a demonstrated history of working in the computer…"
+    },
+    {
+      "label": "Person",
+      "id": "person:markus-howard-engineer",
+      "handle": "markus-howard-engineer",
+      "name": "Markus Howard"
+    },
+    {
+      "label": "Person",
+      "id": "person:aprilschuff",
+      "handle": "aprilschuff",
+      "name": "April Leonard"
+    },
+    {
+      "label": "Person",
+      "id": "person:sammorrow",
+      "handle": "sammorrow",
+      "name": "Sam Morrow",
+      "about": "Building AI developer tools. I maintain GitHub’s official MCP server and contribute to…"
+    },
+    {
+      "label": "Person",
+      "id": "person:chadcthomas",
+      "handle": "chadcthomas",
+      "name": "Jihan Thomas"
+    },
+    {
+      "label": "Person",
+      "id": "person:edsummersnc",
+      "handle": "edsummersnc",
+      "name": "Ed Summers",
+      "about": "Ed Summers is a blind software engineer and accessibility executive. He has a B.S. in…"
+    },
+    {
+      "label": "Person",
+      "id": "person:kentcdodds",
+      "handle": "kentcdodds",
+      "name": "Kent C. Dodds",
+      "about": "My mission is to make the world a better place through quality software. I do that…"
+    },
+    {
+      "label": "Person",
+      "id": "person:angelajiang",
+      "handle": "angelajiang",
+      "name": "Angela Jiang"
+    },
+    {
+      "label": "Person",
+      "id": "person:ashleywolf",
+      "handle": "ashleywolf",
+      "name": "Ashley Wolf"
+    },
+    {
+      "label": "Person",
+      "id": "person:burkeholland",
+      "handle": "burkeholland",
+      "name": "Burke Holland"
+    },
+    {
+      "label": "Person",
+      "id": "person:xinwu1",
+      "handle": "xinwu1",
+      "name": "Xin Wu"
+    },
+    {
+      "label": "Person",
+      "id": "person:kristindew",
+      "handle": "kristindew",
+      "name": "Kristin N. Dew"
+    },
+    {
+      "label": "Person",
+      "id": "person:seroter",
+      "handle": "seroter",
+      "name": "Richard Seroter",
+      "about": "Richard Seroter is currently a Senior Director and the Chief Evangelist at Google Cloud…"
+    },
+    {
+      "label": "Person",
+      "id": "person:bored-engineer",
+      "handle": "bored-engineer",
+      "name": "Luke Young",
+      "about": "I find bugs and exploit them. Sometimes for money, mainly for T-Shirts."
+    },
+    {
+      "label": "Person",
+      "id": "person:dm-divyamahajan",
+      "handle": "dm-divyamahajan",
+      "name": "Divya Mahajan",
+      "about": "As a Software Development Engineer at Amazon, 𝗜 𝗯𝘂𝗶𝗹𝗱…"
+    },
+    {
+      "label": "Person",
+      "id": "person:nishnha",
+      "handle": "nishnha",
+      "name": "Nish Sinha"
+    },
+    {
+      "label": "Person",
+      "id": "person:kmuse",
+      "handle": "kmuse",
+      "name": "Ken Muse",
+      "about": "I thrive on challenge and finding ways to make the impossible happen. As a technologist…"
+    },
+    {
+      "label": "Person",
+      "id": "person:sameenkarim",
+      "handle": "sameenkarim",
+      "name": "Sameen Karim"
+    },
+    {
+      "label": "Person",
+      "id": "person:jonjanego",
+      "handle": "jonjanego",
+      "name": "Jon Janego"
+    },
+    {
+      "label": "Person",
+      "id": "person:sueblack",
+      "handle": "sueblack",
+      "name": "Sue Black",
+      "about": "Professor Sue Black OBE is a globally recognised technology leader, keynote speaker, and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:yjayaraman",
+      "handle": "yjayaraman",
+      "name": "Yadhav Jayaraman"
+    },
+    {
+      "label": "Person",
+      "id": "person:jose-david-pereira",
+      "handle": "jose-david-pereira",
+      "name": "David Pereira"
+    },
+    {
+      "label": "Person",
+      "id": "person:karenjli",
+      "handle": "karenjli",
+      "name": "Karen Li"
+    },
+    {
+      "label": "Person",
+      "id": "person:ronefroni",
+      "handle": "ronefroni",
+      "name": "Ron Efroni"
+    },
+    {
+      "label": "Person",
+      "id": "person:leobalter",
+      "handle": "leobalter",
+      "name": "Leo Balter",
+      "about": "npm PM. At GitHub also had a take on different classes of product strategies…"
+    },
+    {
+      "label": "Person",
+      "id": "person:ericsorenson",
+      "handle": "ericsorenson",
+      "name": "Eric Sorenson",
+      "about": "I love combining my experience as a technology-loving systems administrator and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:dylan-mccarthy-181199ab",
+      "handle": "dylan-mccarthy-181199ab",
+      "name": "Dylan McCarthy",
+      "about": "Hi I'm Dylan, I am a Principal Solution Consultant at Versent working in the…"
+    },
+    {
+      "label": "Person",
+      "id": "person:qianqianye",
+      "handle": "qianqianye",
+      "name": "Qianqian Ye",
+      "about": "Qianqian is a designer, creative technologist, and educator with over a decade of…"
+    },
+    {
+      "label": "Person",
+      "id": "person:jbaruch",
+      "handle": "jbaruch",
+      "name": "Baruch Sadogursky",
+      "about": "✅ Beard ✅ Hat ✅ From zero to $6B IPO leading developer relations ✅ Java Champion…"
+    },
+    {
+      "label": "Person",
+      "id": "person:mina-tawadrous",
+      "handle": "mina-tawadrous",
+      "name": "Mina Tawadrous",
+      "about": "I’m a product leader who thrives at the intersection of deep tech and people. Over…"
+    },
+    {
+      "label": "Person",
+      "id": "person:pierceboggan",
+      "handle": "pierceboggan",
+      "name": "Pierce Boggan"
+    },
+    {
+      "label": "Person",
+      "id": "person:callumcieciala",
+      "handle": "callumcieciala",
+      "name": "Callum Cieciala",
+      "about": "I am an DevOps/Infrastructure Engineer who graduated from Northumbria University with a…"
+    },
+    {
+      "label": "Person",
+      "id": "person:sanjeevnmurthy",
+      "handle": "sanjeevnmurthy",
+      "name": "Sanjeev Murthy",
+      "about": "I am a Security Ninja with 16 years of experience in solving complex cyber security…"
+    },
+    {
+      "label": "Person",
+      "id": "person:catharinemcnally",
+      "handle": "catharinemcnally",
+      "name": "Catharine McNally",
+      "about": "I have a real passion for scale, repeatability, and reducing friction. I love taking a…"
+    },
+    {
+      "label": "Person",
+      "id": "person:guptaachin",
+      "handle": "guptaachin",
+      "name": "Achin Gupta",
+      "about": "Hands-on engineer with 9+ years of experience in Kubernetes, observability, backend, and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:dr-david-a-wheeler",
+      "handle": "dr-david-a-wheeler",
+      "name": "David A. Wheeler",
+      "about": "Experienced problem-solving practitioner and researcher in developing secure software and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:angiejones",
+      "handle": "angiejones",
+      "name": "Angie Jones",
+      "about": "Globally recognized Engineering Executive driving innovation in Agentic…"
+    },
+    {
+      "label": "Person",
+      "id": "person:ronen-lewit-0a9173",
+      "handle": "ronen-lewit-0a9173",
+      "name": "Ronen Lewit",
+      "about": "As a Technology Executive and Global Field CTO, I empower enterprises to deliver software…"
+    },
+    {
+      "label": "Person",
+      "id": "person:rohannvarma",
+      "handle": "rohannvarma",
+      "name": "Rohan Varma"
+    },
+    {
+      "label": "Person",
+      "id": "person:adamferrari",
+      "handle": "adamferrari",
+      "name": "Adam Ferrari",
+      "about": "I’m a lifelong software engineer turned technology leader. I love working with great…"
+    },
+    {
+      "label": "Person",
+      "id": "person:bcelenza",
+      "handle": "bcelenza",
+      "name": "Brian Celenza",
+      "about": "I am a software engineer and leader based in Seattle, Washington. With nearly 20 years of…"
+    },
+    {
+      "label": "Person",
+      "id": "person:mickeygousset",
+      "handle": "mickeygousset",
+      "name": "Mickey Gousset"
+    },
+    {
+      "label": "Person",
+      "id": "person:monika-tamber-p-eng-cissp-ccsp-cism-22a59b4",
+      "handle": "monika-tamber-p-eng-cissp-ccsp-cism-22a59b4",
+      "name": "Monika Tamber",
+      "about": "With over 20 years of experience in engineering, cybersecurity, and risk management, I am…"
+    },
+    {
+      "label": "Person",
+      "id": "person:samuvel-tamilselvan-devasagayam-06631553",
+      "handle": "samuvel-tamilselvan-devasagayam-06631553",
+      "name": "Samuvel Tamilselvan Devasagayam",
+      "about": "I am an Enterprise Architect passionate about transforming technology into measurable…"
+    },
+    {
+      "label": "Person",
+      "id": "person:paulsnider",
+      "handle": "paulsnider",
+      "name": "Paul Snider",
+      "about": "Paul is an accomplished engineering executive dedicated to transforming healthcare…"
+    },
+    {
+      "label": "Person",
+      "id": "person:sergical",
+      "handle": "sergical",
+      "name": "Serge Dybskiy",
+      "about": "I make things with TypeScript and React ⚛️"
+    },
+    {
+      "label": "Person",
+      "id": "person:priyapahwa",
+      "handle": "priyapahwa",
+      "name": "Priya Pahwa",
+      "about": "I’m a Software Engineer who thrives at the intersection of Backend Engineering and…"
+    },
+    {
+      "label": "Person",
+      "id": "person:greglarkin",
+      "handle": "greglarkin",
+      "name": "Greg Larkin",
+      "about": "I am a software engineer by trade with deep technical knowledge of languages, programming…"
+    },
+    {
+      "label": "Person",
+      "id": "person:spencetaylor",
+      "handle": "spencetaylor",
+      "name": "Spencer Taylor",
+      "about": "I’ve worked in fine dining kitchens, served in the military, and helped build New Relic’s…"
+    },
+    {
+      "label": "Person",
+      "id": "person:kautilaysiingh",
+      "handle": "kautilaysiingh",
+      "name": "Kautilay Siingh"
+    },
+    {
+      "label": "Person",
+      "id": "person:brittany-istenes",
+      "handle": "brittany-istenes",
+      "name": "Brittany Istenes",
+      "about": "Dynamic technology leader with 15+ years of experience driving innovation, compliance…"
+    }
+  ],
+  "edges": []
+}

@@ -1,6 +1,7 @@
-// Sample: 3 public Luma SF events in Universe week (Oct 27–30, Pacific).
-// Public event data and hosts only; guest fields are dropped before writing.
-// Usage: pnpm sample:side-events [--from <data/raw/probe-*.json with a saved body>]
+// Public Luma SF events in Universe week (Oct 27–30, Pacific). Sample: 3 from luma.com/sf.
+// --full: up to 30, paging api2.luma.com/discover/get-paginated-events (50 per page) until the
+// window ends. Public event data and hosts only; guest fields are dropped before writing.
+// Usage: pnpm sample:side-events [--full] [--from <data/raw/probe-*.json with a saved body>]
 import { readFile } from 'node:fs/promises';
 import { unlocker, usage } from '../brightdata.ts';
 import { writeRaw } from '../paths.ts';
@@ -8,7 +9,10 @@ import { writeRaw } from '../paths.ts';
 const URL_SF = 'https://luma.com/sf';
 const WINDOW_START = Date.parse('2026-10-27T00:00:00-07:00');
 const WINDOW_END = Date.parse('2026-10-31T00:00:00-07:00');
-const SAMPLE = 3;
+const FULL = process.argv.includes('--full');
+const LIMIT = FULL ? 30 : 3;
+const MAX_PAGES = 4;
+const PLACE_API = 'https://api2.luma.com/discover/get-paginated-events';
 
 interface LumaHost {
   api_id?: string;
@@ -42,20 +46,48 @@ async function loadHtml(): Promise<string> {
   return (await unlocker(URL_SF, { expect: { text: '__NEXT_DATA__' } })).body;
 }
 
-const html = await loadHtml();
-const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-if (!m?.[1]) throw new Error('luma: __NEXT_DATA__ not found');
-const next = JSON.parse(m[1]) as {
-  props: { pageProps: { initialData: { kind: string; data: { events?: LumaEntry[] } } } };
-};
-const all = next.props.pageProps.initialData.data.events ?? [];
+function placeAndEntries(html: string): { placeId?: string; kind: string; entries: LumaEntry[] } {
+  const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+  if (!m?.[1]) throw new Error('luma: __NEXT_DATA__ not found');
+  const next = JSON.parse(m[1]) as {
+    props: {
+      pageProps: { initialData: { kind: string; data: { place?: { api_id?: string }; events?: LumaEntry[] } } };
+    };
+  };
+  const { kind, data } = next.props.pageProps.initialData;
+  return { placeId: data.place?.api_id, kind, entries: data.events ?? [] };
+}
 
+/** Pages the discover API for the place until past the window (or MAX_PAGES). */
+async function pagedEntries(placeId: string): Promise<LumaEntry[]> {
+  const out: LumaEntry[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const q = new URLSearchParams({ discover_place_api_id: placeId, pagination_limit: '50' });
+    if (cursor) q.set('pagination_cursor', cursor);
+    const res = await unlocker(`${PLACE_API}?${q}`, { expect: { text: '"entries"' } });
+    const body = JSON.parse(res.body) as { entries?: LumaEntry[]; has_more?: boolean; next_cursor?: string };
+    out.push(...(body.entries ?? []));
+    const last = body.entries?.at(-1);
+    if (!body.has_more || !body.next_cursor || (last && Date.parse(last.event.start_at) >= WINDOW_END)) break;
+    cursor = body.next_cursor;
+  }
+  return out;
+}
+
+const html = await loadHtml();
+const first = placeAndEntries(html);
+const all = FULL && first.placeId ? await pagedEntries(first.placeId) : first.entries;
+
+const seenIds = new Set<string>();
 const inWeek = all.filter((e) => {
   const t = Date.parse(e.event.start_at);
+  if (seenIds.has(e.api_id)) return false;
+  seenIds.add(e.api_id);
   return t >= WINDOW_START && t < WINDOW_END && e.event.visibility !== 'private';
 });
 
-const events = inWeek.slice(0, SAMPLE).map((e) => ({
+const events = inWeek.slice(0, LIMIT).map((e) => ({
   id: e.api_id,
   name: e.event.name,
   start: e.event.start_at,
@@ -82,8 +114,8 @@ const events = inWeek.slice(0, SAMPLE).map((e) => ({
 const file = await writeRaw('side-events', {
   source: URL_SF,
   fetchedAt: new Date().toISOString(),
-  pageKind: next.props.pageProps.initialData.kind,
-  totalOnPage: all.length,
+  pageKind: first.kind,
+  entriesSeen: all.length,
   inUniverseWeek: inWeek.length,
   events,
 });

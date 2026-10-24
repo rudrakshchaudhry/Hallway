@@ -1,0 +1,132 @@
+{
+  "nodes": [
+    {
+      "label": "Person",
+      "id": "person:demo",
+      "handle": "demo",
+      "name": "Demo Attendee",
+      "headline": "Software engineer (demo persona)",
+      "isUser": true,
+      "optedIn": true
+    },
+    {
+      "label": "Topic",
+      "id": "topic:build-software-not-code",
+      "name": "Build software, not code"
+    },
+    {
+      "label": "Topic",
+      "id": "topic:ai-agents",
+      "name": "AI: Agents"
+    },
+    {
+      "label": "Topic",
+      "id": "topic:lead-through-what-s-next",
+      "name": "Lead through what's next"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:security",
+      "name": "Security"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:ai-ml",
+      "name": "AI/ML"
+    },
+    {
+      "label": "Skill",
+      "id": "skill:cloud",
+      "name": "Cloud"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:networking",
+      "name": "Networking",
+      "goal": "networking"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:learn",
+      "name": "Learn a topic",
+      "goal": "learn"
+    },
+    {
+      "label": "Conference",
+      "id": "conf:universe-2026",
+      "name": "GitHub Universe 2026",
+      "start": "2026-10-28T09:00:00-07:00",
+      "end": "2026-10-29T18:00:00-07:00",
+      "city": "San Francisco",
+      "venue": "Fort Mason Center",
+      "tz": "America/Los_Angeles",
+      "url": "https://githubuniverse.com",
+      "source": "snapshot",
+      "status": "ready"
+    },
+    {
+      "label": "Company",
+      "id": "company:microsoft",
+      "name": "Microsoft"
+    }
+  ],
+  "edges": [
+    {
+      "type": "INTERESTED_IN",
+      "from": "person:demo",
+      "to": "topic:build-software-not-code"
+    },
+    {
+      "type": "INTERESTED_IN",
+      "from": "person:demo",
+      "to": "topic:ai-agents"
+    },
+    {
+      "type": "INTERESTED_IN",
+      "from": "person:demo",
+      "to": "topic:lead-through-what-s-next"
+    },
+    {
+      "type": "SKILLED_IN",
+      "from": "person:demo",
+      "to": "skill:security"
+    },
+    {
+      "type": "SKILLED_IN",
+      "from": "person:demo",
+      "to": "skill:ai-ml"
+    },
+    {
+      "type": "SKILLED_IN",
+      "from": "person:demo",
+      "to": "skill:cloud"
+    },
+    {
+      "type": "HAS_GOAL",
+      "from": "person:demo",
+      "to": "goal:networking"
+    },
+    {
+      "type": "HAS_GOAL",
+      "from": "person:demo",
+      "to": "goal:learn"
+    },
+    {
+      "type": "TARGETS",
+      "from": "person:demo",
+      "to": "conf:universe-2026",
+      "props": {
+        "at": 1792843200000
+      }
+    },
+    {
+      "type": "WORKED_AT",
+      "from": "person:demo",
+      "to": "company:microsoft",
+      "props": {
+        "from": "2019",
+        "to": "2023"
+      }
+    }
+  ]
+}

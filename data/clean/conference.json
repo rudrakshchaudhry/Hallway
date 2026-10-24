@@ -1,0 +1,54 @@
+{
+  "nodes": [
+    {
+      "label": "Conference",
+      "id": "conf:universe-2026",
+      "name": "GitHub Universe 2026",
+      "start": "2026-10-28T09:00:00-07:00",
+      "end": "2026-10-29T18:00:00-07:00",
+      "city": "San Francisco",
+      "venue": "Fort Mason Center",
+      "tz": "America/Los_Angeles",
+      "url": "https://githubuniverse.com",
+      "source": "snapshot",
+      "status": "ready"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:networking",
+      "name": "Networking",
+      "goal": "networking"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:learn",
+      "name": "Learn a topic",
+      "goal": "learn"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:job",
+      "name": "Find a job",
+      "goal": "job"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:hire",
+      "name": "Hire",
+      "goal": "hire"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:collaborate",
+      "name": "Find collaborators",
+      "goal": "collaborate"
+    },
+    {
+      "label": "Goal",
+      "id": "goal:fundraise",
+      "name": "Fundraise",
+      "goal": "fundraise"
+    }
+  ],
+  "edges": []
+}
