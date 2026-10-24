@@ -1,477 +1,421 @@
-# Hallway: Build Plan (docs/PLAN.md)
+# Hallway: Build Plan v2 (docs/PLAN.md)
 
-Oct 24, 2026 · @Ron
+Oct 24, 2026 · revised 13:50 after the product pivot · @Ron
 
-Spec and runbook for the coding agent building Hallway in one day: One human reviews plans, merges PRs and makes cut decisions; three Claude Code sessions build. This file lives in the repo as `docs/PLAN.md`, and `CLAUDE.md` (section 11) points every session at it.
+Spec and runbook for the coding agents building Hallway today. One human reviews plans, merges PRs and makes cut decisions; three Claude Code sessions build. `CLAUDE.md` points every session here. **This v2 replaces v1 entirely**; anything not written here is out of scope.
 
-## 1. The product: a mobile-first web app, not a native iOS app
+## 1. The product
 
-We ship **Hallway** (working name, from "the hallway track"): a mobile-first Progressive Web App (PWA) built in Next.js, plus a wide "stage view" of the same app for the projector. Attendees use it on their phone at the venue; judges can scan a QR code on stage and try it on their own phones within seconds.
+**Hallway** is a mobile-first PWA (Next.js) that plans your conference around who you are. You open it to a chat. It asks which conference you're targeting and what you want out of it (networking, learning a topic, jobs, hiring, fundraising...). It reads your LinkedIn and GitHub, or lets you describe yourself. Then it builds you a plan across four tabs: your feed and calendar, people to meet (swipe cards), side events to explore, and an agenda that remembers everything you've done.
 
-| Option | Build time risk | Judges can try it | Verdict |
-| --- | --- | --- | --- |
-| Mobile-first PWA (Next.js) | Low: one codebase, hot reload, served through a tunnel URL | Yes: scan a QR code, no install | **Pick this** |
-| Native iOS (Swift / React Native) | High: Xcode signing, no App Store or TestFlight review in one day | Only on your own phone | Too slow for 6.5 hours |
-| Desktop website only | Lowest | Yes | Wastes the in-person, at-the-venue angle |
+Every recommendation is backed by a walk through one FalkorDB graph, and the app shows that walk as proof. A PWA because judges scan a QR code and try it on their own phones in seconds; native iOS is not possible in a day.
 
-Why this wins on polish: one codebase means every hour goes into UX instead of platform plumbing. A PWA can be added to the home screen, runs full-screen, and looks like a native app in the demo. Nothing in the four tracks needs native-only APIs.
+## 2. Product structure
 
-## 2. Product structure: one feed, four tabs, one agent
+### 2.1 Onboarding: a chat (the home screen)
 
-The app answers one question from the moment you open it: **"What should I do next?"** Everything else is a drill-down. The four features are not four separate tools; they are four kinds of card in one ranked "Today" feed, each backed by the same graph.
+A full-screen chat. **The onboarding flow is a deterministic step machine on the server** (`/api/chat`: conference → goals → identity → confirm), so it works even if the agent is down. The LLM (`gpt-5-mini`) is used only to understand free-text answers and to extract profiles. Quick-reply chips for every question, so nobody has to type on stage.
 
-| Tab | What it shows | Feature behind it | Priority |
-| --- | --- | --- | --- |
-| **Today** (home) | A ranked feed of next actions: "Meet Priya at the 6pm Git-Together", "Skip the 2pm talk, it's on YouTube", "Visit booth 124, they're hiring for Go" | All four | Must |
-| **People** | Who to meet, each with the reason (graph path), an icebreaker, and where they'll be | Networking + dependency graph | Must |
-| **Schedule** | Sessions marked Live-only / Rerun (watch later) / Clash | Rerun detector | Must |
-| **Expo** | Booths ranked by fit: hiring for your skills, uses your stack, recently funded | Booth scout | Nice to have |
-| **Ask** (floating button on every tab) | Chat with the TrueForge agent; every answer shows its graph path | Agent | Must |
+1. **"Which conference are you focusing on?"** Chips: GitHub Universe 2026 (pre-ingested), plus free text. A conference we don't have triggers a **live ingest** (section 7.3). The chat streams its progress ("Found 84 sessions… 31 speakers… 18 side events…") and keeps asking questions meanwhile.
+2. **"What do you want out of it?"** Multi-select goal chips: Networking, Learn a topic, Find a job, Hire, Find collaborators, Fundraise. Follow-ups depend on the goals: which topics, what role, which companies.
+3. **"Who are you?"** Any of:
+   - LinkedIn profile URL, scraped live via Bright Data
+   - LinkedIn PDF export upload, parsed by the LLM
+   - GitHub username, via the REST API: repos, languages, dependencies
+   - If none of these: "Tell me about yourself" in free text, which the LLM extracts into a profile
+4. The agent shows a **profile summary card** (role, skills, topics, goals) with Edit and Looks good. Confirming writes the profile to the graph and moves to the main app.
 
-Onboarding is three taps, under 30 seconds:
+"Use demo profile" skips everything on stage. A floating **chat button** on every tab opens the **Hallway agent** (TrueForge + OpenAI, tools in 5.2) for open questions ("find me more Go people", "what clashes tomorrow?").
 
-1. Enter your GitHub username (we read public repos and dependency files) or drop in a `package.json` / `requirements.txt`.
-2. Pick up to 5 topics (pre-filled from your repos).
-3. Done: Today feed loads. A "Use demo profile" link skips all of this on stage.
+### 2.2 Main app: four tabs
 
-After the event, a **Follow-ups** screen (inside the People tab) lists everyone you marked as met, with drafted emails that wait for your approval before sending.
+| Tab | What it shows | Priority |
+| --- | --- | --- |
+| **My Feed** | The top is **my calendar**: a day-strip timeline of everything confirmed (added sessions and side events; accepted meetings), with clash markers. Below it, **detailed cards** for each confirmed item, then a **"Requests sent"** section (people you right-swiped, with invite status pending, accepted or declined; query 8), then **suggested next items** (the top 3 not yet acted on from queries 1, 2 and 4). | Must |
+| **People** | **Swipe deck**, Tinder style. Each card shows a person, **category tags** (e.g. "Shared stack", "Speaker", "Hiring", "Same topic", "Ex-colleague network"), the reason with its graph path, and where they'll be. Right swipe: an invite sheet. Left swipe: pass. **The deck re-ranks from your choices** (section 6.3). A filter row of tag chips. | Must |
+| **Explore** | Luma and sponsor side events around the conference (parties, meetups, breakfasts), ranked for you. Each has Add to calendar, with a clash warning. Not in the scripted demo. | Should |
+| **Agenda** | Two panes you **swipe between**. **Now:** the target conference's talks, presentations, workshops and keynotes in suggested priority order, each with **+** to add to the calendar, a **clash warning** if it overlaps, and a **Rerun** tag when the speaker gave it before. **Past:** your FalkorDB graph (`@falkordb/canvas`) of everything you've done in Hallway, across visits and conferences: conferences targeted, sessions added, people swiped and met, invites accepted. Tap a node for details. | Must |
 
-## 3. UI/UX: verdicts first, the graph as proof
+### 2.3 Invites: right swipe → request → accept → calendar
 
-Every screen leads with a verdict and lets the user tap for the reason. That one rule is what makes this feel like a product instead of a chatbot demo.
+1. A right swipe opens an **invite sheet** with:
+   - a suggested slot: the first free 30-minute gap during conference hours (09:00–18:00 venue time on conference days) that overlaps neither your calendar (query 5) nor the person's own talks (`SPEAKS_AT`). Computed in TS
+   - a place: the venue lobby or near their session
+   - an editable intro note
+2. **Send request** creates a `Meeting` (status `pending`) and a short **invite link** (`PUBLIC_URL/invite/<token>`). The sheet shows **Copy link**, **Share** (the Web Share API, so it opens LinkedIn, Messages or email) and **Open LinkedIn**. Hallway never sends anything by itself.
+3. The invitee opens the link on their phone. A public page shows who's asking, why, and when, with **Accept** and **Decline**. Accepting sets the meeting to `accepted` (the WITH edge turns green in the Past graph). Only then does it appear in the requester's calendar. Both sides get an **Add to Google Calendar** link (a prefilled `calendar.google.com/calendar/render?action=TEMPLATE…` URL) and an `.ics` download.
+4. After the meeting, **Mark as met** on its card writes a `MET` edge.
+5. **Fallback (if the invite page slips):** a **Mark accepted** button on the request card in My Feed does the same state change.
+
+On stage, a judge accepts from their own phone and the meeting appears in the calendar, and its edge turns green in the graph.
+
+## 3. UI/UX
 
 **Principles**
 
-- **Verdict, reason, action.** Each card is one line of verdict ("Meet Priya"), one line of why ("maintains `zod`, which 4 of your repos use"), and one button ("Where is she?" / "Draft intro").
-- **The path is the proof.** A small "3 hops" chip on every card opens a bottom sheet with the graph path animating in. This is the FalkorDB judging criterion turned into a UI pattern.
-- **One-thumb use.** Bottom tab bar, primary actions in the lower half of the screen, nothing that needs typing except the Ask box. People use this standing in a hallway with a coffee.
-- **Calm visual system.** GitHub's Primer design system (see below), dark theme by default (conference halls are dim, projectors love it), Primer's own accent and type scale. Colour only carries meaning: green = go live, amber = rerun, red = clash.
-- **Never a blank screen.** Skeleton cards while loading; the agent streams its steps ("Searching graph… found 3 paths…") instead of a spinner; empty states say what to do next.
-- **Human in the loop is visible.** Anything that leaves the app (an email, a calendar add) shows a confirmation sheet with the exact text. This is TrueForge's approval feature, made obvious on stage.
+- **Verdict, reason, action.** Each card has one line of verdict, one line of why, and one button.
+- **The path is the proof.** A "3 hops" chip on every recommendation opens a bottom sheet with the graph path animating in.
+- **One thumb.** Bottom tab bar, actions in the lower half, chips instead of typing.
+- **Calm visuals.** GitHub Primer, dark theme. Colour only carries meaning: green = confirmed or accepted, amber = pending or rerun, red = clash.
+- **Never a blank screen.** Skeletons while loading. The agent streams its steps and the live ingest streams its counts. Every empty state says what to do next.
+- **Human in the loop.** Nothing leaves the app without a confirmation sheet showing the exact text. Invites are links you send yourself.
 
-**Screen by screen**
+**Routes:** `/` (chat onboarding; redirects to `/feed` once a profile exists), `/feed`, `/people`, `/explore`, `/agenda?pane=now|past`, `/invite/[token]` (public), `/stage` (desktop).
 
-| Screen | Key elements | The detail that makes it feel finished |
+**Screens**
+
+| Screen | Key elements | The finishing detail |
 | --- | --- | --- |
-| Onboarding | GitHub username field, topic chips, "Use demo profile" | Repos and deps appear as they load, so the wait feels like progress |
-| Today | Ranked cards of mixed types, time-aware ("in 40 min") | Cards reorder as the day moves on; swipe to dismiss |
-| Person sheet | Photo, role, why-meet path, icebreaker, where they'll be next | "Mark as met" button (section 4) |
-| Session sheet | Live-only / Rerun verdict, link to the earlier recording, similarity % | "Watch later" saves it; "Add to calendar" asks first |
-| Expo | Booth list sorted by fit, with booth numbers | Fit reasons as chips: "Hiring Go", "Uses your stack" |
-| Ask | Chat with streamed tool steps and a path card under each answer | Suggested questions as chips so nobody types on stage |
-| Follow-ups | People met today, drafted emails, approve / edit / skip | Approve sends; the card flips to "Sent" with a timestamp |
-| Stage view (desktop) | Phone-frame app on the left, live FalkorDB graph on the right | Nodes light up as the agent walks them, so the audience sees the graph work |
+| Chat onboarding | Messages, quick-reply chips, file upload (PDF), profile summary card | LinkedIn and GitHub data appear as they load ("Found 23 repos, top: TypeScript, Go") |
+| My Feed | Day-strip calendar (hour rows, today and tomorrow toggle), confirmed cards, Requests sent | Clash markers in red on the strip; a pending request pulses amber |
+| People deck | Stacked cards, drag to swipe, ✓ / ✕ buttons for accessibility, tag filter chips | "Learning from your picks" toast after 3 swipes; tags reorder |
+| Invite sheet | Slot, place, note, Copy / Share / LinkedIn | Shows the exact message that will be shared |
+| Invite page (public) | Requester card, reason, slot, Accept / Decline | Works without onboarding; minimal data shown |
+| Explore | List of side events with host, time and topic chips | "Hosted by" shows the host and why they fit you |
+| Agenda / Now | Sessions by priority, + button, kind label (Talk, Workshop, Keynote, Panel) | Clash warning inline when + would overlap |
+| Agenda / Past | `@falkordb/canvas` graph, legend, node detail sheet | Newest nodes glow; filter by conference |
+| Stage view (`/stage`, desktop) | Phone frame on the left, live graph on the right | Nodes light up as the agent walks them |
 
-**Design system decision: GitHub Primer, not shadcn.** At a GitHub event, an app that looks native to GitHub reads as polished instantly, and Primer is GitHub's open-source (MIT) design system. Primer React v38 styles components with CSS modules and Primer Primitives tokens, and it is tested with Next.js App Router and React 19. [Primer React](https://npmjs.com/package/@primer/react) · [Primer agent eval, Next.js App Router](https://primer.github.io/agent-eval/experiments/baseline/runs/2026-07-29)
+**Design system: GitHub Primer** (MIT). `@primer/react` v38 only, `@primer/primitives` dark tokens, `@primer/octicons-react`. No Tailwind, no shadcn. Verdict chips are `Label` variants (success, attention, danger). Sheets are Primer `Dialog` styled as bottom sheets. The tab bar and swipe deck are the only custom components, built with Primer tokens. Do **not** use GitHub logos, the Invertocat, Mona or the word "GitHub" in our branding. Naming the conference "GitHub Universe" as data is fine.
 
-| Need | Use | Notes |
+## 4. Memory
+
+FalkorDB is the memory. Every user action is a graph write with a timestamp:
+- targeting a conference
+- adding a session or side event
+- swiping
+- requesting or accepting a meeting
+- marking someone met
+
+The Past pane renders that history, and it survives reloads and new conferences (a FalkorDB criterion). `pnpm seed` preserves runtime-written edges (section 6.4).
+
+## 5. Architecture and stack
+
+Everything runs on the presenting laptop. Only Next.js is exposed through the Cloudflare quick tunnel. TrueForge, FalkorDB and the MCP servers stay on localhost.
+
+**Request flow:**
+- The phone or stage view talks to Next.js API routes.
+- Chat routes go to TrueForge (OpenAI), which calls MCP tools (hallway-tools and the FalkorDB MCP), which read and write FalkorDB.
+- Feed, deck and agenda routes query FalkorDB directly through `packages/graph`.
+- Ingest has two paths:
+  - **offline:** Bright Data + GitHub → `data/clean/*.json` snapshots → `pnpm seed`
+  - **live:** an `/api/conferences` ingest job → Bright Data → the same normalisers → upserted into FalkorDB
+
+| Layer | Choice |
+| --- | --- |
+| App | Next.js 16 App Router PWA, React 19, Primer React v38 + Primitives + Octicons |
+| Graph view | `@falkordb/canvas` web component |
+| Agent | TrueForge local server (`npx @truefoundry/trueforge`, port 8790) via `@truefoundry/trueforge-sdk`, OpenAI models |
+| Agent tools | `packages/mcp-hallway`: a streamable-HTTP MCP server with named, typed tools (section 5.2); FalkorDB MCP for read-only open questions |
+| Database | FalkorDB in Docker via the `falkordb` npm client |
+| Data in | Bright Data (Web Scraper API datasets + Web Unlocker), GitHub REST API, OpenAI for extraction and embeddings |
+| Hosting | Laptop + Cloudflare quick tunnel. HTTPS for PWA install. The tunnel blocks SSE, so streaming routes use NDJSON over chunked fetch |
+
+### 5.1 Verified facts and corrections (from the docs check, still valid)
+
+- **TrueForge only registers remote MCP servers** (streamable HTTP or SSE, no stdio). `packages/mcp-hallway` runs as streamable HTTP on localhost. The FalkorDB MCP uses the `falkordb/mcpserver` Docker image (HTTP 8080, `FALKORDB_DEFAULT_READONLY=true`). Read-only is only a default that `query_graph` callers can override, so the agent registers it with `enableTools: ["query_graph_readonly", "list_graphs", "get_graph_schema", "get_node_schema", "get_relationship_schema"]` and never gets `query_graph` or `delete_graph`. Bright Data MCP, if used, is the hosted `https://mcp.brightdata.com/mcp`. [TrueForge](https://github.com/truefoundry/trueforge) · [FalkorDB MCP](https://github.com/FalkorDB/FalkorDB-MCPServer)
+- **Tool approvals are API-only.** `apps/web/lib/agent/setup.ts` creates the agent with `requireApprovalForTools` naming tools literally (section 5.2) and writes its id to `TRUEFORGE_AGENT_ID`.
+- **Models:** OpenAI is registered in TrueForge as `openai/gpt-5-2` (agent) and `openai/gpt-5-mini` (extraction, cheap calls). Model names are lowercase with hyphens only. Embeddings use `text-embedding-3-small` via the OpenAI API directly.
+- **TrueForge → Next.js is SSE on localhost;** `/api/chat` re-emits it as NDJSON. The tunnel never carries SSE.
+- **`@falkordb/canvas` (v0.3)** themes only through colours. It throws on import during SSR: load it in a `'use client'` component with a dynamic import in `useEffect`.
+- **Primer React v38:** `BaseStyles` wrapper, `data-color-mode="dark" data-dark-theme="dark"` on `<html>`, Primitives functional dark theme CSS. Server components cannot pass component props (e.g. `leadingVisual={Icon}`) to Primer client components: mark such files `'use client'`.
+- **FalkorDB:** data lives in `/var/lib/falkordb/data` (the compose volume mounts there). `RENAME` atomically replaces a graph. The image's default query timeout is 1000 ms, so keep queries indexed.
+- **Versions:** Next 16.4, React 19.3, zod 4, vitest 5, TypeScript 6.0 (pinned: typescript-eslint needs <6.1), `falkordb` 6.9, pnpm 12.
+
+### 5.2 Agent tools (`packages/mcp-hallway`)
+
+Each tool returns its answer plus a `GraphPath` where one applies.
+
+| Tool | Does | Approval |
 | --- | --- | --- |
-| Components | `@primer/react` v38 | Only UI kit in the app; no Tailwind, no shadcn |
-| Colours, spacing, type | `@primer/primitives` dark theme CSS variables | Import the functional dark theme CSS once in the root layout; custom CSS modules use only these variables |
-| Icons | `@primer/octicons-react` | Same icons GitHub uses |
-| Graph view | `@falkordb/canvas` | Pass Primer token values into its theme config so it matches |
-| Feed and lists | Primer `ActionList`, `Avatar`, `Label`, `Token` | Verdict chips as `Label` variants: success = live-only, attention = rerun, danger = clash |
-| Schedule | Primer `Timeline` | Grouped by hour |
-| Sheets and approvals | Primer `Dialog` styled as a bottom sheet on mobile | Approval sheet shows the exact email text |
-| Status | Primer `Banner`, `Spinner` | Banner for "showing cached data" |
+| `list_conferences` | Ingested conferences with status | — |
+| `start_conference_ingest` | Starts a live ingest job for a named conference or URL; returns a job id | — |
+| `get_ingest_status` | Counts and stage of a job | — |
+| `ingest_profile` | From a LinkedIn URL, GitHub username, PDF text or free text; returns a draft profile | — |
+| `save_profile` | Writes the confirmed profile, goals and target conference to the graph | — |
+| `suggest_people` | Ranked candidates with tags and paths (section 6.3) | — |
+| `plan_sessions` | Prioritised sessions with clash flags | — |
+| `suggest_explore` | Ranked side events | — |
+| `check_calendar` | Calendar for a day with clashes | — |
+| `explain_path` | Human-readable proof for a recommendation | — |
+| `add_to_calendar` | Adds a session or side event (PLANS edge) | **yes** |
+| `create_invite` | Creates a pending Meeting and its invite link | **yes** |
 
-Where the look comes from: Primer components and tokens only, composed to follow GitHub mobile patterns. Do **not** copy GitHub screenshots or use GitHub's logos, Invertocat, Mona or the word "GitHub" in our branding; the code is MIT but the trademarks are not. The bottom tab bar is the one custom component (Primer has no mobile tab bar): build it with Primer tokens and Octicons.
+### 5.3 API routes (zod-validated in and out; owning track in brackets, see section 8)
 
-## 4. Remembering who you met: a "Mark as met" button
+| Route | Purpose |
+| --- | --- |
+| `POST /api/chat` [Main] | Onboarding step machine, NDJSON `ChatEvent` stream. After onboarding, proxies to the TrueForge agent |
+| `POST /api/chat/approve` [Main] | Approve or deny an agent tool call |
+| `POST /api/profile/pdf` [Main] | LinkedIn PDF upload → text → draft profile |
+| `POST /api/profile` [Main] | Save the confirmed profile, goals and conference; sets the identity cookie |
+| `GET /api/feed` [A] | Calendar items, confirmed cards, requests sent, suggestions |
+| `GET /api/people?tag=` [B] · `POST /api/people/swipe` [B] | Deck cards; swipe (writes SWIPED and PREFERS) |
+| `POST /api/invites` [B] · `GET/POST /api/invites/[token]` [B] | Create an invite; public view; accept or decline |
+| `POST /api/meetings/[id]/accepted` · `/met` [B] (buttons live on A's feed cards) | Manual accept fallback; mark as met |
+| `GET /api/agenda` [A] · `GET /api/explore` [B] · `POST /api/calendar` [Main] | Prioritised sessions; explore items; add to calendar (clash returned; shared by A and B) |
+| `GET /api/past` [A] | The user's past subgraph for the canvas |
+| `GET /api/stage/last-path` [A] | The latest path walked, polled by `/stage` |
+| `GET /api/health` [Main] | Health |
+| `POST /api/conferences` · `GET /api/conferences` · `GET /api/conferences/jobs/[id]` [Main] | Start a live ingest, list conferences, job status |
 
-Every Person sheet has a **Mark as met** button. It writes a `MET` edge with a timestamp, removes that person from "who to meet", and adds them to Follow-ups. This keeps the graph's memory across sessions (a FalkorDB criterion) with one API route and one Cypher `MERGE`, and no hardware.
+Tracks A and B build against these shapes from `packages/types` (PR B). Until PR B merges, they use local mocks shaped by this table.
 
-## 5. Architecture and stack: TypeScript end to end, everything on one laptop
+## 6. Graph schema and queries
 
-Run the whole system on the presenting laptop and expose only the Next.js app through a tunnel, so phones in the room can reach it. TrueForge's local mode has no login and is meant to stay on localhost, so the Next.js server talks to it privately. [TrueForge README](https://github.com/truefoundry/trueforge)
-
-Flow: phone or stage view → Next.js API routes → TrueForge (OpenAI model) → MCP tools (hallway-tools, FalkorDB MCP, Bright Data MCP) → FalkorDB; Next.js also queries FalkorDB directly for feeds; offline ingest (Bright Data + GitHub → JSON snapshots → pnpm seed) loads FalkorDB. Phones only ever talk to the Next.js app; TrueForge, FalkorDB and the MCP servers stay private on the laptop, and the graph is loaded from snapshots before noon.
-
-| Layer | Choice | Why |
-| --- | --- | --- |
-| App | Next.js (App Router) as a PWA, Primer React + Primer Primitives + Octicons | Polished defaults, one codebase for phone and stage view |
-| Graph view | `@falkordb/canvas` web component | FalkorDB's own force-directed graph renderer, with themes and loading states built in [docs](https://docs.falkordb.com/browser/canvas) |
-| Agent | TrueForge (`npx @truefoundry/trueforge`), called from Next.js via `@truefoundry/trueforge-sdk`; OpenAI model | Agent loop, MCP tools, approvals and streaming events handled for us; needs Node 22.14+ |
-| Agent tools | A small custom MCP server ("hallway-tools") with named, typed tools; plus the official FalkorDB MCP server for open-ended Cypher | Named tools return reliable answers *and* the path; the LLM never has to invent Cypher for the core flows [FalkorDB MCP](https://github.com/FalkorDB/FalkorDB-MCPServer) |
-| Database | FalkorDB in Docker, queried with the `falkordb` npm client | Required track; multi-hop Cypher |
-| Data in | Bright Data Scraper APIs + Web Unlocker, GitHub REST API, saved as JSON snapshots | Fast, repeatable loads; demo never depends on live scraping |
-| Hosting | Laptop + Cloudflare quick tunnel (no account; random trycloudflare.com URL that changes on each restart) | HTTPS is required for PWA install; no deploy risk. Quick tunnels don't support Server-Sent Events, so /api/ask streams NDJSON over a chunked fetch response instead |
-
-The hallway-tools MCP server exposes about six tools: `people_to_meet`, `explain_path`, `check_rerun`, `rank_booths`, `record_meeting`, `draft_followup`. Each returns its answer plus the node and edge IDs it walked, which the UI animates. `draft_followup` (and any calendar add) is marked as requiring approval in TrueForge. The TrueForge sandbox runs on Daytona, so treat it as optional: use it only if setup takes under 20 minutes, for an "analyse my day" report.
-
-### 5.1 Corrections from the docs check (Oct 24, these override the text above)
-
-- **TrueForge only registers remote MCP servers** (streamable HTTP or SSE, no stdio). `packages/mcp-hallway` runs as a streamable-HTTP MCP server on localhost; the FalkorDB MCP uses the `falkordb/mcpserver` Docker image (HTTP on 8080, `FALKORDB_DEFAULT_READONLY=true`). Read-only is only a default that `query_graph` callers can override, so the TrueForge agent registers it with `enableTools: ["query_graph_readonly", "list_graphs", "get_graph_schema", "get_node_schema", "get_relationship_schema"]` and never gets `query_graph` or `delete_graph`; Bright Data MCP, if used, is the hosted `https://mcp.brightdata.com/mcp` endpoint. [TrueForge](https://github.com/truefoundry/trueforge) · [FalkorDB MCP](https://github.com/FalkorDB/FalkorDB-MCPServer)
-- **Tool approvals are configured through the API only**, not the UI. A setup script in `apps/web/lib/agent` creates the agent with `requireApprovalForTools: ["draft_followup"]` (literal names, not `@write`) and writes its id to `TRUEFORGE_AGENT_ID`.
-- **Model provider:** OpenAI is registered in the local TrueForge (port 8790) with models `gpt-5-2` (agent) and `gpt-5-mini` (cheap calls); address them as `openai/gpt-5-2`. Model names must be lowercase with hyphens only.
-- **TrueForge → Next.js is SSE on localhost;** `/api/ask` re-emits it to the phone as NDJSON. The tunnel never carries SSE.
-- **`@falkordb/canvas` (v0.3) themes only through colours** (`backgroundColor`, `foregroundColor`, per-node and per-link colours): pass Primer token values resolved at runtime. It throws on import during SSR, so load it in a `'use client'` component with a dynamic import inside `useEffect`.
-- **Primer React v38:** wrap the app in `BaseStyles`, set `data-color-mode="dark" data-dark-theme="dark"` on `<html>`, import `@primer/primitives` functional dark theme CSS. No styled-components, no `sx`.
-- **Versions:** Next 16, React 19, zod 4, vitest 5, `falkordb` client v6 (Node 22+).
-
-## 6. Graph schema and the four queries that power the app
-
-One graph, eight node types. Every feature is a different walk through it, which is exactly what the FalkorDB judges want to see.
+Every node has a stable string `id` (`<kind>:<key>`, no `|`). Edge ids are `${from}|${TYPE}|${to}`. Runtime writers set the same `id`. All Cypher lives in `packages/graph`, parameterised. Labels and types are interpolated only after zod enum validation.
 
 ```
-(:Person {handle, name, role, avatar, linkedin, github, optedIn})
-(:Company {name, funding, booth})
-(:Repo {fullName, stars})        (:Package {name, ecosystem})
-(:Talk {id, title, abstract, start, room})   (:PastTalk {title, conf, year, url})
-(:SideEvent {name, start, venue, url})       (:Skill {name})   (:Topic {name})
+(:Person {id, handle, name, role, headline, avatar, linkedin, github, about, optedIn, isUser})
+(:Conference {id, name, start, end, city, venue, url, source: 'snapshot'|'live', status})
+(:Talk {id, title, abstract, kind: 'talk'|'workshop'|'keynote'|'panel'|'other', start, end, room})
+(:PastTalk {id, title, conf, year, url})
+(:SideEvent {id, name, start, end, venue, url, source})       // Luma etc.
+(:Company {id, name, funding, booth})  // booth: optional, unused by v2 UI   (:Repo {id, fullName, stars})   (:Package {id, name, ecosystem})
+(:Skill {id, name})   (:Topic {id, name})   (:Goal {id, name})
+(:Meeting {id, tokenHash, start, end, place, note, status: 'pending'|'accepted'|'declined', createdAt, respondedAt})
 
-(Person)-[:WORKS_AT]->(Company)        (Person)-[:OWNS]->(Repo)-[:DEPENDS_ON]->(Package)
-(Person)-[:MAINTAINS]->(Package)       (Person)-[:SPEAKS_AT]->(Talk)
-(Person)-[:GAVE]->(PastTalk)           (Talk)-[:SIMILAR_TO {score}]->(PastTalk)
-(Person)-[:ATTENDING]->(SideEvent)     (Talk|Person)-[:ABOUT|INTERESTED_IN]->(Topic)
-(Company)-[:HIRING_FOR]->(Skill)       (Person)-[:SKILLED_IN]->(Skill)
-(Person)-[:MET {at, via}]->(Person)    (Person)-[:PLANS]->(Talk|SideEvent)
+(Talk)-[:PART_OF]->(Conference)        (SideEvent)-[:NEAR]->(Conference)
+(Person)-[:SPEAKS_AT]->(Talk)          (Person)-[:GAVE]->(PastTalk)      (Talk)-[:SIMILAR_TO {score}]->(PastTalk)
+(Person|Company)-[:HOSTS]->(SideEvent) (Person)-[:ATTENDING]->(SideEvent|Conference)
+(Person)-[:WORKS_AT]->(Company)        (Person)-[:WORKED_AT {from, to}]->(Company)
+(Person|Company)-[:OWNS]->(Repo)-[:DEPENDS_ON]->(Package)<-[:MAINTAINS]-(Person)
+(Person)-[:SKILLED_IN]->(Skill)        (Company)-[:HIRING_FOR]->(Skill)
+(Talk)-[:ABOUT]->(Topic)               (Person)-[:INTERESTED_IN]->(Topic)
+(Person)-[:HAS_GOAL]->(Goal)           (Person)-[:TARGETS {at}]->(Conference)
+(Person)-[:PLANS {at}]->(Talk|SideEvent)
+(Person)-[:SWIPED {dir: 'right'|'left', at}]->(Person)
+(Person)-[:PREFERS {weight}]->(Topic|Skill|Company|Goal)        // learned from swipes
+(Person)-[:ORGANIZES]->(Meeting)-[:WITH]->(Person)
+(Person)-[:MET {at, via}]->(Person)
 ```
 
-**1. Who to meet (dependency route, 4 hops)**
+### 6.1 Ingest-time facts
 
-```cypher
-MATCH path = (me:Person {handle: $me})-[:OWNS]->(:Repo)-[:DEPENDS_ON]->(pkg:Package)<-[:MAINTAINS]-(p:Person)
-WHERE p <> me AND NOT (me)-[:MET]->(p)
-OPTIONAL MATCH (p)-[:SPEAKS_AT|ATTENDING]->(loc)
-RETURN p, collect(DISTINCT pkg.name) AS sharedPkgs, collect(DISTINCT loc) AS findThem, collect(path)[0] AS proof
-ORDER BY size(sharedPkgs) DESC LIMIT 10
-```
+`SIMILAR_TO` scores are computed once (OpenAI embeddings of title + abstract, cosine, keep > 0.8). Talk `kind` and `end` come from the catalog. When the end is missing, the normaliser sets start + 45 min, or + 90 min for workshops.
 
-**2. Is this talk a rerun?**
+### 6.2 Queries (each has a vitest test against `data/fixtures`, including its path)
 
-```cypher
-MATCH path = (s:Person)-[:SPEAKS_AT]->(t:Talk)-[r:SIMILAR_TO]->(old:PastTalk)<-[:GAVE]-(s)
-WHERE r.score > 0.8
-RETURN t.title, old.conf, old.year, old.url, r.score, path
-```
+1. **Candidates for the deck.** One query per signal, merged and scored in TS:
+   - dependency route: `me→OWNS→Repo→DEPENDS_ON→Package←MAINTAINS←p`
+   - shared topic: `me→INTERESTED_IN→Topic←ABOUT←Talk←SPEAKS_AT←p`
+   - goal match: e.g. Find a job → `p→WORKS_AT→Company→HIRING_FOR→Skill←SKILLED_IN←me`
+   - same company or ex-colleague: `me→WORKED_AT→Company←WORKS_AT|WORKED_AT←p`
+   - speaker at a session I planned: `me→PLANS→Talk←SPEAKS_AT←p`
 
-**3. Which booths to visit**
+   "At the conference" means the person `SPEAKS_AT` a Talk `PART_OF` it, `HOSTS` a SideEvent `NEAR` it, or `ATTENDING` it (opted-in users). Candidates exclude the user, people already `SWIPED`, and people already `MET`. Each candidate carries its tags (one per signal) and its strongest path.
+2. **Session priority:** Talks `PART_OF` the target conference, scored by topic match + goal boost + `PREFERS` weights, with a rerun flag (`SIMILAR_TO > 0.8` by the same speaker). Goal boosts are a fixed map in `packages/graph`:
+   - Learn a topic → workshops, and talks about the user's topics
+   - Networking → keynotes and panels
+   - Find a job → talks whose speaker `WORKS_AT` a Company `HIRING_FOR` the user's skills
+   - Hire / Find collaborators / Fundraise → talks about the user's topics by speakers at companies in their space
+3. **Clash check:** an interval overlap of a candidate item against the user's `PLANS` items and accepted Meetings. Done in TS over one query's results.
+4. **Explore:** `SideEvent -[:NEAR]-> Conference`, scored by `PREFERS`, topic and host fit.
+5. **Calendar:** `PLANS` targets plus `Meeting {status:'accepted'}` for the user, ordered by start.
+6. **Past graph:** the user's subgraph. Every node within 2 hops via `TARGETS | PLANS | SWIPED | ORGANIZES | WITH | MET | HAS_GOAL | PREFERS`, capped at 200 nodes.
+7. **Writes**, each a single parameterised `MERGE` that sets `id`:
+   - **profile:** the user's Person (`isUser: true`), `SKILLED_IN`, `INTERESTED_IN`, `WORKS_AT`, `WORKED_AT`, `OWNS`/`DEPENDS_ON` for their repos
+   - **activity:** `TARGETS`, `HAS_GOAL`, `PLANS`, `SWIPED`, `PREFERS` updates, `Meeting` create and accept, `MET`
+8. **Requests sent:** the user's `ORGANIZES` Meetings with the `WITH` person and status, newest first.
 
-```cypher
-MATCH path = (me:Person {handle: $me})-[:SKILLED_IN]->(sk:Skill)<-[:HIRING_FOR]-(c:Company)
-WHERE c.booth IS NOT NULL
-RETURN c.name, c.booth, collect(sk.name) AS matches, collect(path) AS proof
-ORDER BY size(matches) DESC
-```
+### 6.3 Swipe learning (simple, explainable, graph-native)
 
-This covers the hiring signal only. If Expo survives the cut list, extend the ranking with "uses your stack" (shared `Package` via staff repos) and funding, so booths without a `HIRING_FOR` match still appear.
+A candidate's score is `Σ signalWeight × (1 + PREFERS(me, feature))` over their features. With no `PREFERS` edges yet, every signal counts equally.
+- A **right swipe** adds +0.2 to the `PREFERS` weight of each of the candidate's features: their topics, skills, company and the goal that matched.
+- A **left swipe** adds −0.1.
 
-**4. Record a meeting (memory across sessions)**
+Weights are clamped to [−1, 2]. The deck refetches after each swipe. Because the weights are edges, the Past graph and the path sheet can show *why* the ranking changed.
 
-```cypher
-MATCH (a:Person {handle: $me}), (b:Person {handle: $them})
-MERGE (a)-[m:MET]->(b)
-ON CREATE SET m.at = timestamp(), m.via = 'button', m.id = a.id + '|MET|' + b.id
-```
+### 6.4 Seed and runtime writes
 
-The `SIMILAR_TO` score is computed once during ingest (OpenAI embeddings of title + abstract, cosine similarity), not at query time, so the Schedule tab loads instantly.
+`pnpm seed` merges every `data/clean/*.json` plus `data/live/*.json` (falling back to `data/fixtures` when `data/clean` is empty), builds `<graph>_next`, carries over the user's runtime subgraph, then `RENAME`s it into place.
 
-**Public-tunnel rules (the app is reachable by anyone with the URL):**
+**The user's runtime subgraph** is every `isUser` Person, every edge out of them (profile and activity, from 6.2 #7), the nodes those edges reach that the snapshot lacks (their Repos, Packages, Companies, Skills, Topics, Goals, Meetings), and `Meeting -[:WITH]->` edges.
 
-- Write routes never take the caller's identity from the request. `POST /api/met/[handle]` always uses `DEMO_HANDLE` (or the opted-in onboarding profile from a server-set cookie) as `me`; only `them` comes from the path.
-- `/api/ask` and `/api/refresh-events` spend paid credits, so both get a simple in-memory rate limit per IP (for example 10 asks and 3 refreshes per minute) and a global daily cap; over the limit, return the `DEMO_CACHE` answer or the snapshot instead of an error.
+Live-ingested conferences are written to gitignored `data/live/<conf>.json` (with their Conference node, `source: 'live'`), so a reseed keeps them without dirtying committed folders.
 
-**Privacy rule:** the graph only holds people who are public in this context (speakers, event hosts, package maintainers, sponsor staff on public pages) plus attendees who opt in through onboarding. Say this on stage; judges notice.
+**Writing from other packages:** `packages/graph` exports `upsertSnapshot(snapshot)`, which merges nodes and edges by id without wiping. `packages/ingest` calls only that, so all Cypher stays in `packages/graph`.
 
-## 7. Data plan: real GitHub Universe 2026 data, scraped by noon, served from snapshots
+**Privacy rule:** the graph only holds:
+- people public in this context (speakers, hosts, package maintainers, public sponsor staff)
+- users who onboard themselves
 
-Build for the real event: GitHub Universe 2026 runs Oct 28–29 at Fort Mason Center, San Francisco, with 6,000+ attendees and a public session catalog. Real speakers and real side events make the demo land far harder than fake data. [Cloudsmith session guide](https://cloudsmith.com/blog/10-github-universe-2026-sessions-not-to-miss)
+The invite page shows only the requester's name, headline, reason and slot.
 
-| Data | Source | How we get it | Feeds |
+**Public-tunnel rules:**
+- **Identity:** the server identifies the user by an httpOnly cookie set at onboarding (`DEMO_HANDLE` for the demo profile). Write routes never take "me" from the request body.
+- **Invite tokens:** 128-bit random. Store only their hash. Accept and decline are idempotent, and a request can be answered once.
+- **Rate limits:** credit-spending routes (`/api/chat`, live ingest, LinkedIn fetch) get a per-IP rate limit (`apps/web/lib/ratelimit.ts`, Main) and the global budget guard (section 7.4). Over the limit, they return cached results instead of errors.
+
+## 7. Data
+
+### 7.1 Sources
+
+| Data | Source | How | Feeds |
 | --- | --- | --- | --- |
-| Sessions, speakers, abstracts, times | Universe session catalog (`reg.githubuniverse.com`, a JavaScript-heavy portal) | Bright Data Browser API or Scraper Studio | Schedule, rerun detector, people |
-| Speakers' past talks | YouTube + other conference sites | Bright Data SERP API (search "\<speaker> talk"), then the YouTube videos scraper for titles, descriptions, dates | Rerun detector |
-| Speaker / sponsor-staff profiles | LinkedIn profiles and companies | Bright Data LinkedIn scrapers (profiles, companies) | People, icebreakers |
-| Sponsor hiring | LinkedIn jobs for each sponsor | Bright Data LinkedIn jobs scraper | Expo / booth scout |
-| Company funding | Crunchbase | Bright Data Crunchbase scraper (confirm it's in your plan) | Expo |
-| Side events and parties | Luma city/calendar pages (e.g. `luma.com/sf`) and sponsor event pages | Bright Data Web Unlocker; public event data only | Today feed, people (hosts) |
-| Your deps, repos, maintainers | GitHub | GitHub REST API with a personal token (not scraping) | Dependency route to people |
+| Universe sessions, speakers, times, kinds | `reg.githubuniverse.com` catalog | Bright Data Web Unlocker (`expect` element for the session list); Browser API only if Unlocker fails (ask first) | Agenda, deck |
+| Speaker profiles | LinkedIn | Bright Data LinkedIn profiles dataset | Deck, tags |
+| Speakers' past talks | YouTube | Bright Data YouTube videos dataset (discover by keyword) | Rerun tag |
+| Sponsor hiring | LinkedIn jobs | Bright Data LinkedIn jobs dataset (discover by keyword + company) | "Hiring" tag, job-goal ranking |
+| Side events | Luma city and calendar pages, sponsor event pages | Web Unlocker; public event data and hosts only (never guest lists) | Explore, feed |
+| User profile (`packages/ingest` exports `fetchLinkedInProfile`, `parseLinkedInPdf`, `fetchGitHubProfile`, `extractProfileFromText`; the profile routes and tools call them) | LinkedIn URL / PDF / GitHub / free text | LinkedIn dataset (live, by URL) · PDF text → `gpt-5-mini` extraction · GitHub REST API · free text → `gpt-5-mini` extraction | Profile, deck |
 
-Bright Data documents scrapers for LinkedIn (profiles, companies, jobs, posts) and YouTube (videos, channels, comments) in its scraper library. [Bright Data scrapers](https://docs.brightdata.com/scraping-automation/web-data-apis/web-scraper-api/overview) · [Social media scraper APIs](https://docs.brightdata.com/api-reference/scrapers/social-media-apis/overview.md)
+### 7.2 Offline snapshot (GitHub Universe 2026)
 
-**Luma guest lists: don't.** Full Luma attendee lists generally need a logged-in, registered account, and anonymous visitors only see hosts and featured guests. Use only the public event details and hosts; attendees enter our graph by opting in. [example Luma scraper notes](https://apify.com/lukas_bekr/apify-luma-scraper)
+1. Raw → `data/raw/<source>-<ts>.json` (gitignored). A normaliser writes `data/clean/<source>.json` in the `GraphSnapshot` format (stable ids, null keys dropped, each record validated, bad ones skipped and logged).
+2. Run every source on 3 records first and show the human the clean output. Each full run is capped at 200 records.
+3. Commit `data/clean/` as soon as it is good. From then on the Universe demo never waits on a scraper.
 
-**Snapshot strategy**
+### 7.3 Live ingest (any other conference)
 
-1. Every ingest script writes raw results to `data/raw/<source>-<timestamp>.json`, then a normaliser writes `data/clean/<source>.json` in the `GraphSnapshot` format from `packages/types` (stable ids like `person:<handle>`, `talk:<slug>`; drop null keys; validate each record and skip bad ones instead of failing the file). `pnpm seed` merges every `data/clean/*.json` (same id = same node) and only falls back to `data/fixtures` when `data/clean` is empty.
-2. A loader script wipes and rebuilds the graph from `data/clean/` in under a minute (`pnpm seed`).
-3. Commit the clean snapshots to the repo by 12:00. From then on the app never waits on a scraper.
-4. One "Refresh side events" button triggers a live Bright Data call on stage. On failure or timeout (8 s), it shows the cached result with a "last updated" time. That is the failure-handling story for the Bright Data judges.
-5. Scope the scrape to what the demo touches: about 100 sessions, their speakers, 15–20 sponsors, 20–30 side events. Check credit usage in the Bright Data dashboard after the first run so the $50 lasts the day.
+1. `POST /api/conferences` with `{ name | url }` starts a job in the Next.js process (an in-memory queue, one job at a time). `GET /api/conferences/jobs/<id>` returns the stage and counts.
+2. **Stages:**
+   - **find:** web search via the Unlocker on a search URL, then pick the official site and agenda URL with `gpt-5-mini`
+   - **sessions:** Unlocker on the agenda page, then `gpt-5-mini` extraction into Talk records
+   - **speakers:** LinkedIn search by name and company, capped
+   - **side events:** Luma search for the city and dates
+3. Each stage writes through the same normalisers and upserts into FalkorDB as it finishes, so the app fills in progressively. Each stage has its own timeout and a stage failure is skipped, never fatal.
+4. **Caps per live conference (lenient, about $5):**
+   - 150 sessions
+   - 80 speaker profiles
+   - 30 side events
+   - 3 past-talk searches per speaker for the first 30 speakers
+5. Results are cached as `data/live/<conf>.json` (gitignored). A second request for the same conference is instant.
 
-**Bright Data products actually used (Oct 24 decision, $50 budget; overrides the table above)**
+### 7.4 Budget
 
-| Product | Use | Notes |
-| --- | --- | --- |
-| Web Unlocker, zone `hallway_unlocker` | Session catalog, Luma and sponsor event pages, live "Refresh side events" | `POST https://api.brightdata.com/request` with `{zone, url, format: "raw"}`, Bearer API key. Synchronous; CAPTCHA solver and `expect` elements enabled, premium domains off. $1.50 per 1,000 requests |
-| Web Scraper API: LinkedIn profiles, LinkedIn companies, LinkedIn jobs, YouTube videos | Speaker and sponsor profiles, hiring, speakers' past talks | `POST /datasets/v3/trigger?dataset_id=…` then poll `/progress` and download `/snapshot`. Always set `limit_per_input` |
-| Browser API | Not used unless Web Unlocker cannot render the catalog | Billed by bandwidth; ask the human before creating it |
-| SERP API, Crunchbase | Not used | Past talks come from YouTube discover-by-keyword; funding is dropped with the Expo cut risk |
+- **Budget:** $50 Bright Data, pay as you go. Scraper datasets are $1.50 per 1,000 records and the Unlocker is $1.50 per 1,000 requests.
+- **Universe snapshot:** about 1,500 records, roughly $3.
+- **Live conferences:** about $5 each at the caps.
+- **Budget guard:** `packages/ingest` exports `budget.reserve(usd, label)` (throws past the limit) and `budget.status()`. It is a persisted counter in `data/live/budget.json` with limit `BRIGHTDATA_BUDGET_USD` (default 40). Every Bright Data call reserves first. Status shows in the chat.
+- **Never buy anything** from the Dataset Marketplace, and never start collections from the dashboard.
 
-Target about 1,500 records and a few hundred Unlocker requests in total. Never buy Dataset Marketplace data; never start collections from the dashboard.
+## 8. Team, tracks and ownership
 
-## 8. Solo plan: three Claude Code sessions, four gates
+Two people, each with their own Claude Code, plus this main session. Ownership is **by feature, full stack**: each track owns its screens, API routes and graph queries, in separate files, so tracks rarely touch the same file.
 
-The human is the product owner and reviewer; three Claude Code sessions are the team. Each session owns its own folders, so they never edit the same file. Session 1 runs in the main checkout; sessions 2 and 3 run in their own git worktrees.
+| Track | Who | Where | Owns |
+| --- | --- | --- | --- |
+| **Main** | this Claude session (repo root, presenting laptop) | Rudraksh's laptop | **Shared core:** `packages/types` (the contract), `packages/graph/src/{client,seed,upsert,calendar}.ts` (schema, seed, `upsertSnapshot`, calendar query 5, clash check 3 and free-slot helper), `packages/mcp-hallway`, `packages/ingest` (Universe snapshot, profile fetchers, live pipeline, budget guard: run via worktree-isolated subagents), `data/` (all of it), app shell (`app/layout.tsx`, `providers.tsx`, `manifest.ts`, `globals.css`, icons, `app/page.tsx` chat onboarding, `components/shell/` tab bar + chat button), API `chat`, `profile`, `calendar`, `conferences`, `health`, `apps/web/lib` (agent, cache, ratelimit, identity cookie), `apps/web/package.json`, `scripts/`, `docs/`, root config |
+| **A: Feed & My events** | teammate + their Claude Code | teammate's laptop (own clone) | `app/(app)/feed`, `app/(app)/agenda` (Now + Past panes), `app/stage`, `components/feed/`, `components/agenda/`, API `feed`, `agenda`, `past`, `stage`, `packages/graph/src/queries/{feed,agenda,past}.ts` (queries 2, 6, 8 and feed suggestions) + their tests |
+| **B: Whom to meet & Explore** | Rudraksh + a Claude Code worktree session (`claude --worktree people`) | Rudraksh's laptop | `app/(app)/people`, `app/(app)/explore`, `app/invite`, `components/people/`, `components/explore/`, API `people`, `invites`, `meetings`, `explore`, `packages/graph/src/queries/{people,invites,explore}.ts` (query 1, swipe learning 6.3, Meeting writes, query 4) + their tests |
 
-| Session | Started with | Owns (folders) | Morning (to 12 PM) | Afternoon (to 3 PM) |
-| --- | --- | --- | --- | --- |
-| 1. Main | `claude` in the repo root | `packages/types`, `packages/graph`, `packages/mcp-hallway`, `apps/web/app/api` (except `refresh-events`), `apps/web/lib/agent`, `data/fixtures` | Scaffold, shared types, graph schema, seed, query 1 | MCP tools, TrueForge agent, `/api/ask` streaming, approvals |
-| 2. Data | `claude --worktree data` | `packages/ingest`, `data/clean`, `data/raw`, `apps/web/app/api/refresh-events` | Bright Data + GitHub ingest, clean snapshots | Embeddings, rerun scores, booth data, live refresh endpoint |
-| 3. UI | `claude --worktree ui` | `apps/web/app/(app)`, `apps/web/components`, `apps/web/styles` | Primer shell, tab bar, onboarding, Today feed on fixtures | Sheets, path view, Schedule, Ask UI, Mark as met, stage view |
+**Rules between tracks:**
+- **Only Main edits `packages/types`.** A track that needs a type change asks Main (through its human). Main ships it as a small PR within minutes.
+- **Shared helpers are Main's.** Calendar items, clash detection and free slots live in `packages/graph/src/calendar.ts`. A uses them for the feed calendar and agenda clashes; B uses them for invite slots and Explore clashes. `POST /api/calendar` is Main's and both tracks call it.
+- **Cross-track UI:** the feed's "Requests sent" cards (A) render Meetings created by B, and call B's `meetings/[id]/accepted` and `/met` routes. Agree on the shapes in `packages/types` (`RequestSent`), not by reading each other's code.
+- **Dependencies:** PR B adds every approved runtime dependency to `apps/web/package.json` (`@falkordb/canvas`, `@truefoundry/trueforge-sdk`, `@modelcontextprotocol/sdk`, `ics`, `pdf-parse`, `@hallway/graph`, `@hallway/ingest`), so tracks never edit the lockfile for them. A track that needs another dependency asks Main.
+- `docs/QODO_CATCHES.md` is append-only and shared.
+- **Pull `main` before starting each task;** contract PRs land often today.
+- **Merging:** either human may merge a PR once Qodo's findings are fixed or answered and checks pass, but not a PR from their own track without a glance from the other human, when there's time.
+- **The demo runs on Rudraksh's laptop.** Track A's work arrives by PRs merged to `main`.
 
-`docs/QODO_CATCHES.md` is append-only and shared: any session may add rows to it. Everything else in `docs/` belongs to Session 1.
+### 8.1 Teammate setup (Track A, own laptop, about 15 minutes)
 
-After 3 PM only Session 1 stays open: it merges, integrates and polishes. Sessions 2 and 3 end once their last PR is merged.
-
-Gates: **12 PM**, snapshots committed and one feature works end to end; **3 PM**, all must-have features work; **4 PM**, feature freeze (polish, bugs, backup video at 4:45); **5:15 PM**, submit and rehearse.
+1. Accept the GitHub collaborator invite for `rudrakshchaudhry/Hallway`, then clone it.
+2. Install Node 22.14+, pnpm, Docker Desktop, `gh` (`gh auth login`) and Claude Code.
+3. `cp .env.example .env`. For Track A work, only `FALKORDB_URL`, `GRAPH_NAME` and `DEMO_HANDLE=demo` are needed, since fixtures cover feed and agenda. Get any API keys from Rudraksh via a password manager share, **never in chat or git**.
+4. `pnpm install && docker compose up -d && pnpm seed && pnpm dev` → http://localhost:3000.
+5. `npx -y @playwright/mcp@0.0.83 install-browser chrome-for-testing`. Start `claude --permission-mode plan` in the repo and approve the `falkordb` and `playwright` MCP servers when asked.
+6. Paste the Track A prompt from section 10.
 
 ## 9. Agent operating manual (Claude Code)
 
-One rule above all: **plan, then build, then verify, then ship a small PR.** The main session makes design and integration decisions; worktree sessions do well-specified work in parallel; subagents read docs and review diffs so the main context stays clean. Claude Code docs: [common workflows](https://code.claude.com/docs/en/common-workflows.md) · [worktrees](https://code.claude.com/docs/en/worktrees.md) · [subagents](https://code.claude.com/docs/en/sub-agents.md) · [MCP](https://code.claude.com/docs/en/mcp.md)
+**Plan → build → verify → ship a small PR.**
 
-### 9.1 Which mode or mechanism, when
+- **Plan mode** for any change over 3 files or across packages.
+- **Research subagents** read external docs before code depends on them.
+- **Worktree-isolated subagents** for mechanical fan-out (MCP tool handlers, normalisers).
+- The **reviewer** subagent reviews every diff.
+- The **ui-verifier** checks UI at 390×844, and `/stage` at 1440×900, through the **Playwright MCP** in `.mcp.json` (`@playwright/mcp@0.0.83`, headless Chromium, 390×844 default viewport; use `browser_resize` for 1440×900). Browsers are installed on the laptop with `npx -y @playwright/mcp@0.0.83 install-browser chrome-for-testing`. Screenshots land in the working directory and root-level `*.png` is gitignored.
 
-| Mechanism | How to start it | Use it in this project for | Do not use it for |
-| --- | --- | --- | --- |
-| Plan mode | `claude --permission-mode plan`, or `Shift+Tab` until the status bar shows plan mode | The start of every phase; the shared types; the graph schema; any change touching more than 3 files or more than one package | One-file fixes and copy changes |
-| Higher effort / extended thinking | Raise the effort level in the session | Phase 0 planning, ranking logic in query 1, the agent's tool design, debugging a failure that survived one fix | UI boilerplate, CSS tweaks |
-| Research subagent ("deep search") | "Use a subagent to read the current docs for X and report the API in 15 lines with links" | Reading TrueForge SDK, FalkorDB client, Primer v38, Bright Data API docs before code that depends on them | Writing code |
-| Parallel sessions in worktrees | `claude --worktree data`, `claude --worktree ui` in new terminals | Sessions 2 and 3 (section 8) | Anything that edits `packages/types` or root config |
-| Subagents with `isolation: worktree` | "Use worktree-isolated subagents, one per file" | Fan-out of mechanical, independent files: the six MCP tool handlers; the four Bright Data normalisers | Anything needing a design choice |
-| Reviewer subagent | `.claude/agents/reviewer.md` (section 11), invoked by the ship-pr skill | A fresh-eyes review of every diff before its PR | Replacing Qodo |
-| UI verifier subagent | `.claude/agents/ui-verifier.md` | Screenshots at 390×844 and 1440×900, console errors, comparison with section 3 | Changing code |
-| Agent teams | Off | Not used: experimental, heavy on tokens, and three fixed sessions with fixed folders already cover it | — |
-| Web search in the session | Ask the agent to check current docs | When an installed package's API differs from this doc | General browsing |
-| Browser tool (Claude in Chrome or a Playwright MCP) | Ask it to open `http://localhost:3000` | Clicking through the demo path, screenshots, console logs | Real third-party sites |
+**Git:**
+- Never commit to `main`; it's protected.
+- Branches are `feat/<area>-<slug>` or `fix/<slug>`. Keep PRs under about 300 hand-written lines, with a What / Why / How tested description.
+- Ship with the `ship-pr` skill: verify, reviewer, PR, Qodo, then fix or answer every finding and log real catches. Don't merge; the human does.
+- Never commit `.env`, `data/raw/`, or anything over 5 MB.
 
-### 9.2 MCP servers for the coding agent (development time)
+**Definition of done:**
+- `pnpm typecheck && pnpm lint && pnpm test` pass, with FalkorDB running.
+- Every route validates input and output with `packages/types` zod schemas.
+- Every graph query has a fixture test including its path.
+- UI is verified at 390 px with no console errors.
+- No dependency outside the CLAUDE.md stack without asking the human. Already approved for v2: `pdf-parse` (LinkedIn PDF text) and `ics` (calendar files).
 
-These help the agent while building. They are separate from the app's runtime MCP servers in section 5. Add them with project scope so all three sessions share them through `.mcp.json`.
+**Stop and ask when:**
+- an external API differs from this doc (report with a link; don't switch libraries)
+- a step needs a login, CAPTCHA, payment or new plan
+- a scrape would exceed the caps in section 7
+- a worktree session needs a `packages/types` change
 
-| Server | Why the agent needs it | Add it |
-| --- | --- | --- |
-| FalkorDB MCP | Inspect the live graph and test Cypher before putting it in code | Run the `falkordb/mcpserver` container from `docker-compose.yml`, then `claude mcp add --scope project --transport http falkordb <URL printed in its logs>` |
-| Bright Data MCP | Look at real scrape output while writing normalisers (Session 2 only) | Follow Bright Data's MCP setup docs; add with `--scope project` |
-| Browser (Claude in Chrome, or a Playwright MCP) | UI verification by Session 3 and the ui-verifier subagent | Enable the Chrome extension, or `claude mcp add` a Playwright server |
-| GitHub | Not needed as MCP: use the `gh` CLI for PRs and reading Qodo comments | `gh auth login` (done by the human) |
+## 10. Runbook (from 14:15)
 
-### 9.3 Git, PRs and Qodo
+| Time | Main (this session) | Track A: Feed & My events | Track B: Whom to meet & Explore | Humans |
+| --- | --- | --- | --- | --- |
+| 14:15–14:45 | **PR A** (this plan) → **PR B:** types v2, fixtures v2, `calendar.ts`, `upsertSnapshot`, seed carry-over, deps, scripts. In parallel, a worktree subagent starts the Universe scrape (3-record samples first) | Teammate setup (8.1); plan the feed and agenda on mocks shaped by 5.3 | Start `claude --worktree people`; plan the deck, invite sheet and Explore on mocks | Merge PR A, then PR B; collaborator invite |
+| 14:45–16:15 | Onboarding step machine + chat UI; app shell + tab bar; profile fetchers; Universe snapshot committed by 15:15; then the TrueForge agent for the chat button; live ingest last (may slip) | Queries 2, 6, 8 + routes; My Feed calendar + cards + Requests sent; Agenda Now (+, clash) and Past (canvas) | Query 1 + swipe learning + routes; swipe deck + tags; invite sheet + invite page + accept; Explore | Review and merge PRs; phone-test through the tunnel |
+| **15:15 gate** | Universe data seeded; chips-only onboarding → feed works on real data | Feed + Agenda Now render from real routes | Deck renders from real routes; a swipe re-ranks | Cut decision |
+| 16:15–16:45 | **Integrate** on the presenting laptop: section 12 demo path in the browser and on a phone; `DEMO_CACHE=1`; `pnpm demo:check` | Last fixes; final PR merged by 16:30 | Last fixes; final PR merged by 16:30 | Merge order |
+| 16:45–17:15 | **Polish only;** backup video at 17:00 | Help rehearse | Help rehearse | Record video; submit 17:15; rehearse |
 
-- Never commit to `main`. One branch per task: `feat/p<phase>-<slug>` or `fix/<slug>`.
-- Keep PRs under about 300 changed lines, one concern each. Description: **What**, **Why**, **How tested**.
-- Ship with the `ship-pr` skill (section 11): verify, run the reviewer subagent, open the PR with `gh pr create`, wait for Qodo, fix or answer each finding, log real catches in `docs/QODO_CATCHES.md`, then hand back for the human to merge.
-- Never commit `.env`, `data/raw/`, or anything over 5 MB. Commit `data/clean/` snapshots.
-- Before starting a task in a worktree session, pull the latest `main` so shared types are current.
+**Track prompts** (paste into each track's Claude Code; the plan is the spec):
+- **Track A:** "You are Track A (Feed & My events). Read docs/PLAN.md v2 sections 1–9, especially section 8, then your row in section 10. Stay inside Track A's files. Plan first, then ship small PRs with ship-pr."
+- **Track B:** "You are Track B (Whom to meet & Explore). Read docs/PLAN.md v2 sections 1–9, especially section 8, then your row in section 10. Stay inside Track B's files. Plan first, then ship small PRs with ship-pr."
 
-### 9.4 Definition of done (every task)
+**DEMO_CACHE:** `DEMO_CACHE=record` saves responses for the scripted chat chips, the demo LinkedIn fetch and live-ingest stages to `data/cache/<key>.json`, keyed by chip id or URL. `DEMO_CACHE=1` replays them. Main owns the cache module.
 
-- `pnpm typecheck && pnpm lint && pnpm test` pass.
-- Every API route validates its response with the zod schema from `packages/types`.
-- Every graph query has a vitest test against the fixture graph (`data/fixtures/`), including the path it returns.
-- UI work is checked by the ui-verifier subagent at phone width with no console errors.
-- No new dependency outside the stack in `CLAUDE.md` without asking the human first.
+**Phase prompts:** the human pastes a short prompt ("Phase v2, Session N. Read docs/PLAN.md v2 sections 1–9 and your row in section 10. Plan first, then ship small PRs with ship-pr."). The plan is the spec; prompts don't repeat it.
 
-### 9.5 When the agent should stop and ask
+**Cut list, in this order, if a gate slips:**
+1. stage view
+2. jobs and hiring signals
+3. rerun tag
+4. LinkedIn PDF upload
+5. live ingest for other conferences (keep Universe; say "coming soon")
+6. the public invite page (use **Mark accepted**)
 
-- An external API or package behaves differently from this doc: report what changed with the docs link; do not switch libraries.
-- A step needs a login, a CAPTCHA, a payment, or a new paid plan.
-- A scrape would exceed about 200 records or the credit alert.
-- A plan would edit `packages/types` from a worktree session.
+**Never cut:** chat onboarding, My Feed calendar + cards, swipe deck with learning, Agenda Now with clash warnings, the Past graph, the Qodo PR history.
 
-## 10. Runbook: phases, prompts, gates
-
-The human starts each phase by pasting its prompt below into the named session. Every phase starts in plan mode; the human approves a plan only when it names files, tests and the PRs it will open.
-
-### Phase 0: Scaffold and contracts (9:45–10:15, Session 1 only)
-
-**Mode:** plan mode, higher effort. **Parallel:** one research subagent. **MCP:** none yet.
-
-```text
-Read docs/PLAN.md sections 1–11 and CLAUDE.md.
-
-First, use a research subagent to read the current official docs for:
-@truefoundry/trueforge-sdk (sessions, turns, streamed events, tool approvals),
-the falkordb npm client, @falkordb/canvas, @primer/react v38 with Next.js App Router,
-and the Bright Data Web Scraper API request pattern. Report each API in at most
-15 lines with links. Flag anything that contradicts PLAN.md.
-
-Then plan, without writing feature code:
-1. The pnpm monorepo in section 11 (apps/web, packages/types, graph, mcp-hallway, ingest).
-2. docker-compose.yml with falkordb and falkordb/mcpserver, with health checks.
-3. packages/types: zod schemas + TS types for every node and edge in section 6, and for
-   API payloads: FeedCard, PersonCard, SessionVerdict, BoothFit, GraphPath
-   (nodeIds, edgeIds, human-readable hops), AskEvent (stream events).
-4. A hand-written fixture graph in data/fixtures (about 30 nodes) that exercises all
-   four queries, so UI and tests never wait on scraping.
-5. apps/web: Primer v38 root layout with the dark theme, a hello page, PWA manifest.
-6. Root scripts: dev, seed, test, typecheck, lint, demo:check.
-List the PRs you will open.
-```
-
-**Done when:** `docker compose up -d` is healthy, `pnpm seed` loads the fixtures, `pnpm dev` shows a Primer-themed page, types compile. **PRs:** `chore: scaffold`, `feat: shared types + fixtures`. Then merge, and start sessions 2 and 3.
-
-### Phase 1: Three sessions in parallel (10:15–12:00)
-
-**Session 1, main, plan mode:**
-
-```text
-Phase 1, Session 1. Build packages/graph: connection, indexes, `pnpm seed` from
-data/clean if present else data/fixtures, and query 1 (who to meet via dependencies)
-exactly as section 6, returning PersonCard[] each with a GraphPath. Add vitest tests
-against the fixture graph. Then add GET /api/feed and GET /api/people in apps/web
-returning zod-validated data. Use the FalkorDB MCP to try each Cypher query on the
-live graph before writing it into code. Ship with the ship-pr skill.
-```
-
-**Session 2, `claude --worktree data`, plan mode:**
-
-```text
-Phase 1, Session 2. You own packages/ingest and data/ only. Read PLAN.md section 7.
-Build one script per source: Universe sessions (Bright Data Browser API or Scraper
-Studio), speakers' LinkedIn profiles and companies, sponsor LinkedIn jobs, side events
-(Web Unlocker on public pages), GitHub repos/deps/maintainers (REST API with
-GITHUB_TOKEN). Each writes data/raw/<source>-<timestamp>.json; a normaliser writes
-data/clean/*.json validated by packages/types.
-Credits rule: run each source on 3 records first and show me the clean output before
-any full run; cap each full run at 200 records. Retry once, then log and skip.
-Ship each source as its own small PR with the ship-pr skill.
-```
-
-**Session 3, `claude --worktree ui`, plan mode:**
-
-```text
-Phase 1, Session 3. You own apps/web/app/(app), apps/web/components, apps/web/styles.
-Read PLAN.md sections 2 and 3. Using only @primer/react v38, Primer Primitives dark
-tokens and Octicons, build: the bottom tab bar (Today, People, Schedule, Expo) with a
-floating Ask button, onboarding (GitHub username, topic tokens, 'Use demo profile'),
-and the Today feed of FeedCards with skeleton loading, empty and error states.
-Read data from /api/feed; until it exists, use a local mock that returns
-data/fixtures shaped by packages/types. Check every screen with the ui-verifier
-subagent at 390x844. Ship with the ship-pr skill.
-```
-
-**12 PM gate:** clean snapshots committed and seeded; query 1 returns real people with paths; the Today feed renders real cards. If data is late, keep building on fixtures and swap at 1 PM.
-
-### Phase 2: Features (12:00–15:00)
-
-**Session 1:**
-
-```text
-Phase 2, Session 1. (a) Queries 2–4 from section 6 with tests and their API routes
-(/api/schedule, /api/booths, POST /api/met/[handle]). (b) packages/mcp-hallway:
-an MCP server exposing people_to_meet, explain_path, check_rerun, rank_booths,
-record_meeting, draft_followup; each returns its answer plus a GraphPath. Write the six
-tool handlers with worktree-isolated subagents, one file each, then review and merge them
-yourself. (c) Configure a TrueForge agent on an OpenAI model with hallway-tools
-(and the FalkorDB MCP read-only); draft_followup requires approval. (d) POST /api/ask
-streams TrueForge events to the client as AskEvent via the SDK, as NDJSON over a
-chunked fetch response (not SSE: the Cloudflare quick tunnel does not support SSE).
-Plan first.
-```
-
-**Session 2:**
-
-```text
-Phase 2, Session 2. (a) Embeddings of talk title+abstract (OpenAI) and SIMILAR_TO
-edges with score > 0.8 into data/clean. (b) Sponsor hiring and funding into data/clean
-for booth fit. (c) GET /api/refresh-events: live Bright Data call with an 8 s timeout;
-on failure return the snapshot with lastUpdated. (d) A 'pnpm ingest:check' that reports
-record counts and nulls per source. Ship each as a small PR.
-```
-
-**Session 3:**
-
-```text
-Phase 2, Session 3. Build: the Person and Session sheets; the path sheet rendering a
-GraphPath with @falkordb/canvas themed from Primer tokens, animating hops in order;
-the Schedule tab (Primer Timeline, Live-only / Rerun / Clash labels); the Ask tab
-consuming the /api/ask stream with tool steps shown live and suggested-question tokens;
-the approval sheet for draft_followup; a 'Mark as met' button on the Person sheet (POST
-/api/met/[handle], then update the graph and Follow-ups live); and /stage, a 1440px view with the
-phone UI on the left and a live graph on the right. Verify with ui-verifier.
-```
-
-**3 PM gate:** every must-have works end to end on real data: Today, People with path, Schedule reruns, Ask with streaming tools, Mark as met.
-
-### Phase 3: Integrate (15:00–16:00, Session 1 only)
-
-```text
-Phase 3. List every open PR in merge order and hand it to the human to merge (agents never
-merge). After each merge, pull main and fix integration breaks in small PRs. Run the full demo path from section 12 in the browser
-tool and fix every break, then repeat it on a real phone through PUBLIC_URL. Add DEMO_CACHE=1: cached answers for the three suggested
-questions and the booth query. Write `pnpm demo:check` that calls every route the
-demo uses and fails if any takes over 2 s or fails schema validation.
-```
-
-### Phase 4: Polish only (16:00–17:15)
-
-```text
-Phase 4: feature freeze. Run the ui-verifier subagent on every screen at 390x844 and on
-/stage at 1440x900. Produce a numbered polish list (spacing, copy, empty/loading/error
-states, contrast, tap targets, animation timing), then fix it top to bottom in small PRs.
-No new features, no new dependencies.
-```
-
-**Cut list, in this order, if a gate slips:** 1) Expo tab, 2) Bright Data live refresh inside the agent (keep the refresh button), 3) stage view (mirror the phone instead). **Never cut:** Today feed, the path sheet, Ask with streamed tool steps, the Qodo PR history.
-
-## 11. Repo files (committed by the human at 9:00)
-
-**Repo layout**
+## 11. Repo layout
 
 ```text
 hallway/
-  CLAUDE.md                 agent rules
-  .mcp.json                 dev-time MCP servers (written by `claude mcp add --scope project`)
-  .worktreeinclude          copies .env into worktree sessions
+  CLAUDE.md  .mcp.json  .worktreeinclude  .env.example  docker-compose.yml
   .claude/agents/           reviewer.md, ui-verifier.md
   .claude/skills/ship-pr/   SKILL.md
-  docs/PLAN.md              this document, exported as Markdown
-  docs/QODO_CATCHES.md      log of real Qodo findings fixed (for the demo)
-  docker-compose.yml        falkordb + falkordb/mcpserver
-  apps/web/                 Next.js PWA, API routes, /stage
-  packages/types/           zod schemas + types: the contract (Session 1 only)
-  packages/graph/           FalkorDB client, schema, seed, queries, tests
+  docs/PLAN.md              this document
+  docs/QODO_CATCHES.md      real Qodo findings fixed (for the demo)
+  apps/web/                 Next.js PWA: app/(app) tabs, app/invite, app/stage, app/api, lib/agent
+  packages/types/           zod contract (Main only)
+  packages/graph/           client, seed, upsert, calendar (Main); queries/{feed,agenda,past} (A); queries/{people,invites,explore} (B)
   packages/mcp-hallway/     MCP server for the TrueForge agent
-  packages/ingest/          Bright Data + GitHub ingest, normalisers, embeddings
+  packages/ingest/          Bright Data + GitHub + LinkedIn ingest, normalisers, live pipeline, budget guard
   data/fixtures/            hand-written test graph
-  data/clean/               committed snapshots
+  data/clean/               committed snapshots (+ live-<conf>.json)
   data/raw/                 gitignored
 ```
 
-The committed files themselves (`CLAUDE.md`, `.env.example`, `.worktreeinclude`, `.claude/agents/*.md`, `.claude/skills/ship-pr/SKILL.md`) are the source of truth for their contents.
-
-## 12. Demo path (what Phase 3 and demo:check must support)
-
-The 3-minute demo follows one user through one morning at GitHub Universe. Every step below must work on real data, on a phone through PUBLIC\_URL and on /stage, and be covered by pnpm demo:check. With DEMO\_CACHE=1, the suggested-question chips must return cached answers; /api/refresh-events must fall back to the snapshot with lastUpdated.
+## 12. Demo path (3 minutes; what integration and `pnpm demo:check` must support)
 
 | Time | On screen |
 | --- | --- |
-| 0:00–0:20 | Title slide, then the phone |
-| 0:20–0:45 | Onboarding with the demo profile: GitHub repos and deps load live |
-| 0:45–1:25 | Today feed → tap "Meet Priya" → path animates in stage view |
-| 1:25–1:55 | Schedule tab → a talk marked Rerun → open the earlier recording |
-| 1:55–2:20 | Ask: "Which booths should I visit?" (suggested chip) → streamed tool steps → ranked booths |
-| 2:20–2:45 | Tap "Mark as met" on Priya's card → edge appears live in the stage graph → follow-up email drafted, approval sheet shown |
-| 2:45–3:00 | Two Qodo catches, then the stack slide with the QR code so judges can try it |
+| 0:00–0:15 | Title, then the phone |
+| 0:15–0:50 | Chat: tap "GitHub Universe 2026", pick goals (Networking, Learn AI tooling), paste a LinkedIn URL and GitHub username. Profile data streams in; confirm the profile card |
+| 0:50–1:20 | My Feed: an empty calendar fills as suggested cards are confirmed. Agenda / Now: + a talk; a second + shows the **clash warning**; one talk tagged **Rerun** |
+| 1:20–1:55 | People: swipe left twice, right once. The deck re-ranks ("Learning from your picks"). Tap the "3 hops" chip and the path animates in |
+| 1:55–2:25 | The right swipe opens the invite sheet → Send → a judge scans the invite QR and taps **Accept** → the meeting appears in My Feed's calendar |
+| 2:25–2:45 | Agenda / Past: the graph shows today's choices, including the new meeting edge. Optional: type a different conference in chat and its live ingest counts start streaming |
+| 2:45–3:00 | Two Qodo catches, then the stack slide with the QR code |
 
-(Names like "Priya" are placeholders; use a real public speaker from the scraped data.)
+With `DEMO_CACHE=1`, chat answers for the scripted chips and the LinkedIn fetch for the demo profile are served from cache. `pnpm demo:check` calls every section 5.3 route the demo uses and fails on errors, schema mismatches, or responses over 2 s (streams: time to first event).
+
+`DEMO_HANDLE` names the Person handle "Use demo profile" loads: `demo` with fixtures; set it to the real persona once `data/clean` includes them.
 
 ## Sources
 
-- [Your guide to GitHub Universe 2026 (GitHub Blog)](https://github.blog/news-insights/company-news/your-guide-to-github-universe-2026-is-here-the-schedule-just-launched/)
-- [10 GitHub Universe 2026 sessions not to miss (Cloudsmith)](https://cloudsmith.com/blog/10-github-universe-2026-sessions-not-to-miss)
-- [TrueForge repository and README](https://github.com/truefoundry/trueforge)
-- [FalkorDB Canvas](https://docs.falkordb.com/browser/canvas)
-- [FalkorDB MCP Server](https://github.com/FalkorDB/FalkorDB-MCPServer)
-- [Bright Data Scraper API overview](https://docs.brightdata.com/scraping-automation/web-data-apis/web-scraper-api/overview)
-- [Bright Data social media scraper APIs](https://docs.brightdata.com/api-reference/scrapers/social-media-apis/overview.md)
-- [Luma scraper notes on guest-list visibility](https://apify.com/lukas_bekr/apify-luma-scraper)
-- [Primer React on npm](https://npmjs.com/package/@primer/react)
-- [Primer agent eval: Primer v38 in Next.js App Router](https://primer.github.io/agent-eval/experiments/baseline/runs/2026-07-29)
-- [Claude Code: common workflows (plan mode, worktrees, subagents)](https://code.claude.com/docs/en/common-workflows.md)
-- [Claude Code: worktrees and .worktreeinclude](https://code.claude.com/docs/en/worktrees.md)
-- [Claude Code: subagents](https://code.claude.com/docs/en/sub-agents.md)
-- [Claude Code: MCP](https://code.claude.com/docs/en/mcp.md)
-- [Cloudflare Quick Tunnels (no account; no SSE; URL changes per run)](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/)
+- [GitHub Universe 2026 guide (GitHub Blog)](https://github.blog/news-insights/company-news/your-guide-to-github-universe-2026-is-here-the-schedule-just-launched/)
+- [TrueForge](https://github.com/truefoundry/trueforge) · [FalkorDB Canvas](https://docs.falkordb.com/browser/canvas) · [FalkorDB MCP Server](https://github.com/FalkorDB/FalkorDB-MCPServer)
+- [Bright Data Scraper API](https://docs.brightdata.com/scraping-automation/web-data-apis/web-scraper-api/overview) · [Bright Data social media scrapers](https://docs.brightdata.com/api-reference/scrapers/social-media-apis/overview.md)
+- [Primer React](https://npmjs.com/package/@primer/react) · [Cloudflare Quick Tunnels](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/)
+- [Google Calendar event template URL parameters](https://github.com/InteractionDesignFoundation/add-event-to-calendar-docs/blob/main/services/google.md)
+- [Claude Code docs: workflows, worktrees, subagents, MCP](https://code.claude.com/docs/en/common-workflows.md)

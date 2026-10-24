@@ -3,6 +3,21 @@
     "falkordb": {
       "type": "http",
       "url": "http://localhost:8080/mcp"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@0.0.83",
+        "--browser",
+        "chromium",
+        "--headless",
+        "--isolated",
+        "--viewport-size",
+        "390x844"
+      ],
+      "env": {}
     }
   }
 }

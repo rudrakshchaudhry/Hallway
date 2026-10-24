@@ -18,3 +18,4 @@ Real findings from Qodo's PR reviews that we fixed. Used in the demo (section 12
 | [#3](https://github.com/rudrakshchaudhry/Hallway/pull/3) | Schema defaults applied per source before merging, so a later source could reset stars, abstracts and opt-ins | Merge raw objects, then validate |
 | [#3](https://github.com/rudrakshchaudhry/Hallway/pull/3) | GraphPath accepted disconnected "proof" walks | Edge i must join node i and i+1 |
 | [#3](https://github.com/rudrakshchaudhry/Hallway/pull/3) | One failed FalkorDB connect was cached forever, breaking every later request | Clear the cached promise on failure |
+| [#4](https://github.com/rudrakshchaudhry/Hallway/pull/4) | `demo:check` only checked `/api/health`, so it would pass with every demo route broken | Checks every demo route; fails until each responds in under 2 s |
