@@ -101,7 +101,7 @@ The hallway-tools MCP server exposes about six tools: `people_to_meet`, `explain
 
 ### 5.1 Corrections from the docs check (Oct 24, these override the text above)
 
-- **TrueForge only registers remote MCP servers** (streamable HTTP or SSE, no stdio). `packages/mcp-hallway` runs as a streamable-HTTP MCP server on localhost; the FalkorDB MCP uses the `falkordb/mcpserver` Docker image (HTTP on 8080, `FALKORDB_DEFAULT_READONLY=true` for the agent); Bright Data MCP, if used, is the hosted `https://mcp.brightdata.com/mcp` endpoint. [TrueForge](https://github.com/truefoundry/trueforge) · [FalkorDB MCP](https://github.com/FalkorDB/FalkorDB-MCPServer)
+- **TrueForge only registers remote MCP servers** (streamable HTTP or SSE, no stdio). `packages/mcp-hallway` runs as a streamable-HTTP MCP server on localhost; the FalkorDB MCP uses the `falkordb/mcpserver` Docker image (HTTP on 8080, `FALKORDB_DEFAULT_READONLY=true`). Read-only is only a default that `query_graph` callers can override, so the TrueForge agent registers it with `enableTools: ["query_graph_readonly", "list_graphs", "get_graph_schema", "get_node_schema", "get_relationship_schema"]` and never gets `query_graph` or `delete_graph`; Bright Data MCP, if used, is the hosted `https://mcp.brightdata.com/mcp` endpoint. [TrueForge](https://github.com/truefoundry/trueforge) · [FalkorDB MCP](https://github.com/FalkorDB/FalkorDB-MCPServer)
 - **Tool approvals are configured through the API only**, not the UI. A setup script in `apps/web/lib/agent` creates the agent with `requireApprovalForTools: ["draft_followup"]` (literal names, not `@write`) and writes its id to `TRUEFORGE_AGENT_ID`.
 - **Model provider:** OpenAI is registered in the local TrueForge (port 8790) with models `gpt-5-2` (agent) and `gpt-5-mini` (cheap calls); address them as `openai/gpt-5-2`. Model names must be lowercase with hyphens only.
 - **TrueForge → Next.js is SSE on localhost;** `/api/ask` re-emits it to the phone as NDJSON. The tunnel never carries SSE.
@@ -162,7 +162,7 @@ This covers the hiring signal only. If Expo survives the cut list, extend the ra
 ```cypher
 MATCH (a:Person {handle: $me}), (b:Person {handle: $them})
 MERGE (a)-[m:MET]->(b)
-ON CREATE SET m.at = timestamp(), m.via = 'button'
+ON CREATE SET m.at = timestamp(), m.via = 'button', m.id = a.id + '|MET|' + b.id
 ```
 
 The `SIMILAR_TO` score is computed once during ingest (OpenAI embeddings of title + abstract, cosine similarity), not at query time, so the Schedule tab loads instantly.
@@ -194,7 +194,7 @@ Bright Data documents scrapers for LinkedIn (profiles, companies, jobs, posts) a
 
 **Snapshot strategy**
 
-1. Every ingest script writes raw results to `data/raw/<source>-<timestamp>.json`, then a normaliser writes `data/clean/*.json`.
+1. Every ingest script writes raw results to `data/raw/<source>-<timestamp>.json`, then a normaliser writes `data/clean/<source>.json` in the `GraphSnapshot` format from `packages/types` (stable ids like `person:<handle>`, `talk:<slug>`; drop null keys; validate each record and skip bad ones instead of failing the file). `pnpm seed` merges every `data/clean/*.json` (same id = same node) and only falls back to `data/fixtures` when `data/clean` is empty.
 2. A loader script wipes and rebuilds the graph from `data/clean/` in under a minute (`pnpm seed`).
 3. Commit the clean snapshots to the repo by 12:00. From then on the app never waits on a scraper.
 4. One "Refresh side events" button triggers a live Bright Data call on stage. On failure or timeout (8 s), it shows the cached result with a "last updated" time. That is the failure-handling story for the Bright Data judges.

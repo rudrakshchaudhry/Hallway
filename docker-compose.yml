@@ -1,0 +1,43 @@
+# Everything stays on localhost; only the Next.js app is exposed (through the tunnel).
+services:
+  falkordb:
+    image: falkordb/falkordb@sha256:0fb85036662ce3d1206530a38fdf7df5a92b1fb31ad23087f8d4e89038ce0812 # latest as of 2026-10-24 (FalkorDB 6.0.3)
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - falkordb-data:/var/lib/falkordb/data # the image's FALKORDB_DATA_PATH
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  falkordb-mcp:
+    image: falkordb/mcpserver@sha256:a12b46009173c967d8ba04b5ae82bab1b4bb4a83a06ec45be6273fcf8984cdca # latest as of 2026-10-24
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      MCP_TRANSPORT: http
+      MCP_PORT: "8080"
+      FALKORDB_DEFAULT_READONLY: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    healthcheck:
+      # Healthy only when an MCP initialize on /mcp succeeds.
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://localhost:8080/mcp',{method:'POST',headers:{'content-type':'application/json',accept:'application/json, text/event-stream'},
+          body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'healthcheck',version:'0'}}})})
+          .then(r=>process.exit(r.ok?0:1),()=>process.exit(1))
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  falkordb-data:

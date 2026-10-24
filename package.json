@@ -1,6 +1,28 @@
 {
   "name": "hallway",
   "private": true,
-  "version": "0.0.0",
-  "description": "Today feed. Frontend is the mobile app. Backend holds the loaders and the fixed prompt. See docs/FEATURES.md."
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=22.14"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "seed": "pnpm --filter @hallway/graph --fail-if-no-match seed",
+    "test": "vitest run",
+    "typecheck": "tsc -p . && pnpm -r typecheck",
+    "lint": "eslint .",
+    "demo:check": "tsx --env-file-if-exists=.env scripts/demo-check.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.13.0",
+    "eslint-config-next": "16.4.3",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5",
+    "zod": "^4.6.7"
+  }
 }
