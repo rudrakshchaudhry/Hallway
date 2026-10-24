@@ -1,7 +1,7 @@
 # Everything stays on localhost; only the Next.js app is exposed (through the tunnel).
 services:
   falkordb:
-    image: falkordb/falkordb:latest
+    image: falkordb/falkordb@sha256:0fb85036662ce3d1206530a38fdf7df5a92b1fb31ad23087f8d4e89038ce0812 # latest as of 2026-10-24 (FalkorDB 6.0.3)
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
@@ -13,7 +13,7 @@ services:
       retries: 10
 
   falkordb-mcp:
-    image: falkordb/mcpserver:latest
+    image: falkordb/mcpserver@sha256:a12b46009173c967d8ba04b5ae82bab1b4bb4a83a06ec45be6273fcf8984cdca # latest as of 2026-10-24
     environment:
       FALKORDB_HOST: falkordb
       FALKORDB_PORT: "6379"

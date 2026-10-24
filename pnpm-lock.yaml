@@ -200,7 +200,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/types
       '@next/env':
-        specifier: 16.4.3
+        specifier: ^16.4.3
         version: 16.4.3
       '@primer/octicons-react':
         specifier: ^19.42.0

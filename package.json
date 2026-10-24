@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter web dev",
-    "seed": "pnpm --filter @hallway/graph seed",
+    "seed": "pnpm --filter @hallway/graph --fail-if-no-match seed",
     "test": "vitest run",
     "typecheck": "tsc -p . && pnpm -r typecheck",
     "lint": "eslint .",

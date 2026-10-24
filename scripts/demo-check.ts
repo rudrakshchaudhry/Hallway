@@ -13,8 +13,8 @@ for (const { path, schema } of checks) {
   const start = performance.now();
   try {
     const res = await fetch(base + path, { signal: AbortSignal.timeout(LIMIT_MS) });
-    const ms = Math.round(performance.now() - start);
     const parsed = schema.safeParse(await res.json());
+    const ms = Math.round(performance.now() - start);
     const ok = res.ok && parsed.success && ms <= LIMIT_MS;
     if (!ok) failed++;
     console.log(`${ok ? "PASS" : "FAIL"} ${path} ${res.status} ${ms}ms${parsed.success ? "" : " schema mismatch"}`);
