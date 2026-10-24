@@ -19,3 +19,6 @@ Real findings from Qodo's PR reviews that we fixed. Used in the demo (section 12
 | [#3](https://github.com/rudrakshchaudhry/Hallway/pull/3) | GraphPath accepted disconnected "proof" walks | Edge i must join node i and i+1 |
 | [#3](https://github.com/rudrakshchaudhry/Hallway/pull/3) | One failed FalkorDB connect was cached forever, breaking every later request | Clear the cached promise on failure |
 | [#4](https://github.com/rudrakshchaudhry/Hallway/pull/4) | `demo:check` only checked `/api/health`, so it would pass with every demo route broken | Checks every demo route; fails until each responds in under 2 s |
+| [#6](https://github.com/rudrakshchaudhry/Hallway/pull/6) | Cookie signing fell back to a public hard-coded secret, so anyone could forge a login as any user | Random per-process secret when COOKIE_SECRET is unset |
+| [#6](https://github.com/rudrakshchaudhry/Hallway/pull/6) | Upserts wrote schema defaults over stored values: a profile save could clear isUser and wipe abstracts or star counts | Write only supplied fields; never demote isUser |
+| [#6](https://github.com/rudrakshchaudhry/Hallway/pull/6) | Reseed dropped meetings recorded from the other side and the user's repo dependencies | Carry incoming MET/SWIPED and second-hop DEPENDS_ON |
