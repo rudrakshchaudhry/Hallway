@@ -12,10 +12,27 @@ export const Person = z.object({
   handle: z.string(),
   name: z.string(),
   role: z.string().optional(),
+  headline: z.string().optional(),
+  about: z.string().optional(),
   avatar: z.url().optional(),
   linkedin: z.url().optional(),
   github: z.string().optional(),
   optedIn: z.boolean().default(false),
+  /** True for people who onboarded themselves; their subgraph survives reseeds. */
+  isUser: z.boolean().default(false),
+});
+
+export const Conference = z.object({
+  label: z.literal("Conference"),
+  id,
+  name: z.string(),
+  start: isoDate,
+  end: isoDate,
+  city: z.string().optional(),
+  venue: z.string().optional(),
+  url: z.url().optional(),
+  source: z.enum(["snapshot", "live"]),
+  status: z.enum(["ready", "ingesting", "failed"]).default("ready"),
 });
 
 export const Company = z.object({
@@ -23,6 +40,7 @@ export const Company = z.object({
   id,
   name: z.string(),
   funding: z.string().optional(),
+  /** Optional, unused by the v2 UI. */
   booth: z.string().optional(),
 });
 
@@ -40,13 +58,17 @@ export const Package = z.object({
   ecosystem: z.enum(["npm", "pypi", "go", "cargo", "maven", "rubygems", "other"]),
 });
 
+export const TalkKind = z.enum(["talk", "workshop", "keynote", "panel", "other"]);
+
 export const Talk = z.object({
   label: z.literal("Talk"),
   id,
   title: z.string(),
   abstract: z.string().default(""),
+  kind: TalkKind.default("talk"),
   start: isoDate,
-  end: isoDate.optional(),
+  /** Normalisers fill a missing end with start + 45 min (90 for workshops). */
+  end: isoDate,
   room: z.string().optional(),
 });
 
@@ -67,13 +89,34 @@ export const SideEvent = z.object({
   end: isoDate.optional(),
   venue: z.string().optional(),
   url: z.url().optional(),
+  source: z.string().optional(),
 });
+
+export const GoalId = z.enum(["networking", "learn", "job", "hire", "collaborate", "fundraise"]);
 
 export const Skill = z.object({ label: z.literal("Skill"), id, name: z.string() });
 export const Topic = z.object({ label: z.literal("Topic"), id, name: z.string() });
+export const Goal = z.object({ label: z.literal("Goal"), id, name: z.string(), goal: GoalId });
+
+export const MeetingStatus = z.enum(["pending", "accepted", "declined"]);
+
+export const Meeting = z.object({
+  label: z.literal("Meeting"),
+  id,
+  /** sha256 of the invite token; the token itself is never stored. */
+  tokenHash: z.string(),
+  start: isoDate,
+  end: isoDate,
+  place: z.string(),
+  note: z.string().default(""),
+  status: MeetingStatus,
+  createdAt: z.number().int(),
+  respondedAt: z.number().int().optional(),
+});
 
 export const Node = z.discriminatedUnion("label", [
   Person,
+  Conference,
   Company,
   Repo,
   Package,
@@ -82,10 +125,13 @@ export const Node = z.discriminatedUnion("label", [
   SideEvent,
   Skill,
   Topic,
+  Goal,
+  Meeting,
 ]);
 
 export const NodeLabel = z.enum([
   "Person",
+  "Conference",
   "Company",
   "Repo",
   "Package",
@@ -94,30 +140,38 @@ export const NodeLabel = z.enum([
   "SideEvent",
   "Skill",
   "Topic",
+  "Goal",
+  "Meeting",
 ]);
 
 export type Person = z.infer<typeof Person>;
+export type Conference = z.infer<typeof Conference>;
 export type Company = z.infer<typeof Company>;
 export type Repo = z.infer<typeof Repo>;
 export type Package = z.infer<typeof Package>;
+export type TalkKind = z.infer<typeof TalkKind>;
 export type Talk = z.infer<typeof Talk>;
 export type PastTalk = z.infer<typeof PastTalk>;
 export type SideEvent = z.infer<typeof SideEvent>;
+export type GoalId = z.infer<typeof GoalId>;
 export type Skill = z.infer<typeof Skill>;
 export type Topic = z.infer<typeof Topic>;
+export type Goal = z.infer<typeof Goal>;
+export type MeetingStatus = z.infer<typeof MeetingStatus>;
+export type Meeting = z.infer<typeof Meeting>;
 export type Node = z.infer<typeof Node>;
 export type NodeLabel = z.infer<typeof NodeLabel>;
 
 /** Short display name for any node, used in path hops and graph captions. */
 export function nodeName(node: Node): string {
   switch (node.label) {
-    case "Person":
-      return node.name;
     case "Repo":
       return node.fullName;
     case "Talk":
     case "PastTalk":
       return node.title;
+    case "Meeting":
+      return `Meeting at ${node.place}`;
     default:
       return node.name;
   }

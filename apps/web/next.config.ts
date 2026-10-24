@@ -6,7 +6,9 @@ import type { NextConfig } from "next";
 loadEnvConfig(path.resolve(import.meta.dirname, "../.."));
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@hallway/types"],
+  transpilePackages: ["@hallway/types", "@hallway/graph"],
+  // The falkordb client is Node-only; keep it out of the bundle.
+  serverExternalPackages: ["falkordb"],
   // Lets phones reach the dev server through the Cloudflare quick tunnel.
   allowedDevOrigins: ["*.trycloudflare.com"],
 };

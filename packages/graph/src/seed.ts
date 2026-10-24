@@ -1,10 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { NodeLabel, edgeId, mergeSnapshots, validateSnapshot, type GraphSnapshot } from "@hallway/types";
+import { Edge, Node, NodeLabel, edgeId, mergeSnapshots, validateSnapshot, type GraphSnapshot } from "@hallway/types";
 import type { FalkorDB } from "falkordb";
+import { mergeInto } from "./write.ts";
 
 const ROOT = path.resolve(import.meta.dirname, "../../..");
 export const CLEAN_DIR = path.join(ROOT, "data/clean");
+export const LIVE_DIR = path.join(ROOT, "data/live");
 export const FIXTURE_SNAPSHOT = path.join(ROOT, "data/fixtures/graph.json");
 
 function readSnapshot(file: string) {
@@ -16,14 +18,15 @@ function readSnapshot(file: string) {
 }
 
 /**
- * Every data/clean/*.json (one per ingest source) merged into one graph, or the
- * hand-written fixtures when data/clean has none yet.
+ * Every data/clean/*.json (one per ingest source) plus data/live/*.json (live-ingested
+ * conferences) merged into one graph; the hand-written fixtures stand in for data/clean
+ * until it has files.
  */
 export function loadSnapshot(files?: string[]) {
-  const clean = existsSync(CLEAN_DIR)
-    ? readdirSync(CLEAN_DIR).filter((f) => f.endsWith(".json")).sort().map((f) => path.join(CLEAN_DIR, f))
-    : [];
-  const sources = files ?? (clean.length ? clean : [FIXTURE_SNAPSHOT]);
+  const list = (dir: string) =>
+    existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".json") && f !== "budget.json").sort().map((f) => path.join(dir, f)) : [];
+  const clean = list(CLEAN_DIR);
+  const sources = files ?? [...(clean.length ? clean : [FIXTURE_SNAPSHOT]), ...list(LIVE_DIR)];
   return { files: sources, snapshot: validateSnapshot(mergeSnapshots(sources.map(readSnapshot))) };
 }
 
@@ -35,17 +38,52 @@ async function deleteIfExists(db: FalkorDB, name: string) {
   }
 }
 
-/** MET edges written by the running app since the last seed; a reseed must keep them. */
-async function readRuntimeMeetings(db: FalkorDB, name: string) {
-  if (!(await db.list()).includes(name)) return [];
-  const res = await db.selectGraph(name).roQuery<{ from: string; to: string; at: number; via: string; id: string }>(
-    "MATCH (a:Person)-[m:MET]->(b:Person) RETURN a.id AS from, b.id AS to, m.at AS at, m.via AS via, m.id AS id",
+type RawNode = { labels: string[]; properties: Record<string, unknown> };
+
+const asNode = (raw: RawNode) => Node.safeParse({ label: raw.labels[0], ...raw.properties });
+
+/**
+ * The user's runtime subgraph (PLAN.md 6.4): every isUser Person, every edge out of them,
+ * the nodes those edges reach, and Meeting-[:WITH]->Person edges. Nodes that fail the
+ * contract are skipped with a warning rather than blocking the reseed.
+ */
+async function readUserSubgraph(db: FalkorDB, name: string) {
+  if (!(await db.list()).includes(name)) return { nodes: [] as Node[], edges: [] as Edge[] };
+  const graph = db.selectGraph(name);
+  const nodes = new Map<string, Node>();
+  const edges: Edge[] = [];
+  const keep = (raw: RawNode | null) => {
+    if (!raw) return undefined;
+    const parsed = asNode(raw);
+    if (!parsed.success) {
+      console.warn(`seed: skipping runtime node ${String(raw.properties.id)}: ${parsed.error.issues[0]?.message}`);
+      return undefined;
+    }
+    nodes.set(parsed.data.id, parsed.data);
+    return parsed.data.id;
+  };
+  const addEdge = (type: string, from: string | undefined, to: string | undefined, props: Record<string, unknown>) => {
+    if (!from || !to) return;
+    const { id: _id, ...rest } = props;
+    const parsed = Edge.safeParse({ type, from, to, props: Object.keys(rest).length ? rest : undefined });
+    if (parsed.success) edges.push(parsed.data);
+  };
+
+  const users = await graph.roQuery<{ u: RawNode }>("MATCH (u:Person {isUser: true}) RETURN u");
+  for (const row of users.data ?? []) keep(row.u);
+  const out = await graph.roQuery<{ u: RawNode; type: string; props: Record<string, unknown>; n: RawNode }>(
+    "MATCH (u:Person {isUser: true})-[r]->(n) RETURN u, type(r) AS type, properties(r) AS props, n",
   );
-  return res.data ?? [];
+  for (const row of out.data ?? []) addEdge(row.type, keep(row.u), keep(row.n), row.props);
+  const withs = await graph.roQuery<{ m: RawNode; props: Record<string, unknown>; p: RawNode }>(
+    "MATCH (:Person {isUser: true})-[:ORGANIZES]->(m:Meeting)-[w:WITH]->(p:Person) RETURN m, properties(w) AS props, p",
+  );
+  for (const row of withs.data ?? []) addEdge("WITH", keep(row.m), keep(row.p), row.props);
+  return { nodes: [...nodes.values()], edges };
 }
 
 /**
- * Builds the graph in `<name>_next`, carries over MET edges recorded at runtime, then
+ * Builds the graph in `<name>_next`, carries over the user's runtime subgraph, then
  * swaps it in with an atomic RENAME, so the live graph is never missing or half-loaded.
  * Labels and relationship types can't be Cypher parameters, so they are interpolated only
  * after validation against the zod enums; every value is a parameter.
@@ -55,7 +93,7 @@ export async function seedGraph(db: FalkorDB, name: string, input: GraphSnapshot
   const staging = `${name}_next`;
   await deleteIfExists(db, staging);
   const graph = db.selectGraph(staging);
-  const labelOf = new Map(snapshot.nodes.map((n) => [n.id, n.label]));
+  const snapshotLabels = new Map(snapshot.nodes.map((n) => [n.id, n.label]));
 
   for (const label of NodeLabel.options) {
     const rows = snapshot.nodes.filter((n) => n.label === label).map(({ label: _label, ...props }) => props);
@@ -68,7 +106,7 @@ export async function seedGraph(db: FalkorDB, name: string, input: GraphSnapshot
   type EdgeRow = { from: string; to: string; props: Record<string, string | number | boolean> };
   const groups = new Map<string, EdgeRow[]>();
   for (const edge of snapshot.edges) {
-    const key = `${labelOf.get(edge.from)}|${edge.type}|${labelOf.get(edge.to)}`;
+    const key = `${snapshotLabels.get(edge.from)}|${edge.type}|${snapshotLabels.get(edge.to)}`;
     const rows = groups.get(key) ?? [];
     rows.push({ from: edge.from, to: edge.to, props: { ...edge.props, id: edgeId(edge) } });
     groups.set(key, rows);
@@ -83,20 +121,15 @@ export async function seedGraph(db: FalkorDB, name: string, input: GraphSnapshot
     );
   }
 
-  const inSnapshot = new Set(snapshot.edges.filter((e) => e.type === "MET").map(edgeId));
-  const meetings = (await readRuntimeMeetings(db, name))
-    .map((m) => ({ ...m, id: m.id ?? edgeId({ from: m.from, type: "MET", to: m.to }) }))
-    .filter((m) => !inSnapshot.has(m.id));
-  if (meetings.length) {
-    await graph.query(
-      `UNWIND $rows AS row
-       MATCH (a:Person {id: row.from}), (b:Person {id: row.to})
-       MERGE (a)-[m:MET]->(b)
-       ON CREATE SET m.at = row.at, m.via = row.via, m.id = row.id`,
-      { params: { rows: meetings } },
-    );
-  }
+  // Snapshot nodes win, except users and meetings, which only the running app writes.
+  const runtime = await readUserSubgraph(db, name);
+  const inSnapshot = new Set(snapshot.nodes.map((n) => n.id));
+  const runtimeNodes = runtime.nodes.filter((n) => !inSnapshot.has(n.id) || n.label === "Meeting" || (n.label === "Person" && n.isUser));
+  const knownEdges = new Set(snapshot.edges.map(edgeId));
+  const runtimeEdges = runtime.edges.filter((e) => !knownEdges.has(edgeId(e)));
+  const labelOf = new Map<string, Node["label"]>([...snapshot.nodes, ...runtime.nodes].map((n) => [n.id, n.label]));
+  await mergeInto(graph, runtimeNodes, runtimeEdges, labelOf);
 
   await (await db.connection).rename(staging, name);
-  return { nodes: snapshot.nodes.length, edges: snapshot.edges.length, keptMeetings: meetings.length };
+  return { nodes: snapshot.nodes.length, edges: snapshot.edges.length, keptRuntimeEdges: runtimeEdges.length };
 }

@@ -54,17 +54,26 @@ describe("seedGraph", () => {
     expect(nodes.data?.[0]?.c).toBe(snapshot.nodes.length);
   });
 
-  it("keeps meetings recorded at runtime across a reseed", async () => {
+  it("keeps the user's runtime subgraph across a reseed", async () => {
+    // What the app writes at runtime: a swipe, a new interest node, and a meeting with its WITH edge.
     await graph.query(
-      `MATCH (a:Person {handle: $me}), (b:Person {handle: $them})
-       MERGE (a)-[m:MET]->(b) ON CREATE SET m.at = timestamp(), m.via = 'button', m.id = a.id + '|MET|' + b.id`,
-      { params: { me: "demo", them: "priya-r" } },
+      `MATCH (u:Person {id: 'person:demo'}), (p:Person {id: 'person:jo'})
+       MERGE (u)-[s:SWIPED]->(p) SET s.dir = 'left', s.at = 1, s.id = 'person:demo|SWIPED|person:jo'
+       MERGE (t:Topic {id: 'topic:rust'}) SET t.name = 'Rust'
+       MERGE (u)-[i:INTERESTED_IN]->(t) SET i.id = 'person:demo|INTERESTED_IN|topic:rust'
+       CREATE (m:Meeting {id: 'meeting:runtime', tokenHash: 'h', start: '2026-10-28T11:00:00-07:00',
+                          end: '2026-10-28T11:30:00-07:00', place: 'Lobby', note: '', status: 'accepted', createdAt: 1})
+       CREATE (u)-[:ORGANIZES {id: 'person:demo|ORGANIZES|meeting:runtime'}]->(m)
+       CREATE (m)-[:WITH {id: 'meeting:runtime|WITH|person:jo'}]->(p)`,
     );
     const counts = await seedGraph(await getDb(), NAME, snapshot);
-    expect(counts.keptMeetings).toBeGreaterThanOrEqual(1);
-    const res = await graph.query<{ via: string }>(
-      "MATCH (:Person {handle: 'demo'})-[m:MET]->(:Person {handle: 'priya-r'}) RETURN m.via AS via",
+    expect(counts.keptRuntimeEdges).toBe(4);
+    const res = await graph.query<{ swipe: string; topic: string; withName: string }>(
+      `MATCH (u:Person {id: 'person:demo'})-[s:SWIPED]->(:Person {id: 'person:jo'}),
+             (u)-[:INTERESTED_IN]->(t:Topic {id: 'topic:rust'}),
+             (u)-[:ORGANIZES]->(:Meeting {id: 'meeting:runtime'})-[:WITH]->(p:Person)
+       RETURN s.dir AS swipe, t.name AS topic, p.name AS withName`,
     );
-    expect(res.data?.[0]?.via).toBe("button");
+    expect(res.data?.[0]).toEqual({ swipe: "left", topic: "Rust", withName: "Jo Tanaka" });
   });
 });
