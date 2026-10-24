@@ -1,4 +1,3 @@
-import "./env";
 import { getGraph, getProfileSummary, listConferences, listTopics } from "@hallway/graph";
 import { GoalId, type ChatEvent, type ProfileDraft } from "@hallway/types";
 import { demoPersonId } from "./identity";

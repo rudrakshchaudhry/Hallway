@@ -1,9 +1,7 @@
-import path from "node:path";
-import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
 
-// One .env at the repo root is shared by every package and session.
-loadEnvConfig(path.resolve(import.meta.dirname, "../.."));
+// One .env at the repo root is shared by every package and session: the dev/build/start
+// scripts symlink it to apps/web/.env so Next loads it natively in every worker.
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@hallway/types", "@hallway/graph"],
