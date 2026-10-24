@@ -389,6 +389,15 @@ PR #5 (merged before the track split) added a separate `frontend/` app, `backend
 
 **Never cut:** chat onboarding, My Feed calendar + cards, swipe deck with learning, Agenda Now with clash warnings, the Past graph, the Qodo PR history.
 
+## 10.1 What was actually built (16:45)
+
+- **One product, built by Main** after the tracks' PRs didn't land in time; the teammate's `dev` work (Google Calendar OAuth, day calendar, conference-link suggestions) is merged into My Feed, Agenda and Explore.
+- **Google Calendar:** OAuth (read-only scope) instead of the iCal link; the encrypted session is bound to the Hallway person. Needs `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI`; without them the Google parts hide. OAuth redirects work on localhost; on phones via the tunnel the redirect URI must match `PUBLIC_URL`.
+- **Calendar:** add *and remove* (`POST`/`DELETE /api/calendar`); adding a side event with a registration page opens a "Register on Luma" sheet.
+- **GitHub contribution heatmap** (GraphQL) in the onboarding profile card and on My Feed.
+- **Not built (cut list):** stage view (stub route), TrueForge agent behind the chat button (the button reopens onboarding), LinkedIn URL/PDF onboarding, full live ingest (the Explore form covers single-page conference links).
+- **Demo on the production build** (`pnpm --filter web build && pnpm --filter web start`): `next dev` reload-loops in browsers here because its watcher sees Next's own log writes.
+
 ## 11. Repo layout
 
 ```text
