@@ -1,0 +1,20 @@
+{
+  "name": "@hallway/ingest",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "budget": "tsx --env-file-if-exists=../../.env src/budget-cli.ts",
+    "sample:sessions": "tsx --env-file-if-exists=../../.env src/samples/sessions.ts",
+    "sample:speakers": "tsx --env-file-if-exists=../../.env src/samples/speakers.ts",
+    "sample:past-talks": "tsx --env-file-if-exists=../../.env src/samples/past-talks.ts",
+    "sample:side-events": "tsx --env-file-if-exists=../../.env src/samples/side-events.ts",
+    "sample:jobs": "tsx --env-file-if-exists=../../.env src/samples/jobs.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5"
+  }
+}
