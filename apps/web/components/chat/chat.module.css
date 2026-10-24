@@ -1,0 +1,122 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--base-size-12) var(--base-size-16);
+  border-bottom: var(--borderWidth-thin) solid var(--borderColor-muted);
+}
+
+.brand {
+  margin: 0;
+  font-size: var(--text-title-size-medium);
+  font-weight: var(--base-text-weight-semibold);
+}
+
+.log {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--base-size-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-12);
+}
+
+.bubble {
+  max-width: 85%;
+  margin: 0;
+  padding: var(--base-size-8) var(--base-size-12);
+  border-radius: var(--borderRadius-large);
+  line-height: var(--text-body-lineHeight-medium);
+  white-space: pre-wrap;
+}
+
+.bot {
+  align-self: flex-start;
+  background: var(--bgColor-muted);
+}
+
+.user {
+  align-self: flex-end;
+  background: var(--bgColor-accent-emphasis);
+  color: var(--fgColor-onEmphasis);
+}
+
+.error {
+  align-self: flex-start;
+  margin: 0;
+  color: var(--fgColor-danger);
+}
+
+.step {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: var(--base-size-8);
+  margin: 0;
+  color: var(--fgColor-muted);
+  font-size: var(--text-body-size-small);
+}
+
+.card {
+  align-self: stretch;
+  padding: var(--base-size-16);
+  border: var(--borderWidth-thin) solid var(--borderColor-default);
+  border-radius: var(--borderRadius-large);
+  background: var(--bgColor-default);
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--text-title-size-small);
+  font-weight: var(--base-text-weight-semibold);
+}
+
+.muted {
+  margin: 0;
+  color: var(--fgColor-muted);
+  font-size: var(--text-body-size-small);
+}
+
+.labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--base-size-4);
+}
+
+.dock {
+  padding: var(--base-size-12) var(--base-size-16) calc(var(--base-size-12) + env(safe-area-inset-bottom));
+  border-top: var(--borderWidth-thin) solid var(--borderColor-muted);
+  display: flex;
+  flex-direction: column;
+  gap: var(--base-size-8);
+}
+
+.dock:empty {
+  display: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--base-size-8);
+}
+
+.form {
+  display: flex;
+  gap: var(--base-size-8);
+}
+
+.form > :first-child {
+  flex: 1;
+}

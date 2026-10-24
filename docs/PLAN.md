@@ -385,6 +385,8 @@ PR #5 (merged before the track split) added a separate `frontend/` app, `backend
 6. live ingest for other conferences (keep Universe; say "coming soon")
 7. the public invite page (use **Mark accepted**)
 
+**Dev server and worktrees:** Turbopack watches the whole repo, including `.claude/worktrees/`. While a worktree session or subagent is writing files, the main checkout's `next dev` recompiles and reloads pages. Close worktree sessions before integration and the demo.
+
 **Never cut:** chat onboarding, My Feed calendar + cards, swipe deck with learning, Agenda Now with clash warnings, the Past graph, the Qodo PR history.
 
 ## 11. Repo layout
