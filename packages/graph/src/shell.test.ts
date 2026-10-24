@@ -5,7 +5,7 @@ import { getCalendar } from "./calendar.ts";
 import { close, getDb } from "./client.ts";
 import { getConference, listConferences } from "./conferences.ts";
 import { addPlan } from "./plans.ts";
-import { buildProfileSnapshot } from "./profile.ts";
+import { SHARED_PROFILE_LABELS, buildProfileSnapshot } from "./profile.ts";
 import { FIXTURE_SNAPSHOT, loadSnapshot, seedGraph } from "./seed.ts";
 import { upsertSnapshot } from "./upsert.ts";
 
@@ -34,6 +34,7 @@ describe("addPlan", () => {
     expect(await addPlan(graph, "person:demo", "talk:graph-search", 5)).toBe(true);
     expect(await addPlan(graph, "person:demo", "talk:graph-search", 6)).toBe(true);
     expect(await addPlan(graph, "person:demo", "talk:nope")).toBe(false);
+    expect(await addPlan(graph, "person:ghost", "talk:keynote")).toBe(false);
     const ids = (await getCalendar(graph, "person:demo")).map((i) => i.id);
     expect(ids.filter((id) => id === "talk:graph-search")).toHaveLength(1);
   });
@@ -49,8 +50,9 @@ describe("buildProfileSnapshot", () => {
         skills: ["Go", "TypeScript"],
         topics: ["ai", "Rust"],
         companies: [{ name: "Acme Cloud", current: true }, { name: "OldCo", current: false }],
-        repos: ["octo/api"],
-        packages: ["zod"],
+        repos: ["octo/api", "octo/site"],
+        packages: ["zod", "@types/node"],
+        repoPackages: { "octo/api": ["zod"] },
         sources: ["github"],
       },
       goals: ["networking", "job"],
@@ -59,7 +61,11 @@ describe("buildProfileSnapshot", () => {
       now: 1,
     });
     expect(() => validateSnapshot(snapshot)).not.toThrow();
-    await upsertSnapshot(await getDb(), NAME, snapshot);
+    expect(snapshot.edges.filter((e) => e.type === "DEPENDS_ON")).toEqual([{ type: "DEPENDS_ON", from: "repo:octo/api", to: "pkg:npm/zod" }]);
+    expect(snapshot.nodes.some((n) => n.id === "pkg:npm/@types/node")).toBe(true);
+    await upsertSnapshot(await getDb(), NAME, snapshot, { createOnly: SHARED_PROFILE_LABELS });
+    const topic = await graph.query<{ name: string }>("MATCH (t:Topic {id: 'topic:ai'}) RETURN t.name AS name");
+    expect(topic.data?.[0]?.name).toBe("AI"); // shared node not renamed to the draft's "ai"
     const res = await graph.query<{ topics: string[]; works: string; maintainer: string }>(
       `MATCH (u:Person {id: 'person:octo', isUser: true})-[:INTERESTED_IN]->(t:Topic)
        WITH u, collect(t.id) AS topics

@@ -13,9 +13,15 @@ export const slug = (s: string) =>
   s
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9.+#/-]+/g, "-")
+    .replace(/[^a-z0-9._+#/-]+/g, "-")
     .replace(/\|/g, "-")
     .replace(/^-+|-+$/g, "") || "x";
+
+/** Handle-safe slug: no "/" either, so person ids work in URLs. */
+export const handleSlug = (s: string) => slug(s).replace(/\//g, "-");
+
+/** Every label the profile writes except the user's own Person: existing nodes are shared, never overwritten. */
+export const SHARED_PROFILE_LABELS = new Set<Node["label"]>(["Conference", "Goal", "Topic", "Skill", "Company", "Repo", "Package"]);
 
 export type ProfileInput = {
   handle: string;
@@ -76,13 +82,21 @@ export function buildProfileSnapshot({ handle, draft, goals, conference, existin
     link(company.current ? "WORKS_AT" : "WORKED_AT", id);
   }
 
-  const packages = [...new Set(draft.packages)].map((name) => ({ label: "Package" as const, id: `pkg:npm/${slug(name)}`, name, ecosystem: "npm" as const }));
-  packages.forEach(add);
+  // npm names keep their scope ("@types/node"), matching ingested Package ids.
+  const pkgId = (name: string) => `pkg:npm/${name.toLowerCase()}`;
+  for (const name of new Set(draft.packages)) {
+    if (!name.includes("|")) add({ label: "Package", id: pkgId(name), name, ecosystem: "npm" });
+  }
   for (const fullName of new Set(draft.repos)) {
     const id = `repo:${slug(fullName)}`;
     add({ label: "Repo", id, fullName, stars: 0 });
     link("OWNS", id);
-    for (const pkg of packages) edges.push({ type: "DEPENDS_ON", from: id, to: pkg.id });
+    // Only the dependencies we actually read for this repo, never a cross product.
+    for (const name of draft.repoPackages?.[fullName] ?? []) {
+      if (name.includes("|")) continue;
+      add({ label: "Package", id: pkgId(name), name, ecosystem: "npm" });
+      edges.push({ type: "DEPENDS_ON", from: id, to: pkgId(name) });
+    }
   }
 
   const unique = new Map(edges.map((e) => [edgeId(e), e]));

@@ -11,13 +11,14 @@ export async function listConferences(graph: Graph): Promise<ConferenceSummary[]
      OPTIONAL MATCH (s:Person)-[:SPEAKS_AT]->(t)
      WITH c, count(DISTINCT t) AS talks, count(DISTINCT s) AS speakers
      OPTIONAL MATCH (e:SideEvent)-[:NEAR]->(c)
-     RETURN c, talks, speakers, count(DISTINCT e) AS events
-     ORDER BY c.start DESC`,
+     RETURN c, talks, speakers, count(DISTINCT e) AS events`,
   );
-  return (res.data ?? []).flatMap((row) => {
+  const list = (res.data ?? []).flatMap((row) => {
     const parsed = Conference.safeParse({ label: "Conference", ...row.c.properties });
     return parsed.success ? [{ conference: parsed.data, counts: { talks: row.talks, speakers: row.speakers, events: row.events } }] : [];
   });
+  // Sort by instant, not by string: start times may carry different UTC offsets.
+  return list.sort((a, b) => Date.parse(b.conference.start) - Date.parse(a.conference.start));
 }
 
 export async function getConference(graph: Graph, id: string) {

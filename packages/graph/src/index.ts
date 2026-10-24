@@ -4,4 +4,5 @@ export { DEFAULT_EVENT_MINUTES, conferenceDays, findClashes, freeSlots, getCalen
 // Seeding reads the filesystem; import it from "@hallway/graph/seed" in scripts and tests only.
 export { getConference, listConferences } from "./conferences.ts";
 export { addPlan } from "./plans.ts";
-export { buildProfileSnapshot, slug, type ProfileInput } from "./profile.ts";
+export { SHARED_PROFILE_LABELS, buildProfileSnapshot, handleSlug, slug, type ProfileInput } from "./profile.ts";
+export { findPerson, listTopics } from "./people.ts";

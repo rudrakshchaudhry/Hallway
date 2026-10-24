@@ -228,6 +228,8 @@ export const ProfileDraft = z.object({
   companies: z.array(z.object({ name: z.string(), current: z.boolean() })),
   repos: z.array(z.string()),
   packages: z.array(z.string()),
+  /** Which repo depends on which packages (full repo name → package names), when known. */
+  repoPackages: z.record(z.string(), z.array(z.string())).optional(),
   sources: z.array(ProfileSource),
 });
 
