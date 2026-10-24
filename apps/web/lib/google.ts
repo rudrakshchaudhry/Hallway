@@ -38,6 +38,8 @@ const SCOPES = [
 export type Session = {
   refreshToken: string;
   email: string;
+  /** The Hallway person who connected this Google account; other profiles never see it. */
+  personId: string;
 };
 
 export type CalendarEvent = {
@@ -49,6 +51,8 @@ export type CalendarEvent = {
   allDay: boolean;
   /** Minutes from midnight in the calendar timezone. Empty for an all-day event. */
   minutes: number | null;
+  /** ISO start instant, or YYYY-MM-DD for all-day events. */
+  start: string;
 };
 
 type TokenResponse = {
@@ -147,6 +151,8 @@ export async function readSession(): Promise<Session | null> {
   try {
     const parsed = decodeSession(raw);
     if (!parsed?.refreshToken) return null;
+    const { getMe } = await import("./identity");
+    if (parsed.personId !== (await getMe())) return null;
     return parsed;
   } catch {
     return null;
@@ -221,7 +227,8 @@ async function calendarTimeZone(accessToken: string): Promise<string> {
 async function listEvents(accessToken: string, timeMin: string, timeMax: string): Promise<GoogleEvent[]> {
   const items: GoogleEvent[] = [];
   let pageToken = "";
-  for (let page = 0; page < 4; page += 1) {
+  // Follow nextPageToken to the end (hard stop at 40 pages / 2,000 events).
+  for (let page = 0; page < 40; page += 1) {
     const listUrl = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
     listUrl.searchParams.set("timeMin", timeMin);
     listUrl.searchParams.set("timeMax", timeMax);
@@ -273,6 +280,8 @@ function toCalendarEvent(item: GoogleEvent, timeZone: string): CalendarEvent {
     place: item.location ?? "",
     allDay,
     minutes: start && Number.isFinite(hour) && Number.isFinite(minute) ? (hour % 24) * 60 + minute : null,
+    // Raw start (ISO instant, or YYYY-MM-DD for all-day) so callers can bucket in their own zone.
+    start: item.start?.dateTime ?? item.start?.date ?? "",
   };
 }
 

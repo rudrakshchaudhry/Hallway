@@ -37,7 +37,10 @@ export async function fetchGitHubProfile(username: string, onStep: (summary: str
     }
     if (packages.size) onStep(`Read dependencies: ${packages.size} packages`);
 
+    const contributions = await fetchContributions(user.login);
+    if (contributions) onStep(`${contributions.total} contributions in the last year`);
     return ProfileDraft.parse({
+      ...(contributions ? { contributions } : {}),
       name: user.name ?? user.login,
       ...(user.bio ? { headline: user.bio } : {}),
       github: user.login,
@@ -50,4 +53,36 @@ export async function fetchGitHubProfile(username: string, onStep: (summary: str
       sources: ["github"],
     });
   });
+}
+
+type ContributionsQuery = {
+  data?: { user: { contributionsCollection: { contributionCalendar: { totalContributions: number; weeks: { contributionDays: { date: string; contributionCount: number }[] }[] } } } | null };
+};
+
+const contributionsCache = new Map<string, { at: number; value: Contributions | null }>();
+export type Contributions = { total: number; days: { date: string; count: number }[] };
+
+/** Last year of contributions (the profile heatmap), via GitHub GraphQL. Cached for an hour. */
+export async function fetchContributions(login: string): Promise<Contributions | null> {
+  const hit = contributionsCache.get(login);
+  if (hit && Date.now() - hit.at < 3_600_000) return hit.value;
+  let value: Contributions | null = null;
+  try {
+    const res = await fetch("https://api.github.com/graphql", {
+      method: "POST",
+      headers: { authorization: `Bearer ${process.env.GITHUB_TOKEN}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        query: "query($login: String!) { user(login: $login) { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { date contributionCount } } } } } }",
+        variables: { login },
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const body = (await res.json()) as ContributionsQuery;
+    const cal = body.data?.user?.contributionsCollection.contributionCalendar;
+    if (cal) value = { total: cal.totalContributions, days: cal.weeks.flatMap((w) => w.contributionDays.map((d) => ({ date: d.date, count: d.contributionCount }))) };
+  } catch {
+    value = null;
+  }
+  contributionsCache.set(login, { at: Date.now(), value });
+  return value;
 }

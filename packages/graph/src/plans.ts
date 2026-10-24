@@ -18,3 +18,12 @@ export async function addPlan(graph: Graph, me: string, targetId: string, now = 
   );
   return (res.data?.[0]?.n ?? 0) > 0;
 }
+
+/** Removes a talk or side event from the user's calendar. Idempotent; returns whether an edge was removed. */
+export async function removePlan(graph: Graph, me: string, targetId: string): Promise<boolean> {
+  const res = await graph.query<{ n: number }>(
+    "MATCH (:Person {id: $me})-[p:PLANS]->(x {id: $id}) WITH p, count(p) AS n DELETE p RETURN n",
+    { params: { me, id: targetId } },
+  );
+  return (res.data?.[0]?.n ?? 0) > 0;
+}

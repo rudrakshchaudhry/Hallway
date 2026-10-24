@@ -1,3 +1,4 @@
+import { PRICE, budget } from "./budget.ts";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -36,6 +37,12 @@ export async function unlockPage(url: string): Promise<string> {
   const zone = process.env.BRIGHTDATA_UNLOCKER_ZONE;
   if (!key || !zone) {
     throw new UnlockError("missing_key", "Scraping is not set up yet. Add the Bright Data API key and unlocker zone.");
+  }
+  // Every Bright Data call goes through the persisted budget guard (PLAN.md 7.4).
+  try {
+    await budget.reserve(PRICE.unlockerRequest, `suggest ${url}`);
+  } catch (err) {
+    throw new UnlockError("timeout", `Scraping budget reached: ${(err as Error).message}`);
   }
   try {
     const response = await fetch("https://api.brightdata.com/request", {

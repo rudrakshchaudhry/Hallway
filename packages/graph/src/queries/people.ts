@@ -55,7 +55,7 @@ export async function deckFor(graph: Graph, me: string, conference: Conference, 
   }
   for (const r of await rows<{ p: RawNode; talk: string; title: string }>(graph,
     `MATCH (:Person {id: $me})-[:PLANS]->(k:Talk)<-[:SPEAKS_AT]-(p:Person)
-     WHERE ${NOT_DONE} RETURN p, k.id AS talk, k.title AS title LIMIT 100`, params)) {
+     WHERE ${NOT_DONE} AND (k)-[:PART_OF]->(:Conference {id: $conf}) RETURN p, k.id AS talk, k.title AS title LIMIT 100`, params)) {
     add(r.p, { tag: "in-your-sessions", via: { id: r.talk, name: r.title, label: "Talk" } }, []);
   }
   for (const r of await rows<{ p: RawNode; company: string; companyName: string; skill: string; skillName: string }>(graph,

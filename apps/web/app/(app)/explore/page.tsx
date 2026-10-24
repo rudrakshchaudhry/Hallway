@@ -47,7 +47,7 @@ export default async function ExplorePage() {
               </div>
               <p className={styles.muted}>{item.reasons.join(" · ")}</p>
               <div className={styles.row}>
-                <AddButton targetId={item.event.id} planned={item.planned} clashes={item.clashes} />
+                <AddButton targetId={item.event.id} planned={item.planned} clashes={item.clashes} register={item.event.url ? { url: item.event.url, label: item.event.source === "luma" ? "Register on Luma" : "Register", title: item.event.name } : undefined} />
                 {item.event.url ? (
                   <a href={item.event.url} target="_blank" rel="noreferrer" className={styles.muted}>
                     Event page →

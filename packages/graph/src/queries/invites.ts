@@ -85,7 +85,12 @@ export async function viewInvite(graph: Graph, tokenHash: string): Promise<Invit
   const found = await meetingBy(graph, "m.tokenHash = $h", { h: tokenHash });
   if (!found) return null;
   const { meeting, requester } = found;
+  const tzRes = await graph.roQuery<{ tz: string | null }>(
+    "MATCH (:Person {id: $id})-[t:TARGETS]->(c:Conference) RETURN c.tz AS tz ORDER BY t.at DESC LIMIT 1",
+    { params: { id: requester.id } },
+  );
   return {
+    tz: tzRes.data?.[0]?.tz ?? "America/Los_Angeles",
     requester: { name: requester.name, ...(requester.headline ? { headline: requester.headline } : {}), ...(requester.avatar ? { avatar: requester.avatar } : {}) },
     reason: meeting.note || `${requester.name} would like to meet`,
     slots: slotsOf(meeting),
@@ -102,6 +107,8 @@ export async function respondInvite(graph: Graph, tokenHash: string, decision: "
   if (!found) return { error: "not-found" as const };
   if (found.meeting.status !== "pending") return { error: "answered" as const, meeting: found.meeting };
   if (decision === "accept" && (!slot || !found.meeting.proposed.includes(slot.start))) return { error: "bad-slot" as const };
+  // The end always comes from the meeting's duration, never from the client.
+  if (slot) slot = { start: slot.start, end: new Date(Date.parse(slot.start) + found.meeting.durationMinutes * 60_000).toISOString() };
   await graph.query(
     decision === "accept"
       ? "MATCH (m:Meeting {id: $id}) SET m.status = 'accepted', m.start = $start, m.end = $end, m.respondedAt = $now"
@@ -114,7 +121,7 @@ export async function respondInvite(graph: Graph, tokenHash: string, decision: "
 /** Manual fallback (cut item 7): the requester marks a pending meeting accepted at its first slot. */
 export async function markAccepted(graph: Graph, me: string, meetingId: string, now = Date.now()) {
   const found = await meetingBy(graph, "m.id = $id AND requester.id = $me", { id: meetingId, me });
-  if (!found) return null;
+  if (!found || found.meeting.status !== "pending") return null;
   const slot = slotsOf(found.meeting)[0]!;
   await graph.query("MATCH (m:Meeting {id: $id}) SET m.status = 'accepted', m.start = $start, m.end = $end, m.respondedAt = $now", {
     params: { id: meetingId, start: slot.start, end: slot.end, now },
@@ -125,7 +132,7 @@ export async function markAccepted(graph: Graph, me: string, meetingId: string, 
 /** After the meeting: MET edge and status "met". */
 export async function markMet(graph: Graph, me: string, meetingId: string, now = Date.now()) {
   const found = await meetingBy(graph, "m.id = $id AND (requester.id = $me OR other.id = $me)", { id: meetingId, me });
-  if (!found) return null;
+  if (!found || found.meeting.status !== "accepted") return null;
   const otherId = found.requester.id === me ? found.other.id : found.requester.id;
   await graph.query(
     `MATCH (m:Meeting {id: $id}), (u:Person {id: $me}), (o:Person {id: $oid})

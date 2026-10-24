@@ -6,8 +6,6 @@ import { useEffect, useState } from "react";
 import { slotLabel } from "./format";
 import styles from "./tabs.module.css";
 
-const TZ = "America/Los_Angeles";
-
 export function InviteResponse({ token }: { token: string }) {
   const [view, setView] = useState<InvitePublicView | null>(null);
   const [missing, setMissing] = useState(false);
@@ -30,7 +28,12 @@ export function InviteResponse({ token }: { token: string }) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ decision, ...(decision === "accept" ? { slot: view.slots[slot] } : {}) }),
     });
-    if (res.ok) setResult(InviteRespondResponse.parse(await res.json()));
+    if (res.ok) {
+      const parsed = InviteRespondResponse.parse(await res.json());
+      setResult(parsed);
+      const slotPicked = view.slots[slot];
+      if (decision === "accept" && slotPicked) setView({ ...view, status: "accepted", picked: slotPicked });
+    }
     setBusy(false);
   }
 
@@ -47,8 +50,9 @@ export function InviteResponse({ token }: { token: string }) {
       {done ? (
         <>
           <Label variant={done === "accepted" ? "success" : "secondary"}>{done}</Label>
-          {result?.gcalUrl ? (
-            <Button as="a" href={result.gcalUrl} target="_blank" rel="noreferrer" variant="primary">
+          {view.picked ? <p className={styles.muted}>{slotLabel(view.picked.start, view.picked.end, view.tz)}</p> : null}
+          {result?.gcalUrl ?? view.gcalUrl ? (
+            <Button as="a" href={result?.gcalUrl ?? view.gcalUrl} target="_blank" rel="noreferrer" variant="primary">
               Add to Google Calendar
             </Button>
           ) : null}
@@ -60,7 +64,7 @@ export function InviteResponse({ token }: { token: string }) {
             {view.slots.map((s, i) => (
               <label key={s.start} className={styles.slot}>
                 <input type="radio" name="slot" checked={slot === i} onChange={() => setSlot(i)} />
-                {slotLabel(s.start, s.end, TZ)}
+                {slotLabel(s.start, s.end, view.tz)}
               </label>
             ))}
           </div>

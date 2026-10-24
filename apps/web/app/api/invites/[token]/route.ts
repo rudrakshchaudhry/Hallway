@@ -9,7 +9,11 @@ type Params = { params: Promise<{ token: string }> };
 export async function GET(_req: Request, { params }: Params) {
   const view = await viewInvite(await getGraph(), hashToken((await params).token));
   if (!view) return Response.json({ error: "invite not found" }, { status: 404 });
-  return Response.json(InvitePublicView.parse(view));
+  const gcal =
+    view.status === "accepted" && view.picked
+      ? { gcalUrl: gcalUrl({ title: `Meet ${view.requester.name}`, start: view.picked.start, end: view.picked.end, place: view.place, details: view.note }) }
+      : {};
+  return Response.json(InvitePublicView.parse({ ...view, ...gcal }));
 }
 
 export async function POST(req: Request, { params }: Params) {

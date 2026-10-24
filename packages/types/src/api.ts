@@ -92,6 +92,10 @@ export const InvitePublicView = z.object({
   slots: z.array(Slot).min(1),
   /** The picked slot once accepted. */
   picked: Slot.optional(),
+  /** The conference's time zone, so the invitee sees the same times the requester offered. */
+  tz: z.string().default("America/Los_Angeles"),
+  /** Add-to-Google-Calendar link once accepted (also on revisits). */
+  gcalUrl: z.url().optional(),
   place: z.string(),
   note: z.string(),
   status: MeetingStatus,
@@ -228,6 +232,10 @@ export const ProfileDraft = z.object({
   companies: z.array(z.object({ name: z.string(), current: z.boolean() })),
   repos: z.array(z.string()),
   packages: z.array(z.string()),
+  /** Last year of GitHub contributions (the profile heatmap), when GitHub was read. */
+  contributions: z
+    .object({ total: z.number().int(), days: z.array(z.object({ date: z.string(), count: z.number().int() })) })
+    .optional(),
   /** Which repo depends on which packages (full repo name → package names), when known. */
   repoPackages: z.record(z.string(), z.array(z.string())).optional(),
   sources: z.array(ProfileSource),

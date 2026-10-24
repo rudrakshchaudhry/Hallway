@@ -5,3 +5,15 @@ body {
   background: var(--bgColor-default);
   color: var(--fgColor-default);
 }
+
+/* Phones: while a sheet (Primer Dialog) is open, the tab bar and chat button get out of the way,
+   and sheets clear the iOS home indicator and browser toolbar. */
+body:has([role="dialog"]) nav[aria-label="Main"],
+body:has([role="dialog"]) a[aria-label="Ask Hallway"] {
+  display: none;
+}
+
+[role="dialog"] {
+  max-height: calc(100dvh - var(--base-size-24));
+  padding-bottom: env(safe-area-inset-bottom);
+}

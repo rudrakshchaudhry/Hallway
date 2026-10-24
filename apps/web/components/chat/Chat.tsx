@@ -5,6 +5,7 @@ import { Button, Label, Spinner, TextInput } from "@primer/react";
 import { AlertIcon, CheckIcon, SyncIcon } from "@primer/octicons-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { Heatmap } from "@/components/Heatmap";
 import styles from "./chat.module.css";
 
 type Entry =
@@ -249,6 +250,7 @@ function ProfileCard({ draft }: { draft: ProfileDraft }) {
         </p>
       ) : null}
       {draft.companies.length ? <p className={styles.muted}>{draft.companies.map((c) => c.name).join(" · ")}</p> : null}
+      {draft.contributions ? <Heatmap total={draft.contributions.total} days={draft.contributions.days} /> : null}
     </section>
   );
 }

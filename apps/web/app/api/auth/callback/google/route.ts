@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { accessTokenFor, encodeSession, exchangeCode, googleEmail, sessionCookie, stateCookie } from "@/lib/google";
+import { getMe } from "@/lib/identity";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -20,8 +21,9 @@ export async function GET(request: Request) {
     if (!refreshToken) throw new Error("No refresh token");
     const accessToken = tokens.access_token || (await accessTokenFor(refreshToken));
     const email = await googleEmail(accessToken);
-    const response = NextResponse.redirect(home);
-    response.cookies.set(sessionCookie, encodeSession({ refreshToken, email }), {
+    const feed = new URL("/feed", url.origin);
+    const response = NextResponse.redirect(feed);
+    response.cookies.set(sessionCookie, encodeSession({ refreshToken, email, personId: await getMe() }), {
       httpOnly: true,
       sameSite: "lax",
       path: "/",

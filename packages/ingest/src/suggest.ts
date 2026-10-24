@@ -130,7 +130,7 @@ export function matchIntent(snapshot: GraphSnapshot, intent: string): Suggestion
 }
 
 function readCache(url: string): { snapshot: GraphSnapshot | null; fresh: boolean } {
-  const file = path.join(repoRoot(), "data/live", `suggest-${slugify(new URL(url).hostname.replace(/^www\./, ""))}.json`);
+  const file = path.join(repoRoot(), "data/live", `suggest-${cacheSlug(url)}.json`);
   try {
     const snapshot = validateSnapshot(JSON.parse(readFileSync(file, "utf8")));
     return { snapshot, fresh: Date.now() - statSync(file).mtimeMs < FRESH_MS };
@@ -140,11 +140,17 @@ function readCache(url: string): { snapshot: GraphSnapshot | null; fresh: boolea
 }
 
 function writeLive(url: string, html: string, snapshot: GraphSnapshot) {
-  const slug = slugify(new URL(url).hostname.replace(/^www\./, ""));
+  const slug = cacheSlug(url);
   const rawDir = path.join(repoRoot(), "data/raw");
   mkdirSync(rawDir, { recursive: true });
   writeFileSync(path.join(rawDir, `${slug}-${Date.now()}.html`), html);
   const clean = path.join(repoRoot(), "data/live", `suggest-${slug}.json`);
   mkdirSync(path.dirname(clean), { recursive: true });
   writeFileSync(clean, JSON.stringify(snapshot, null, 2));
+}
+
+/** Cache key from host and path, so two conferences on one site don't share results. */
+function cacheSlug(url: string): string {
+  const u = new URL(url);
+  return slugify(`${u.hostname.replace(/^www\./, "")}${u.pathname}`.replace(/\/+$/, ""));
 }

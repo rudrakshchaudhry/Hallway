@@ -1,7 +1,8 @@
-import { conferenceDays } from "@hallway/graph";
+import { conferenceDays, getProfileSummary } from "@hallway/graph";
 import { feedFor } from "@hallway/graph/queries/feed";
 import { Label } from "@primer/react";
 import Link from "next/link";
+import { Heatmap } from "@/components/Heatmap";
 import { DayCalendar, type DayEvent } from "@/components/google/DayCalendar";
 import { AddButton } from "@/components/tabs/AddButton";
 import { PathButton } from "@/components/tabs/PathButton";
@@ -9,6 +10,7 @@ import { RequestActions } from "@/components/tabs/RequestActions";
 import { dayIn, localDate, minutesIn, timeIn } from "@/components/tabs/format";
 import styles from "@/components/tabs/tabs.module.css";
 import { context } from "@/lib/context";
+import { fetchContributions } from "@/lib/github";
 import { accessTokenFor, eventsBetween, googleConfigured, readSession, type CalendarEvent } from "@/lib/google";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +29,8 @@ export default async function FeedPage() {
       </main>
     );
   }
-  const feed = await feedFor(graph, me, conference);
+  const [feed, profile] = await Promise.all([feedFor(graph, me, conference), getProfileSummary(graph, me)]);
+  const contributions = profile?.github ? await fetchContributions(profile.github) : null;
   const tz = conference.tz;
   const clashIds = new Set(feed.clashes.flatMap((c) => [c.itemId, c.withId]));
 
@@ -54,11 +57,18 @@ export default async function FeedPage() {
         place: c.location ?? "",
         allDay: false,
         minutes: minutesIn(c.start, tz),
+        start: c.start,
         source: "hallway",
         kind: c.kind === "busy" ? "Busy" : c.kind === "meeting" ? "Meeting" : c.kind === "event" ? "Event" : "Talk",
         clash: clashIds.has(c.id),
       }));
-    const theirs: DayEvent[] = google.filter((g) => g.day.includes(dayIn(day.start, tz).split(", ")[1] ?? "~")).map((g) => ({ ...g, source: "google" }));
+    const theirs: DayEvent[] = google
+      .filter((g) => (g.allDay ? g.start.slice(0, 10) : localDate(g.start, tz)) === date)
+      .map((g) => ({
+        ...g,
+        source: "google",
+        ...(g.allDay ? {} : { minutes: minutesIn(g.start, tz), time: timeIn(g.start, tz) }),
+      }));
     return { label: dayIn(day.start, tz), events: [...hallway, ...theirs].sort((a, b) => (a.minutes ?? -1) - (b.minutes ?? -1)) };
   });
 
@@ -68,6 +78,12 @@ export default async function FeedPage() {
         <p className={styles.kicker}>{conference.name} · {conference.venue}</p>
         <h1 className={styles.title}>My Feed</h1>
       </div>
+
+      {contributions ? (
+        <section className={styles.card}>
+          <Heatmap total={contributions.total} days={contributions.days} label={`contributions by @${profile?.github} in the last year`} />
+        </section>
+      ) : null}
 
       {googleConfigured() && !session ? (
         <a href="/api/auth/google" className={styles.muted}>
@@ -94,6 +110,7 @@ export default async function FeedPage() {
                 {item.location ? ` · ${item.location}` : ""}
               </p>
               {detail ? <p className={styles.detail}>{detail}</p> : null}
+              {item.kind === "talk" || item.kind === "event" ? <AddButton targetId={item.id} planned clashes={[]} /> : null}
             </li>
           ))}
         </ul>
@@ -150,7 +167,7 @@ export default async function FeedPage() {
             <li key={s.item.event.id} className={styles.card}>
               <p className={styles.cardTitle}>{s.item.event.name}</p>
               <p className={styles.muted}>{dayIn(s.item.event.start, tz)} · {timeIn(s.item.event.start, tz)} · {s.item.reasons[0]}</p>
-              <AddButton targetId={s.item.event.id} planned={s.item.planned} clashes={s.item.clashes} />
+              <AddButton targetId={s.item.event.id} planned={s.item.planned} clashes={s.item.clashes} register={s.item.event.url ? { url: s.item.event.url, label: s.item.event.source === "luma" ? "Register on Luma" : "Register", title: s.item.event.name } : undefined} />
             </li>
           );
         })}
