@@ -1,5 +1,5 @@
 // Calls every route the demo uses; fails on errors, schema mismatches or responses over 2 s.
-// Phase 3 adds the remaining routes (feed, people, schedule, booths, ask, met, refresh-events).
+// Integration adds the demo routes from docs/PLAN.md section 5.3 (chat, profile, feed, people, invites, agenda, past).
 import { HealthResponse } from "../packages/types/src/index.ts";
 import type { ZodType } from "zod";
 
