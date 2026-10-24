@@ -6,26 +6,32 @@
    "handle": "demo",
    "name": "Demo Dev",
    "role": "Full-stack engineer",
+   "headline": "Full-stack engineer building dev tools",
+   "github": "demo",
    "optedIn": true,
-   "github": "demo"
+   "isUser": true
   },
   {
    "label": "Person",
    "id": "person:priya",
    "handle": "priya-r",
    "name": "Priya Raman",
-   "role": "Staff engineer, Acme",
+   "role": "Staff engineer",
+   "headline": "Staff engineer at Acme Cloud, zod maintainer",
+   "github": "priya-r",
    "optedIn": false,
-   "github": "priya-r"
+   "isUser": false
   },
   {
    "label": "Person",
    "id": "person:marco",
    "handle": "marco-v",
    "name": "Marco Vitale",
-   "role": "Platform lead, Graphly",
+   "role": "Platform lead",
+   "headline": "Platform lead at Graphly",
+   "github": "marco-v",
    "optedIn": false,
-   "github": "marco-v"
+   "isUser": false
   },
   {
    "label": "Person",
@@ -33,8 +39,9 @@
    "handle": "lena-k",
    "name": "Lena Koch",
    "role": "OSS maintainer",
+   "github": "lena-k",
    "optedIn": false,
-   "github": "lena-k"
+   "isUser": false
   },
   {
    "label": "Person",
@@ -42,7 +49,9 @@
    "handle": "sam-o",
    "name": "Sam Okafor",
    "role": "Developer advocate",
-   "optedIn": false
+   "headline": "DevRel, AI tooling",
+   "optedIn": false,
+   "isUser": false
   },
   {
    "label": "Person",
@@ -50,7 +59,32 @@
    "handle": "jo-t",
    "name": "Jo Tanaka",
    "role": "Research engineer",
-   "optedIn": false
+   "headline": "Research engineer at OldCo",
+   "optedIn": false,
+   "isUser": false
+  },
+  {
+   "label": "Conference",
+   "id": "conf:universe-2026",
+   "name": "GitHub Universe 2026",
+   "start": "2026-10-28T09:00:00-07:00",
+   "end": "2026-10-29T18:00:00-07:00",
+   "city": "San Francisco",
+   "venue": "Fort Mason Center",
+   "url": "https://githubuniverse.com",
+   "source": "snapshot",
+   "status": "ready"
+  },
+  {
+   "label": "Conference",
+   "id": "conf:universe-2025",
+   "name": "GitHub Universe 2025",
+   "start": "2025-10-28T09:00:00-07:00",
+   "end": "2025-10-29T18:00:00-07:00",
+   "city": "San Francisco",
+   "venue": "Fort Mason Center",
+   "source": "snapshot",
+   "status": "ready"
   },
   {
    "label": "Repo",
@@ -93,7 +127,9 @@
    "id": "talk:typesafe-apis",
    "title": "Type-safe APIs end to end",
    "abstract": "Schemas as the single source of truth from database to browser.",
+   "kind": "talk",
    "start": "2026-10-28T14:00:00-07:00",
+   "end": "2026-10-28T14:45:00-07:00",
    "room": "Cowell Theater"
   },
   {
@@ -101,7 +137,9 @@
    "id": "talk:agents-in-ci",
    "title": "Agents in your CI pipeline",
    "abstract": "Letting coding agents fix flaky tests before humans notice.",
+   "kind": "workshop",
    "start": "2026-10-28T15:00:00-07:00",
+   "end": "2026-10-28T16:30:00-07:00",
    "room": "Festival Pavilion A"
   },
   {
@@ -109,8 +147,20 @@
    "id": "talk:graph-search",
    "title": "Searching code as a graph",
    "abstract": "Dependency graphs make code search smarter.",
+   "kind": "talk",
    "start": "2026-10-28T14:00:00-07:00",
+   "end": "2026-10-28T14:45:00-07:00",
    "room": "Festival Pavilion B"
+  },
+  {
+   "label": "Talk",
+   "id": "talk:keynote",
+   "title": "Opening keynote",
+   "abstract": "What's next for developers.",
+   "kind": "keynote",
+   "start": "2026-10-28T09:30:00-07:00",
+   "end": "2026-10-28T10:30:00-07:00",
+   "room": "Festival Pavilion"
   },
   {
    "label": "PastTalk",
@@ -141,34 +191,36 @@
    "id": "event:git-together",
    "name": "Git-Together",
    "start": "2026-10-28T18:00:00-07:00",
+   "end": "2026-10-28T21:00:00-07:00",
    "venue": "Fort Mason Gallery 308",
-   "url": "https://luma.com/fixture-git-together"
+   "url": "https://luma.com/fixture-git-together",
+   "source": "luma"
   },
   {
    "label": "SideEvent",
    "id": "event:ai-breakfast",
    "name": "AI Builders Breakfast",
    "start": "2026-10-29T08:00:00-07:00",
-   "venue": "Marina Cafe"
+   "end": "2026-10-29T09:30:00-07:00",
+   "venue": "Marina Cafe",
+   "source": "luma"
   },
   {
    "label": "Company",
    "id": "company:acme",
    "name": "Acme Cloud",
-   "funding": "Series C",
-   "booth": "B12"
+   "funding": "Series C"
   },
   {
    "label": "Company",
    "id": "company:graphly",
    "name": "Graphly",
-   "funding": "Series A",
-   "booth": "B4"
+   "funding": "Series A"
   },
   {
    "label": "Company",
-   "id": "company:quietco",
-   "name": "QuietCo"
+   "id": "company:oldco",
+   "name": "OldCo"
   },
   {
    "label": "Skill",
@@ -186,11 +238,6 @@
    "name": "GraphQL"
   },
   {
-   "label": "Skill",
-   "id": "skill:python",
-   "name": "Python"
-  },
-  {
    "label": "Topic",
    "id": "topic:ai",
    "name": "AI"
@@ -204,67 +251,85 @@
    "label": "Topic",
    "id": "topic:security",
    "name": "Security"
+  },
+  {
+   "label": "Goal",
+   "id": "goal:networking",
+   "name": "Networking",
+   "goal": "networking"
+  },
+  {
+   "label": "Goal",
+   "id": "goal:learn",
+   "name": "Learn a topic",
+   "goal": "learn"
+  },
+  {
+   "label": "Goal",
+   "id": "goal:job",
+   "name": "Find a job",
+   "goal": "job"
+  },
+  {
+   "label": "Goal",
+   "id": "goal:hire",
+   "name": "Hire",
+   "goal": "hire"
+  },
+  {
+   "label": "Goal",
+   "id": "goal:collaborate",
+   "name": "Find collaborators",
+   "goal": "collaborate"
+  },
+  {
+   "label": "Goal",
+   "id": "goal:fundraise",
+   "name": "Fundraise",
+   "goal": "fundraise"
+  },
+  {
+   "label": "Meeting",
+   "id": "meeting:fixture-marco",
+   "tokenHash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "start": "2026-10-28T16:30:00-07:00",
+   "end": "2026-10-28T17:00:00-07:00",
+   "place": "Fort Mason lobby",
+   "note": "Would love to chat about fastify plugins.",
+   "status": "pending",
+   "createdAt": 1793210000000
   }
  ],
  "edges": [
   {
-   "type": "OWNS",
-   "from": "person:demo",
-   "to": "repo:demo/hallway-api"
+   "type": "PART_OF",
+   "from": "talk:typesafe-apis",
+   "to": "conf:universe-2026"
   },
   {
-   "type": "OWNS",
-   "from": "person:demo",
-   "to": "repo:demo/notes-app"
+   "type": "PART_OF",
+   "from": "talk:agents-in-ci",
+   "to": "conf:universe-2026"
   },
   {
-   "type": "DEPENDS_ON",
-   "from": "repo:demo/hallway-api",
-   "to": "pkg:npm/zod"
+   "type": "PART_OF",
+   "from": "talk:graph-search",
+   "to": "conf:universe-2026"
   },
   {
-   "type": "DEPENDS_ON",
-   "from": "repo:demo/hallway-api",
-   "to": "pkg:npm/fastify"
+   "type": "PART_OF",
+   "from": "talk:keynote",
+   "to": "conf:universe-2026"
   },
   {
-   "type": "DEPENDS_ON",
-   "from": "repo:demo/hallway-api",
-   "to": "pkg:npm/left-pad-ng"
+   "type": "NEAR",
+   "from": "event:git-together",
+   "to": "conf:universe-2026"
   },
   {
-   "type": "DEPENDS_ON",
-   "from": "repo:demo/notes-app",
-   "to": "pkg:npm/zod"
-  },
-  {
-   "type": "DEPENDS_ON",
-   "from": "repo:demo/notes-app",
-   "to": "pkg:npm/react"
-  },
-  {
-   "type": "MAINTAINS",
-   "from": "person:priya",
-   "to": "pkg:npm/zod"
-  },
-  {
-   "type": "MAINTAINS",
-   "from": "person:marco",
-   "to": "pkg:npm/fastify"
-  },
-  {
-   "type": "MAINTAINS",
-   "from": "person:lena",
-   "to": "pkg:npm/react"
-  },
-  {
-   "type": "MET",
-   "from": "person:demo",
-   "to": "person:lena",
-   "props": {
-    "at": 1793120400000,
-    "via": "fixture"
-   }
+   "type": "NEAR",
+   "from": "event:ai-breakfast",
+   "to": "conf:universe-2026"
   },
   {
    "type": "SPEAKS_AT",
@@ -321,14 +386,69 @@
    }
   },
   {
-   "type": "ATTENDING",
+   "type": "HOSTS",
    "from": "person:marco",
    "to": "event:git-together"
   },
   {
-   "type": "ATTENDING",
+   "type": "HOSTS",
+   "from": "company:graphly",
+   "to": "event:git-together"
+  },
+  {
+   "type": "HOSTS",
    "from": "person:sam",
    "to": "event:ai-breakfast"
+  },
+  {
+   "type": "OWNS",
+   "from": "person:demo",
+   "to": "repo:demo/hallway-api"
+  },
+  {
+   "type": "OWNS",
+   "from": "person:demo",
+   "to": "repo:demo/notes-app"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/hallway-api",
+   "to": "pkg:npm/zod"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/hallway-api",
+   "to": "pkg:npm/fastify"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/hallway-api",
+   "to": "pkg:npm/left-pad-ng"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/notes-app",
+   "to": "pkg:npm/zod"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/notes-app",
+   "to": "pkg:npm/react"
+  },
+  {
+   "type": "MAINTAINS",
+   "from": "person:priya",
+   "to": "pkg:npm/zod"
+  },
+  {
+   "type": "MAINTAINS",
+   "from": "person:marco",
+   "to": "pkg:npm/fastify"
+  },
+  {
+   "type": "MAINTAINS",
+   "from": "person:lena",
+   "to": "pkg:npm/react"
   },
   {
    "type": "WORKS_AT",
@@ -339,6 +459,16 @@
    "type": "WORKS_AT",
    "from": "person:marco",
    "to": "company:graphly"
+  },
+  {
+   "type": "WORKS_AT",
+   "from": "person:jo",
+   "to": "company:oldco"
+  },
+  {
+   "type": "WORKED_AT",
+   "from": "person:demo",
+   "to": "company:oldco"
   },
   {
    "type": "SKILLED_IN",
@@ -354,11 +484,6 @@
    "type": "SKILLED_IN",
    "from": "person:demo",
    "to": "skill:graphql"
-  },
-  {
-   "type": "SKILLED_IN",
-   "from": "person:demo",
-   "to": "skill:python"
   },
   {
    "type": "HIRING_FOR",
@@ -376,11 +501,6 @@
    "to": "skill:graphql"
   },
   {
-   "type": "HIRING_FOR",
-   "from": "company:quietco",
-   "to": "skill:python"
-  },
-  {
    "type": "ABOUT",
    "from": "talk:typesafe-apis",
    "to": "topic:devtools"
@@ -396,6 +516,11 @@
    "to": "topic:devtools"
   },
   {
+   "type": "ABOUT",
+   "from": "talk:keynote",
+   "to": "topic:ai"
+  },
+  {
    "type": "INTERESTED_IN",
    "from": "person:demo",
    "to": "topic:devtools"
@@ -406,14 +531,82 @@
    "to": "topic:ai"
   },
   {
-   "type": "PLANS",
+   "type": "HAS_GOAL",
    "from": "person:demo",
-   "to": "talk:typesafe-apis"
+   "to": "goal:networking"
+  },
+  {
+   "type": "HAS_GOAL",
+   "from": "person:demo",
+   "to": "goal:learn"
+  },
+  {
+   "type": "TARGETS",
+   "from": "person:demo",
+   "to": "conf:universe-2025",
+   "props": {
+    "at": 1761600000000
+   }
+  },
+  {
+   "type": "TARGETS",
+   "from": "person:demo",
+   "to": "conf:universe-2026",
+   "props": {
+    "at": 1793200000000
+   }
   },
   {
    "type": "PLANS",
    "from": "person:demo",
-   "to": "event:git-together"
+   "to": "talk:typesafe-apis",
+   "props": {
+    "at": 1793200001000
+   }
+  },
+  {
+   "type": "PLANS",
+   "from": "person:demo",
+   "to": "event:git-together",
+   "props": {
+    "at": 1793200002000
+   }
+  },
+  {
+   "type": "SWIPED",
+   "from": "person:demo",
+   "to": "person:marco",
+   "props": {
+    "dir": "right",
+    "at": 1793200003000
+   }
+  },
+  {
+   "type": "PREFERS",
+   "from": "person:demo",
+   "to": "topic:devtools",
+   "props": {
+    "weight": 0.2
+   }
+  },
+  {
+   "type": "ORGANIZES",
+   "from": "person:demo",
+   "to": "meeting:fixture-marco"
+  },
+  {
+   "type": "WITH",
+   "from": "meeting:fixture-marco",
+   "to": "person:marco"
+  },
+  {
+   "type": "MET",
+   "from": "person:demo",
+   "to": "person:lena",
+   "props": {
+    "at": 1761700000000,
+    "via": "fixture"
+   }
   }
  ]
 }

@@ -2,47 +2,71 @@ import { z } from "zod";
 import type { NodeLabel } from "./nodes.ts";
 
 export const EdgeType = z.enum([
-  "WORKS_AT",
-  "OWNS",
-  "DEPENDS_ON",
-  "MAINTAINS",
+  "PART_OF",
+  "NEAR",
   "SPEAKS_AT",
   "GAVE",
   "SIMILAR_TO",
+  "HOSTS",
   "ATTENDING",
+  "WORKS_AT",
+  "WORKED_AT",
+  "OWNS",
+  "DEPENDS_ON",
+  "MAINTAINS",
+  "SKILLED_IN",
+  "HIRING_FOR",
   "ABOUT",
   "INTERESTED_IN",
-  "HIRING_FOR",
-  "SKILLED_IN",
-  "MET",
+  "HAS_GOAL",
+  "TARGETS",
   "PLANS",
-  "HOSTS",
+  "SWIPED",
+  "PREFERS",
+  "ORGANIZES",
+  "WITH",
+  "MET",
 ]);
 export type EdgeType = z.infer<typeof EdgeType>;
 
 /** Which labels each relationship may connect (PLAN.md section 6). */
 export const EDGE_RULES: Record<EdgeType, { from: NodeLabel[]; to: NodeLabel[] }> = {
-  WORKS_AT: { from: ["Person"], to: ["Company"] },
-  OWNS: { from: ["Person", "Company"], to: ["Repo"] },
-  DEPENDS_ON: { from: ["Repo"], to: ["Package"] },
-  MAINTAINS: { from: ["Person"], to: ["Package"] },
+  PART_OF: { from: ["Talk"], to: ["Conference"] },
+  NEAR: { from: ["SideEvent"], to: ["Conference"] },
   SPEAKS_AT: { from: ["Person"], to: ["Talk"] },
   GAVE: { from: ["Person"], to: ["PastTalk"] },
   SIMILAR_TO: { from: ["Talk"], to: ["PastTalk"] },
-  ATTENDING: { from: ["Person"], to: ["SideEvent"] },
+  HOSTS: { from: ["Person", "Company"], to: ["SideEvent"] },
+  ATTENDING: { from: ["Person"], to: ["SideEvent", "Conference"] },
+  WORKS_AT: { from: ["Person"], to: ["Company"] },
+  WORKED_AT: { from: ["Person"], to: ["Company"] },
+  OWNS: { from: ["Person", "Company"], to: ["Repo"] },
+  DEPENDS_ON: { from: ["Repo"], to: ["Package"] },
+  MAINTAINS: { from: ["Person"], to: ["Package"] },
+  SKILLED_IN: { from: ["Person"], to: ["Skill"] },
+  HIRING_FOR: { from: ["Company"], to: ["Skill"] },
   ABOUT: { from: ["Talk"], to: ["Topic"] },
   INTERESTED_IN: { from: ["Person"], to: ["Topic"] },
-  HIRING_FOR: { from: ["Company"], to: ["Skill"] },
-  SKILLED_IN: { from: ["Person"], to: ["Skill"] },
-  MET: { from: ["Person"], to: ["Person"] },
+  HAS_GOAL: { from: ["Person"], to: ["Goal"] },
+  TARGETS: { from: ["Person"], to: ["Conference"] },
   PLANS: { from: ["Person"], to: ["Talk", "SideEvent"] },
-  HOSTS: { from: ["Person", "Company"], to: ["SideEvent"] },
+  SWIPED: { from: ["Person"], to: ["Person"] },
+  PREFERS: { from: ["Person"], to: ["Topic", "Skill", "Company", "Goal"] },
+  ORGANIZES: { from: ["Person"], to: ["Meeting"] },
+  WITH: { from: ["Meeting"], to: ["Person"] },
+  MET: { from: ["Person"], to: ["Person"] },
 };
+
+const at = z.number().int();
 
 /** Edge types whose props are required; checked by validateSnapshot. */
 export const EDGE_PROPS: Partial<Record<EdgeType, z.ZodType>> = {
   SIMILAR_TO: z.object({ score: z.number().min(0).max(1) }),
-  MET: z.object({ at: z.number().int(), via: z.string() }),
+  MET: z.object({ at, via: z.string() }),
+  TARGETS: z.object({ at }),
+  PLANS: z.object({ at }),
+  SWIPED: z.object({ dir: z.enum(["right", "left"]), at }),
+  PREFERS: z.object({ weight: z.number().min(-1).max(2) }),
 };
 
 // Prop keys end up in the falkordb client's CYPHER parameter prefix unescaped, so keep them plain.
@@ -57,8 +81,8 @@ export const Edge = z.object({
 export type Edge = z.infer<typeof Edge>;
 
 /**
- * Deterministic edge id, stable across reseeds. Runtime writers (e.g. the MET query)
- * must set the same `id` property so paths keep working.
+ * Deterministic edge id, stable across reseeds. Runtime writers must set the same `id`
+ * property so paths keep working.
  */
 export function edgeId(edge: Pick<Edge, "from" | "type" | "to">): string {
   return `${edge.from}|${edge.type}|${edge.to}`;

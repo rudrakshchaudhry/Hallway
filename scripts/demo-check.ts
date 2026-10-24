@@ -1,8 +1,18 @@
 // Calls every route the demo path uses (docs/PLAN.md sections 5.3 and 12) and fails on
 // errors, schema mismatches or slow responses. Routes that don't exist yet fail too: this
-// check is meant to pass only once integration is done. PR B attaches zod schemas from
-// packages/types to every entry and the demo identity cookie.
-import { HealthResponse } from "../packages/types/src/index.ts";
+// check is meant to pass only once integration is done. Requests carry no identity
+// cookie, so routes answer for the demo persona.
+import {
+  AgendaResponse,
+  ChatEvent,
+  ConferencesResponse,
+  ExploreResponse,
+  FeedResponse,
+  HealthResponse,
+  PastGraphResponse,
+  PeopleResponse,
+  StagePathResponse,
+} from "../packages/types/src/index.ts";
 import type { ZodType } from "zod";
 
 const base = process.env.DEMO_BASE_URL ?? "http://localhost:3000";
@@ -19,14 +29,14 @@ type Check = {
 
 const checks: Check[] = [
   { path: "/api/health", schema: HealthResponse },
-  { path: "/api/conferences" },
-  { path: "/api/chat", method: "POST", body: { message: "", chip: "start" }, stream: true },
-  { path: "/api/feed" },
-  { path: "/api/people" },
-  { path: "/api/agenda" },
-  { path: "/api/explore" },
-  { path: "/api/past" },
-  { path: "/api/stage/last-path" },
+  { path: "/api/conferences", schema: ConferencesResponse },
+  { path: "/api/chat", method: "POST", body: { message: "" }, stream: true, schema: ChatEvent },
+  { path: "/api/feed", schema: FeedResponse },
+  { path: "/api/people", schema: PeopleResponse },
+  { path: "/api/agenda", schema: AgendaResponse },
+  { path: "/api/explore", schema: ExploreResponse },
+  { path: "/api/past", schema: PastGraphResponse },
+  { path: "/api/stage/last-path", schema: StagePathResponse },
 ];
 
 async function run({ path, method = "GET", body, stream, schema }: Check) {

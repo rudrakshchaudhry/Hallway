@@ -12,12 +12,13 @@
     "test": "vitest run",
     "typecheck": "tsc -p . && pnpm -r typecheck",
     "lint": "eslint .",
-    "demo:check": "tsx --env-file-if-exists=.env scripts/demo-check.ts"
+    "demo:check": "tsx --env-file-if-exists=.env scripts/demo-check.ts",
+    "tunnel": "cloudflared tunnel --url http://localhost:3000"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.39.5",
     "@types/node": "^26.6.5",
-    "eslint": "^10.13.0",
+    "eslint": "^9.39.5",
     "eslint-config-next": "16.4.3",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
