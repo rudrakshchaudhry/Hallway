@@ -53,4 +53,18 @@ describe("seedGraph", () => {
     const nodes = await graph.query<{ c: number }>("MATCH (n) RETURN count(n) AS c");
     expect(nodes.data?.[0]?.c).toBe(snapshot.nodes.length);
   });
+
+  it("keeps meetings recorded at runtime across a reseed", async () => {
+    await graph.query(
+      `MATCH (a:Person {handle: $me}), (b:Person {handle: $them})
+       MERGE (a)-[m:MET]->(b) ON CREATE SET m.at = timestamp(), m.via = 'button', m.id = a.id + '|MET|' + b.id`,
+      { params: { me: "demo", them: "priya-r" } },
+    );
+    const counts = await seedGraph(await getDb(), NAME, snapshot);
+    expect(counts.keptMeetings).toBeGreaterThanOrEqual(1);
+    const res = await graph.query<{ via: string }>(
+      "MATCH (:Person {handle: 'demo'})-[m:MET]->(:Person {handle: 'priya-r'}) RETURN m.via AS via",
+    );
+    expect(res.data?.[0]?.via).toBe("button");
+  });
 });

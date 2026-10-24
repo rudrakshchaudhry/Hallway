@@ -15,10 +15,16 @@ export const GraphPath = z.object({
   if (path.hops.length !== path.edges.length) {
     ctx.addIssue({ code: "custom", message: "hops must have one entry per edge", path: ["hops"] });
   }
-  const ids = new Set(path.nodes.map((n) => n.id));
+  if (path.nodes.length !== path.edges.length + 1) {
+    ctx.addIssue({ code: "custom", message: "a walk has exactly one more node than edges", path: ["nodes"] });
+    return;
+  }
+  // Edge i joins node i and node i+1, in either direction (walks follow edges backwards too).
   path.edges.forEach((e, i) => {
-    if (!ids.has(e.from) || !ids.has(e.to)) {
-      ctx.addIssue({ code: "custom", message: `edge ${e.id} references a node not in the path`, path: ["edges", i] });
+    const a = path.nodes[i]?.id;
+    const b = path.nodes[i + 1]?.id;
+    if (!((e.from === a && e.to === b) || (e.from === b && e.to === a))) {
+      ctx.addIssue({ code: "custom", message: `edge ${e.id} does not join path nodes ${i} and ${i + 1}`, path: ["edges", i] });
     }
   });
 });

@@ -2,7 +2,8 @@ import { z } from "zod";
 
 // Every node carries a stable string id (e.g. "person:octocat", "pkg:npm/zod").
 // FalkorDB's internal ids change on every reseed, so paths and the UI use these.
-const id = z.string().regex(/^[a-z]+:.+$/, "id must look like '<kind>:<key>'");
+// "|" is reserved as the separator in edge ids.
+const id = z.string().regex(/^[a-z]+:[^|]+$/, "id must look like '<kind>:<key>' with no '|'");
 const isoDate = z.iso.datetime({ offset: true });
 
 export const Person = z.object({

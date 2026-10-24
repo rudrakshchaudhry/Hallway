@@ -3,7 +3,14 @@ import { FalkorDB, type Graph } from "falkordb";
 let db: Promise<FalkorDB> | undefined;
 
 export function getDb(): Promise<FalkorDB> {
-  db ??= FalkorDB.connect({ url: process.env.FALKORDB_URL ?? "redis://localhost:6379" });
+  if (!db) {
+    const pending = FalkorDB.connect({ url: process.env.FALKORDB_URL ?? "redis://localhost:6379" });
+    db = pending;
+    // A failed connect must not poison every later call.
+    pending.catch(() => {
+      if (db === pending) db = undefined;
+    });
+  }
   return db;
 }
 

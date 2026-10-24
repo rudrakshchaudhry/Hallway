@@ -50,9 +50,16 @@ describe("mergeSnapshots", () => {
       ],
       edges: [{ type: "INTERESTED_IN", from: "person:x", to: "topic:ai" }],
     };
-    const merged = validateSnapshot(mergeSnapshots([a, b, b] as never));
+    const merged = validateSnapshot(mergeSnapshots([a, b, b]));
     expect(merged.nodes).toHaveLength(2);
     expect(merged.nodes.find((n) => n.id === "person:x")).toMatchObject({ role: "Speaker" });
     expect(merged.edges).toHaveLength(1);
+  });
+
+  it("does not let defaults from a later source overwrite supplied values", () => {
+    const a = { nodes: [{ label: "Repo", id: "repo:x/y", fullName: "x/y", stars: 99 }], edges: [] };
+    const b = { nodes: [{ label: "Repo", id: "repo:x/y", fullName: "x/y" }], edges: [] };
+    const merged = validateSnapshot(mergeSnapshots([a, b]));
+    expect(merged.nodes[0]).toMatchObject({ stars: 99 });
   });
 });

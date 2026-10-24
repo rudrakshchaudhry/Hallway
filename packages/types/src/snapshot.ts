@@ -9,20 +9,28 @@ export const GraphSnapshot = z.object({
 });
 export type GraphSnapshot = z.infer<typeof GraphSnapshot>;
 
+const RawNode = z.looseObject({ id: z.string(), label: z.string() });
+const RawEdge = z.looseObject({ type: z.string(), from: z.string(), to: z.string(), props: z.record(z.string(), z.unknown()).optional() });
+const RawSnapshot = z.object({ nodes: z.array(RawNode), edges: z.array(RawEdge) });
+type RawNode = z.infer<typeof RawNode>;
+type RawEdge = z.infer<typeof RawEdge>;
+
 /**
  * Combines snapshots (one per ingest source). Nodes with the same id are merged, later
  * properties winning; their labels must match. Duplicate edges collapse into one.
  */
-export function mergeSnapshots(parts: GraphSnapshot[]): GraphSnapshot {
-  const nodes = new Map<string, Node>();
-  const edges = new Map<string, Edge>();
-  for (const part of parts) {
+export function mergeSnapshots(inputs: unknown[]): unknown {
+  // Merge raw objects, before schema defaults fill in omitted fields, so a source that
+  // omits e.g. `stars` can't overwrite a value another source supplied.
+  const nodes = new Map<string, RawNode>();
+  const edges = new Map<string, RawEdge>();
+  for (const part of inputs.map((input) => RawSnapshot.parse(input))) {
     for (const node of part.nodes) {
       const prev = nodes.get(node.id);
       if (prev && prev.label !== node.label) {
         throw new Error(`node ${node.id} is a ${prev.label} in one snapshot and a ${node.label} in another`);
       }
-      nodes.set(node.id, { ...prev, ...node } as Node);
+      nodes.set(node.id, { ...prev, ...node });
     }
     for (const edge of part.edges) {
       const key = `${edge.from}|${edge.type}|${edge.to}`;
