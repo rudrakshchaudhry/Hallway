@@ -1,0 +1,29 @@
+import "@primer/primitives/dist/css/primitives.css";
+import "@primer/primitives/dist/css/functional/themes/dark.css";
+import "./globals.css";
+import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
+import { Providers } from "./providers";
+
+export const metadata: Metadata = {
+  title: "Hallway",
+  description: "What should you do next at the conference?",
+  appleWebApp: { capable: true, title: "Hallway", statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0d1117",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en" data-color-mode="dark" data-dark-theme="dark">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}

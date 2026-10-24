@@ -1,0 +1,35 @@
+# Everything stays on localhost; only the Next.js app is exposed (through the tunnel).
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - falkordb-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  falkordb-mcp:
+    image: falkordb/mcpserver:latest
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      MCP_TRANSPORT: http
+      MCP_PORT: "8080"
+      FALKORDB_DEFAULT_READONLY: "true"
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/').then(()=>process.exit(0),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  falkordb-data:

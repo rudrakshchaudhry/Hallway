@@ -23,3 +23,6 @@ data/raw/
 .DS_Store
 *.log
 .vercel
+
+# next
+next-env.d.ts
