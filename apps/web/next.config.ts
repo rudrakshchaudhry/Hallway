@@ -6,7 +6,7 @@ import type { NextConfig } from "next";
 loadEnvConfig(path.resolve(import.meta.dirname, "../.."));
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@hallway/types"],
+  transpilePackages: ["@hallway/types", "@hallway/ingest"],
   // Lets phones reach the dev server through the Cloudflare quick tunnel.
   allowedDevOrigins: ["*.trycloudflare.com"],
 };

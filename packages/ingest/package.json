@@ -1,0 +1,20 @@
+{
+  "name": "@hallway/ingest",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/suggest.ts"
+  },
+  "scripts": {
+    "ingest": "tsx --env-file-if-exists=../../.env src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hallway/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "vitest": "^5.0.5"
+  }
+}

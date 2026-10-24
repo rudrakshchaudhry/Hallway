@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "pnpm --filter web dev",
     "seed": "pnpm --filter @hallway/graph --fail-if-no-match seed",
+    "ingest": "pnpm --filter @hallway/ingest --fail-if-no-match ingest",
     "test": "vitest run",
     "typecheck": "tsc -p . && pnpm -r typecheck",
     "lint": "eslint .",

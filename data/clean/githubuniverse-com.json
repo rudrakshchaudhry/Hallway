@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    {
+      "label": "Talk",
+      "id": "talk:githubuniverse-com-0-github-universe",
+      "title": "GitHub Universe",
+      "abstract": "GitHub's global developer event is back. Join the world's fair of software.",
+      "start": "2026-10-28T16:00:00.000Z",
+      "end": "2026-10-29T23:30:00.000Z"
+    }
+  ],
+  "edges": []
+}
