@@ -28,6 +28,8 @@ export const SessionVerdict = z.object({
   verdict: Verdict,
   pastTalk: PastTalk.optional(),
   similarity: z.number().min(0).max(1).optional(),
+  /** For "clash": the planned talk or event this one overlaps. */
+  clashesWith: z.object({ id: z.string(), title: z.string(), start: isoDate }).optional(),
   path: GraphPath.optional(),
 });
 
@@ -49,6 +51,7 @@ const cardBase = {
   reason: z.string(),
   /** Primary button label, e.g. "Where is she?". */
   action: z.string(),
+  /** Optional only for cards with no graph walk behind them (e.g. a plain side event). */
   path: GraphPath.optional(),
 };
 
@@ -90,7 +93,63 @@ export const AskEvent = z.discriminatedUnion("type", [
   z.object({ type: z.literal("error"), message: z.string() }),
 ]);
 
+// Request and response envelopes for the API routes.
+
+export const OnboardingRequest = z.object({
+  handle: z.string().min(1).optional(),
+  demo: z.boolean().default(false),
+  topics: z.array(z.string()).max(5).default([]),
+});
+
+export const Profile = z.object({
+  handle: z.string(),
+  name: z.string().optional(),
+  repos: z.array(z.string()),
+  packages: z.array(z.string()),
+  topics: z.array(z.string()),
+});
+
+export const FeedResponse = z.object({ cards: z.array(FeedCard), generatedAt: isoDate, cached: z.boolean() });
+export const PeopleResponse = z.object({ people: z.array(PersonCard) });
+export const ScheduleResponse = z.object({ sessions: z.array(SessionVerdict) });
+export const BoothsResponse = z.object({ booths: z.array(BoothFit) });
+export const FollowUpsResponse = z.object({ followUps: z.array(FollowUp) });
+export const MetResponse = z.object({ followUp: FollowUp, path: GraphPath });
+
+export const AskRequest = z.object({
+  question: z.string().min(1).max(500),
+  sessionId: z.string().optional(),
+  previousTurnId: z.string().optional(),
+});
+
+export const ApprovalDecision = z.object({
+  sessionId: z.string(),
+  turnId: z.string(),
+  threadId: z.string(),
+  toolCallId: z.string(),
+  decision: z.enum(["allow", "deny"]),
+  reason: z.string().optional(),
+});
+
+export const RefreshEventsResponse = z.object({
+  events: z.array(SideEvent),
+  lastUpdated: isoDate,
+  /** True when the live Bright Data call failed or timed out and the snapshot was returned. */
+  cached: z.boolean(),
+});
+
 export type HealthResponse = z.infer<typeof HealthResponse>;
+export type OnboardingRequest = z.infer<typeof OnboardingRequest>;
+export type Profile = z.infer<typeof Profile>;
+export type FeedResponse = z.infer<typeof FeedResponse>;
+export type PeopleResponse = z.infer<typeof PeopleResponse>;
+export type ScheduleResponse = z.infer<typeof ScheduleResponse>;
+export type BoothsResponse = z.infer<typeof BoothsResponse>;
+export type FollowUpsResponse = z.infer<typeof FollowUpsResponse>;
+export type MetResponse = z.infer<typeof MetResponse>;
+export type AskRequest = z.infer<typeof AskRequest>;
+export type ApprovalDecision = z.infer<typeof ApprovalDecision>;
+export type RefreshEventsResponse = z.infer<typeof RefreshEventsResponse>;
 export type Whereabouts = z.infer<typeof Whereabouts>;
 export type PersonCard = z.infer<typeof PersonCard>;
 export type Verdict = z.infer<typeof Verdict>;

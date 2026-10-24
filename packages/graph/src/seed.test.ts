@@ -1,18 +1,20 @@
 import type { Graph } from "falkordb";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { close, getGraph } from "./client.ts";
+import { close, getDb } from "./client.ts";
 import { FIXTURE_SNAPSHOT, loadSnapshot, seedGraph } from "./seed.ts";
 
-// Needs FalkorDB running: docker compose up -d
+// Needs FalkorDB running: docker compose up -d. Per-run name so parallel worktrees don't collide.
+const NAME = `hallway_test_${process.pid}`;
+const { snapshot } = loadSnapshot([FIXTURE_SNAPSHOT]);
 let graph: Graph;
 
 beforeAll(async () => {
   try {
-    graph = await getGraph("hallway_test");
+    graph = (await getDb()).selectGraph(NAME);
   } catch (err) {
     throw new Error(`FalkorDB not reachable (run docker compose up -d): ${(err as Error).message}`, { cause: err });
   }
-  await seedGraph(graph, loadSnapshot(FIXTURE_SNAPSHOT).snapshot);
+  await seedGraph(await getDb(), NAME, snapshot);
 });
 
 afterAll(async () => {
@@ -22,7 +24,6 @@ afterAll(async () => {
 
 describe("seedGraph", () => {
   it("loads every node and edge from the fixtures", async () => {
-    const { snapshot } = loadSnapshot(FIXTURE_SNAPSHOT);
     const nodes = await graph.query<{ c: number }>("MATCH (n) RETURN count(n) AS c");
     const edges = await graph.query<{ c: number }>("MATCH ()-[r]->() RETURN count(r) AS c");
     expect(nodes.data?.[0]?.c).toBe(snapshot.nodes.length);
@@ -48,8 +49,8 @@ describe("seedGraph", () => {
   });
 
   it("reseeding replaces the graph instead of duplicating it", async () => {
-    await seedGraph(graph, loadSnapshot(FIXTURE_SNAPSHOT).snapshot);
+    await seedGraph(await getDb(), NAME, snapshot);
     const nodes = await graph.query<{ c: number }>("MATCH (n) RETURN count(n) AS c");
-    expect(nodes.data?.[0]?.c).toBe(30);
+    expect(nodes.data?.[0]?.c).toBe(snapshot.nodes.length);
   });
 });

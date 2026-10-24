@@ -45,6 +45,7 @@ export const Talk = z.object({
   title: z.string(),
   abstract: z.string().default(""),
   start: isoDate,
+  end: isoDate.optional(),
   room: z.string().optional(),
 });
 
@@ -62,6 +63,7 @@ export const SideEvent = z.object({
   id,
   name: z.string(),
   start: isoDate,
+  end: isoDate.optional(),
   venue: z.string().optional(),
   url: z.url().optional(),
 });

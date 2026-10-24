@@ -1,24 +1,50 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { NodeLabel, edgeId, validateSnapshot, type GraphSnapshot } from "@hallway/types";
-import type { Graph } from "falkordb";
+import { GraphSnapshot, NodeLabel, edgeId, mergeSnapshots, validateSnapshot } from "@hallway/types";
+import type { FalkorDB } from "falkordb";
 
 const ROOT = path.resolve(import.meta.dirname, "../../..");
-export const CLEAN_SNAPSHOT = path.join(ROOT, "data/clean/graph.json");
+export const CLEAN_DIR = path.join(ROOT, "data/clean");
 export const FIXTURE_SNAPSHOT = path.join(ROOT, "data/fixtures/graph.json");
 
-/** data/clean when Session 2 has committed it, else the hand-written fixtures. */
-export function loadSnapshot(file = existsSync(CLEAN_SNAPSHOT) ? CLEAN_SNAPSHOT : FIXTURE_SNAPSHOT) {
-  return { file, snapshot: validateSnapshot(JSON.parse(readFileSync(file, "utf8"))) };
+function readSnapshot(file: string) {
+  try {
+    return GraphSnapshot.parse(JSON.parse(readFileSync(file, "utf8")));
+  } catch (err) {
+    throw new Error(`${path.relative(ROOT, file)}: ${(err as Error).message}`, { cause: err });
+  }
 }
 
 /**
- * Wipes the graph and loads the snapshot. Labels and relationship types can't be
- * Cypher parameters, so they are interpolated only after validation against the zod enums;
- * every value goes in as a parameter.
+ * Every data/clean/*.json (one per ingest source) merged into one graph, or the
+ * hand-written fixtures when data/clean has none yet.
  */
-export async function seedGraph(graph: Graph, snapshot: GraphSnapshot) {
-  await graph.delete().catch(() => {}); // the graph may not exist yet
+export function loadSnapshot(files?: string[]) {
+  const clean = existsSync(CLEAN_DIR)
+    ? readdirSync(CLEAN_DIR).filter((f) => f.endsWith(".json")).sort().map((f) => path.join(CLEAN_DIR, f))
+    : [];
+  const sources = files ?? (clean.length ? clean : [FIXTURE_SNAPSHOT]);
+  return { files: sources, snapshot: validateSnapshot(mergeSnapshots(sources.map(readSnapshot))) };
+}
+
+async function deleteIfExists(db: FalkorDB, name: string) {
+  try {
+    await db.selectGraph(name).delete();
+  } catch (err) {
+    if (!/empty key/i.test((err as Error).message)) throw err;
+  }
+}
+
+/**
+ * Builds the graph in `<name>_next`, then swaps it in, so a failed load never leaves the
+ * live graph empty. Labels and relationship types can't be Cypher parameters, so they are
+ * interpolated only after validation against the zod enums; every value is a parameter.
+ */
+export async function seedGraph(db: FalkorDB, name: string, input: GraphSnapshot) {
+  const snapshot = validateSnapshot(input);
+  const staging = `${name}_next`;
+  await deleteIfExists(db, staging);
+  const graph = db.selectGraph(staging);
   const labelOf = new Map(snapshot.nodes.map((n) => [n.id, n.label]));
 
   for (const label of NodeLabel.options) {
@@ -27,8 +53,10 @@ export async function seedGraph(graph: Graph, snapshot: GraphSnapshot) {
     await graph.query(`UNWIND $rows AS row CREATE (n:${label}) SET n = row`, { params: { rows } });
     await graph.createNodeRangeIndex(label, "id");
   }
+  if (snapshot.nodes.some((n) => n.label === "Person")) await graph.createNodeRangeIndex("Person", "handle");
 
-  const groups = new Map<string, { from: string; to: string; props: Record<string, string | number | boolean> }[]>();
+  type EdgeRow = { from: string; to: string; props: Record<string, string | number | boolean> };
+  const groups = new Map<string, EdgeRow[]>();
   for (const edge of snapshot.edges) {
     const key = `${labelOf.get(edge.from)}|${edge.type}|${labelOf.get(edge.to)}`;
     const rows = groups.get(key) ?? [];
@@ -45,5 +73,8 @@ export async function seedGraph(graph: Graph, snapshot: GraphSnapshot) {
     );
   }
 
+  await deleteIfExists(db, name);
+  await graph.copy(name);
+  await graph.delete();
   return { nodes: snapshot.nodes.length, edges: snapshot.edges.length };
 }

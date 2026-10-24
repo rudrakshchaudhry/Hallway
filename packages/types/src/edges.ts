@@ -16,13 +16,14 @@ export const EdgeType = z.enum([
   "SKILLED_IN",
   "MET",
   "PLANS",
+  "HOSTS",
 ]);
 export type EdgeType = z.infer<typeof EdgeType>;
 
 /** Which labels each relationship may connect (PLAN.md section 6). */
 export const EDGE_RULES: Record<EdgeType, { from: NodeLabel[]; to: NodeLabel[] }> = {
   WORKS_AT: { from: ["Person"], to: ["Company"] },
-  OWNS: { from: ["Person"], to: ["Repo"] },
+  OWNS: { from: ["Person", "Company"], to: ["Repo"] },
   DEPENDS_ON: { from: ["Repo"], to: ["Package"] },
   MAINTAINS: { from: ["Person"], to: ["Package"] },
   SPEAKS_AT: { from: ["Person"], to: ["Talk"] },
@@ -35,20 +36,30 @@ export const EDGE_RULES: Record<EdgeType, { from: NodeLabel[]; to: NodeLabel[] }
   SKILLED_IN: { from: ["Person"], to: ["Skill"] },
   MET: { from: ["Person"], to: ["Person"] },
   PLANS: { from: ["Person"], to: ["Talk", "SideEvent"] },
+  HOSTS: { from: ["Person", "Company"], to: ["SideEvent"] },
 };
 
-export const SimilarToProps = z.object({ score: z.number().min(0).max(1) });
-export const MetProps = z.object({ at: z.number().int(), via: z.string() });
+/** Edge types whose props are required; checked by validateSnapshot. */
+export const EDGE_PROPS: Partial<Record<EdgeType, z.ZodType>> = {
+  SIMILAR_TO: z.object({ score: z.number().min(0).max(1) }),
+  MET: z.object({ at: z.number().int(), via: z.string() }),
+};
+
+// Prop keys end up in the falkordb client's CYPHER parameter prefix unescaped, so keep them plain.
+const propKey = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "edge prop keys must be identifiers");
 
 export const Edge = z.object({
   type: EdgeType,
   from: z.string(),
   to: z.string(),
-  props: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+  props: z.record(propKey, z.union([z.string(), z.number(), z.boolean()])).optional(),
 });
 export type Edge = z.infer<typeof Edge>;
 
-/** Deterministic edge id, stable across reseeds. */
+/**
+ * Deterministic edge id, stable across reseeds. Runtime writers (e.g. the MET query)
+ * must set the same `id` property so paths keep working.
+ */
 export function edgeId(edge: Pick<Edge, "from" | "type" | "to">): string {
   return `${edge.from}|${edge.type}|${edge.to}`;
 }

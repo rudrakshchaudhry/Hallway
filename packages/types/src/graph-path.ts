@@ -11,6 +11,16 @@ export const GraphPath = z.object({
   edges: z.array(PathEdge),
   /** Human-readable hops, one per edge, e.g. "hallway-api depends on zod". */
   hops: z.array(z.string()),
+}).superRefine((path, ctx) => {
+  if (path.hops.length !== path.edges.length) {
+    ctx.addIssue({ code: "custom", message: "hops must have one entry per edge", path: ["hops"] });
+  }
+  const ids = new Set(path.nodes.map((n) => n.id));
+  path.edges.forEach((e, i) => {
+    if (!ids.has(e.from) || !ids.has(e.to)) {
+      ctx.addIssue({ code: "custom", message: `edge ${e.id} references a node not in the path`, path: ["edges", i] });
+    }
+  });
 });
 
 export type PathNode = z.infer<typeof PathNode>;

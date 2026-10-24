@@ -162,7 +162,7 @@ This covers the hiring signal only. If Expo survives the cut list, extend the ra
 ```cypher
 MATCH (a:Person {handle: $me}), (b:Person {handle: $them})
 MERGE (a)-[m:MET]->(b)
-ON CREATE SET m.at = timestamp(), m.via = 'button'
+ON CREATE SET m.at = timestamp(), m.via = 'button', m.id = a.id + '|MET|' + b.id
 ```
 
 The `SIMILAR_TO` score is computed once during ingest (OpenAI embeddings of title + abstract, cosine similarity), not at query time, so the Schedule tab loads instantly.
@@ -194,7 +194,7 @@ Bright Data documents scrapers for LinkedIn (profiles, companies, jobs, posts) a
 
 **Snapshot strategy**
 
-1. Every ingest script writes raw results to `data/raw/<source>-<timestamp>.json`, then a normaliser writes `data/clean/*.json`.
+1. Every ingest script writes raw results to `data/raw/<source>-<timestamp>.json`, then a normaliser writes `data/clean/<source>.json` in the `GraphSnapshot` format from `packages/types` (stable ids like `person:<handle>`, `talk:<slug>`; drop null keys; validate each record and skip bad ones instead of failing the file). `pnpm seed` merges every `data/clean/*.json` (same id = same node) and only falls back to `data/fixtures` when `data/clean` is empty.
 2. A loader script wipes and rebuilds the graph from `data/clean/` in under a minute (`pnpm seed`).
 3. Commit the clean snapshots to the repo by 12:00. From then on the app never waits on a scraper.
 4. One "Refresh side events" button triggers a live Bright Data call on stage. On failure or timeout (8 s), it shows the cached result with a "last updated" time. That is the failure-handling story for the Bright Data judges.
