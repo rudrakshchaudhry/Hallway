@@ -2,12 +2,21 @@ import type { CalendarItem, Clash, Conference } from "@hallway/types";
 import type { Graph } from "falkordb";
 
 const MINUTE = 60_000;
-const DEFAULT_EVENT_MINUTES = 120;
+export const DEFAULT_EVENT_MINUTES = 120;
+
+/** End of a talk, event or block; side events without an end last DEFAULT_EVENT_MINUTES. */
+export function itemEnd(item: { start: string; end?: string | null }): string {
+  return item.end ?? new Date(Date.parse(item.start) + DEFAULT_EVENT_MINUTES * MINUTE).toISOString();
+}
 
 type Row = { id: string; label: string; title: string; start: string; end: string | null; location: string | null };
 type MeetingRow = { id: string; title: string; start: string; end: string; location: string; status: string; personId: string };
+type BlockRow = { id: string; title: string; start: string; end: string };
 
-/** The user's confirmed items (query 5): planned talks and side events plus accepted meetings, by start. */
+/**
+ * The user's calendar (query 5), by start: planned talks and side events, accepted meetings,
+ * and busy blocks imported from their own calendar.
+ */
 export async function getCalendar(graph: Graph, me: string): Promise<CalendarItem[]> {
   const planned = await graph.roQuery<Row>(
     `MATCH (:Person {id: $me})-[:PLANS]->(x)
@@ -26,6 +35,11 @@ export async function getCalendar(graph: Graph, me: string): Promise<CalendarIte
             m.place AS location, m.status AS status, other.id AS personId`,
     { params: { me } },
   );
+  const blocks = await graph.roQuery<BlockRow>(
+    `MATCH (:Person {id: $me})-[:HAS_BLOCK]->(b:CalendarBlock)
+     RETURN b.id AS id, b.title AS title, b.start AS start, b.end AS end`,
+    { params: { me } },
+  );
 
   const items: CalendarItem[] = [
     ...(planned.data ?? []).map((r) => ({
@@ -33,7 +47,7 @@ export async function getCalendar(graph: Graph, me: string): Promise<CalendarIte
       kind: r.label === "Talk" ? ("talk" as const) : ("event" as const),
       title: r.title,
       start: r.start,
-      end: r.end ?? new Date(Date.parse(r.start) + DEFAULT_EVENT_MINUTES * MINUTE).toISOString(),
+      end: itemEnd(r),
       ...(r.location ? { location: r.location } : {}),
     })),
     ...(meetings.data ?? []).map((r) => ({
@@ -46,6 +60,7 @@ export async function getCalendar(graph: Graph, me: string): Promise<CalendarIte
       status: "accepted" as const,
       personId: r.personId,
     })),
+    ...(blocks.data ?? []).map((r) => ({ id: r.id, kind: "busy" as const, title: r.title, start: r.start, end: r.end })),
   ];
   return items.sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
 }
@@ -58,18 +73,35 @@ export function findClashes(calendar: CalendarItem[], candidate: Pick<CalendarIt
     if (item.id === candidate.id) return [];
     const overlap = Math.min(end, Date.parse(item.end)) - Math.max(start, Date.parse(item.start));
     return overlap > 0
-      ? [{ itemId: candidate.id, withId: item.id, withTitle: item.title, overlapMinutes: Math.round(overlap / MINUTE) }]
+      ? [{ itemId: candidate.id, withId: item.id, withTitle: item.title, overlapMinutes: Math.max(1, Math.ceil(overlap / MINUTE)) }]
       : [];
   });
 }
 
-/** Conference hours (09:00–18:00 venue time) for each conference day, in the conference's UTC offset. */
-export function conferenceDays(conference: Pick<Conference, "start" | "end">): { start: string; end: string }[] {
-  const offset = conference.start.match(/([+-]\d{2}:\d{2}|Z)$/)?.[1] ?? "Z";
+/** "+HH:MM"/"-HH:MM" offset of an IANA time zone at an instant. */
+function offsetAt(tz: string, instant: number): string {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" })
+    .formatToParts(instant)
+    .find((p) => p.type === "timeZoneName")?.value;
+  const match = name?.match(/GMT([+-]\d{2}:\d{2})/);
+  return match?.[1] ?? "+00:00";
+}
+
+/** Local calendar date (YYYY-MM-DD) of an instant in a time zone. */
+function localDate(tz: string, instant: number): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(instant);
+}
+
+/**
+ * Conference hours, 09:00–18:00 venue time, for each conference day. Each day uses the
+ * venue's own UTC offset, so DST changes are handled.
+ */
+export function conferenceDays(conference: Pick<Conference, "start" | "end" | "tz">): { start: string; end: string }[] {
+  const tz = conference.tz;
+  const last = localDate(tz, Date.parse(conference.end));
   const days: { start: string; end: string }[] = [];
-  const first = conference.start.slice(0, 10);
-  const last = conference.end.slice(0, 10);
-  for (let day = first; day <= last; day = nextDay(day)) {
+  for (let day = localDate(tz, Date.parse(conference.start)); day <= last; day = nextDay(day)) {
+    const offset = offsetAt(tz, Date.parse(`${day}T12:00:00Z`));
     days.push({ start: `${day}T09:00:00${offset}`, end: `${day}T18:00:00${offset}` });
   }
   return days;
@@ -96,15 +128,16 @@ export function freeSlots(
   const slots: { start: string; end: string }[] = [];
   for (const w of windows) {
     const wEnd = Date.parse(w.end);
-    let t = Math.max(Date.parse(w.start), Math.ceil(notBefore / step) * step);
+    const align = (ms: number) => Math.ceil(ms / step) * step;
+    let t = align(Math.max(Date.parse(w.start), notBefore));
     while (t + length <= wEnd && slots.length < limit) {
       const clash = blocks.find(([s, e]) => t < e && t + length > s);
       if (clash) {
-        t = Math.ceil(clash[1] / step) * step;
+        t = align(clash[1]);
         continue;
       }
       slots.push({ start: new Date(t).toISOString(), end: new Date(t + length).toISOString() });
-      t += length;
+      t = align(t + length);
     }
   }
   return slots;

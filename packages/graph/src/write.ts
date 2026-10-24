@@ -10,7 +10,15 @@ type Props = Record<string, string | number | boolean>;
  */
 export async function mergeInto(graph: Graph, nodes: Node[], edges: Edge[], labelOf: Map<string, Node["label"]>) {
   for (const label of NodeLabel.options) {
-    const rows = nodes.filter((n) => n.label === label).map(({ label: _label, ...props }) => props);
+    const rows = nodes
+      .filter((n) => n.label === label)
+      .map(({ label: _label, ...props }) => {
+        // zod fills isUser/optedIn with false; never let a default demote an onboarded user.
+        const row: Record<string, string | number | boolean | string[]> = { ...props };
+        if (row.isUser === false) delete row.isUser;
+        if (row.optedIn === false) delete row.optedIn;
+        return row;
+      });
     if (!rows.length) continue;
     await graph.query(`UNWIND $rows AS row MERGE (n:${label} {id: row.id}) SET n += row`, { params: { rows } });
   }

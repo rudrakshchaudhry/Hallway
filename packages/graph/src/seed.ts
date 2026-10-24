@@ -52,21 +52,21 @@ async function readUserSubgraph(db: FalkorDB, name: string) {
   const graph = db.selectGraph(name);
   const nodes = new Map<string, Node>();
   const edges: Edge[] = [];
+  // Returns the node's id even when the live copy no longer fits the contract, so edges to
+  // nodes the new snapshot still has (e.g. a planned Talk) survive; such nodes aren't re-written.
   const keep = (raw: RawNode | null) => {
-    if (!raw) return undefined;
+    if (!raw || typeof raw.properties.id !== "string") return undefined;
     const parsed = asNode(raw);
-    if (!parsed.success) {
-      console.warn(`seed: skipping runtime node ${String(raw.properties.id)}: ${parsed.error.issues[0]?.message}`);
-      return undefined;
-    }
-    nodes.set(parsed.data.id, parsed.data);
-    return parsed.data.id;
+    if (parsed.success) nodes.set(parsed.data.id, parsed.data);
+    else console.warn(`seed: not re-writing runtime node ${raw.properties.id}: ${parsed.error.issues[0]?.message}`);
+    return raw.properties.id;
   };
   const addEdge = (type: string, from: string | undefined, to: string | undefined, props: Record<string, unknown>) => {
     if (!from || !to) return;
     const { id: _id, ...rest } = props;
     const parsed = Edge.safeParse({ type, from, to, props: Object.keys(rest).length ? rest : undefined });
     if (parsed.success) edges.push(parsed.data);
+    else console.warn(`seed: skipping runtime edge ${from}|${type}|${to}: ${parsed.error.issues[0]?.message}`);
   };
 
   const users = await graph.roQuery<{ u: RawNode }>("MATCH (u:Person {isUser: true}) RETURN u");
@@ -79,6 +79,16 @@ async function readUserSubgraph(db: FalkorDB, name: string) {
     "MATCH (:Person {isUser: true})-[:ORGANIZES]->(m:Meeting)-[w:WITH]->(p:Person) RETURN m, properties(w) AS props, p",
   );
   for (const row of withs.data ?? []) addEdge("WITH", keep(row.m), keep(row.p), row.props);
+  // Edges into users written by others (meetings recorded from the other side, swipes by other users).
+  const incoming = await graph.roQuery<{ n: RawNode; type: string; props: Record<string, unknown>; u: RawNode }>(
+    "MATCH (n:Person)-[r:MET|SWIPED]->(u:Person {isUser: true}) RETURN n, type(r) AS type, properties(r) AS props, u",
+  );
+  for (const row of incoming.data ?? []) addEdge(row.type, keep(row.n), keep(row.u), row.props);
+  // Second hop for repos the user added: their dependencies.
+  const deps = await graph.roQuery<{ r: RawNode; props: Record<string, unknown>; p: RawNode }>(
+    "MATCH (:Person {isUser: true})-[:OWNS]->(r:Repo)-[d:DEPENDS_ON]->(p:Package) RETURN r, properties(d) AS props, p",
+  );
+  for (const row of deps.data ?? []) addEdge("DEPENDS_ON", keep(row.r), keep(row.p), row.props);
   return { nodes: [...nodes.values()], edges };
 }
 
@@ -121,15 +131,25 @@ export async function seedGraph(db: FalkorDB, name: string, input: GraphSnapshot
     );
   }
 
-  // Snapshot nodes win, except users and meetings, which only the running app writes.
+  // Snapshot nodes win, except users, meetings and calendar blocks, which only the app writes.
+  // Profile nodes the user created (topics, skills, repos...) are kept when the snapshot lacks
+  // them; conference data the snapshot dropped (talks, events, other people) is not revived.
   const runtime = await readUserSubgraph(db, name);
   const inSnapshot = new Set(snapshot.nodes.map((n) => n.id));
-  const runtimeNodes = runtime.nodes.filter((n) => !inSnapshot.has(n.id) || n.label === "Meeting" || (n.label === "Person" && n.isUser));
+  const appOwned = (n: Node) => n.label === "Meeting" || n.label === "CalendarBlock" || (n.label === "Person" && n.isUser);
+  const revivable = new Set<Node["label"]>(["Topic", "Skill", "Company", "Repo", "Package", "Goal"]);
+  const runtimeNodes = runtime.nodes.filter((n) => appOwned(n) || (!inSnapshot.has(n.id) && revivable.has(n.label)));
+  const present = new Set([...inSnapshot, ...runtimeNodes.map((n) => n.id)]);
+  // Runtime edges the snapshot also has are re-applied so newer props (e.g. PREFERS weight) win.
   const knownEdges = new Set(snapshot.edges.map(edgeId));
-  const runtimeEdges = runtime.edges.filter((e) => !knownEdges.has(edgeId(e)));
-  const labelOf = new Map<string, Node["label"]>([...snapshot.nodes, ...runtime.nodes].map((n) => [n.id, n.label]));
+  const runtimeEdges = runtime.edges.filter((e) => present.has(e.from) && present.has(e.to));
+  const labelOf = new Map<string, Node["label"]>([...snapshot.nodes, ...runtimeNodes].map((n) => [n.id, n.label]));
+  for (const label of new Set(runtimeNodes.map((n) => n.label))) {
+    await graph.createNodeRangeIndex(label, "id").catch(() => {}); // may exist from the snapshot
+  }
   await mergeInto(graph, runtimeNodes, runtimeEdges, labelOf);
 
   await (await db.connection).rename(staging, name);
-  return { nodes: snapshot.nodes.length, edges: snapshot.edges.length, keptRuntimeEdges: runtimeEdges.length };
+  const kept = runtimeEdges.filter((e) => !knownEdges.has(edgeId(e))).length;
+  return { nodes: snapshot.nodes.length, edges: snapshot.edges.length, keptRuntimeEdges: kept };
 }

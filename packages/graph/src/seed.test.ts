@@ -61,7 +61,7 @@ describe("seedGraph", () => {
        MERGE (u)-[s:SWIPED]->(p) SET s.dir = 'left', s.at = 1, s.id = 'person:demo|SWIPED|person:jo'
        MERGE (t:Topic {id: 'topic:rust'}) SET t.name = 'Rust'
        MERGE (u)-[i:INTERESTED_IN]->(t) SET i.id = 'person:demo|INTERESTED_IN|topic:rust'
-       CREATE (m:Meeting {id: 'meeting:runtime', tokenHash: 'h', start: '2026-10-28T11:00:00-07:00',
+       CREATE (m:Meeting {id: 'meeting:runtime', tokenHash: 'h', proposed: ['2026-10-28T11:00:00-07:00'], start: '2026-10-28T11:00:00-07:00',
                           end: '2026-10-28T11:30:00-07:00', place: 'Lobby', note: '', status: 'accepted', createdAt: 1})
        CREATE (u)-[:ORGANIZES {id: 'person:demo|ORGANIZES|meeting:runtime'}]->(m)
        CREATE (m)-[:WITH {id: 'meeting:runtime|WITH|person:jo'}]->(p)`,

@@ -1,26 +1,34 @@
 # Hallway
 
-A mobile web app. The home screen is **Today**: a calendar, suggestions for what the conference would give the user, and people they could meet.
+A mobile-first PWA that plans a conference around you. A chat asks which conference you're
+targeting and what you want from it, reads your LinkedIn and GitHub (or lets you describe
+yourself), then builds four tabs:
+- **My Feed:** calendar and confirmed plans
+- **People:** a swipe deck that learns, with invite links
+- **Explore:** side events
+- **Agenda:** sessions with clash warnings, plus your FalkorDB memory graph
 
-| Path | What it is |
-| --- | --- |
-| `frontend/` | The Today screen. This is the app to run and keep pushing. |
-| `backend/` | How each section should be loaded. Comments and types. No server yet. |
-| `docs/FEATURES.md` | The feed, the fixed prompt, and the sponsorship follow-up |
-| `docs/DATABASE.md` | The FalkorDB graph and the lookup order |
+**The spec and runbook are in [docs/PLAN.md](docs/PLAN.md).** Agent rules are in [CLAUDE.md](CLAUDE.md).
 
-Sponsorship is not on the first screen. If the user's sentence parses as a job, the next screen asks. Otherwise it never appears.
-
-## Run the frontend
+## Run it
 
 ```bash
-cd frontend
-npm install
-npm run dev
+pnpm install
+docker compose up -d      # FalkorDB + FalkorDB MCP (localhost only)
+pnpm seed                 # loads data/clean, or data/fixtures
+pnpm dev                  # http://localhost:3000
+pnpm tunnel               # optional: public HTTPS URL for phones
 ```
 
-Open http://localhost:3000. The feed uses sample blocks until `backend/` is connected.
+Checks: `pnpm typecheck && pnpm lint && pnpm test` (needs FalkorDB running) and `pnpm demo:check`.
 
-## Calendar rule
+## Layout
 
-Today's calendar shows blocks synced from Google Calendar and blocks created when someone accepts a meeting message. Accepting a message writes one `CalendarBlock`. The calendar reads those blocks. It does not keep a second copy.
+| Path | What |
+| --- | --- |
+| `apps/web` | Next.js app: screens, API routes, agent glue |
+| `packages/types` | zod contract shared by everything |
+| `packages/graph` | FalkorDB client, seed, calendar helpers, per-track queries |
+| `packages/ingest` | Bright Data, GitHub and LinkedIn ingest |
+| `data/` | fixtures, committed snapshots, live caches |
+| `frontend/`, `backend/` | legacy from PR #5, being ported into `apps/web` by Track A |
