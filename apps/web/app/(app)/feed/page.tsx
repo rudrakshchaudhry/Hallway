@@ -1,17 +1,16 @@
-import { conferenceDays, getProfileSummary } from "@hallway/graph";
+import { getProfileSummary } from "@hallway/graph";
 import { feedFor } from "@hallway/graph/queries/feed";
 import { Label } from "@primer/react";
 import Link from "next/link";
 import { Heatmap } from "@/components/Heatmap";
-import { DayCalendar, type DayEvent } from "@/components/google/DayCalendar";
+import { DayView } from "@/components/calendar/DayView";
 import { AddButton } from "@/components/tabs/AddButton";
 import { PathButton } from "@/components/tabs/PathButton";
 import { RequestActions } from "@/components/tabs/RequestActions";
-import { dayIn, localDate, minutesIn, timeIn } from "@/components/tabs/format";
+import { dayIn, localDate, timeIn } from "@/components/tabs/format";
 import styles from "@/components/tabs/tabs.module.css";
 import { context } from "@/lib/context";
 import { fetchContributions } from "@/lib/github";
-import { accessTokenFor, eventsBetween, googleConfigured, readSession, type CalendarEvent } from "@/lib/google";
 
 export const dynamic = "force-dynamic";
 
@@ -34,43 +33,16 @@ export default async function FeedPage() {
   const tz = conference.tz;
   const clashIds = new Set(feed.clashes.flatMap((c) => [c.itemId, c.withId]));
 
-  // Google Calendar events on the conference days, when signed in (Track A's integration).
-  let google: CalendarEvent[] = [];
-  const session = googleConfigured() ? await readSession() : null;
-  if (session) {
-    try {
-      google = await eventsBetween(await accessTokenFor(session.refreshToken), conference.start, conference.end);
-    } catch {
-      google = [];
+  // Days shown: the conference plus a day either side (side events), plus any day with plans.
+  const dayList = (() => {
+    const set = new Set(feed.calendar.map((c) => localDate(c.start, tz)));
+    const first = new Date(`${localDate(conference.start, tz)}T12:00:00Z`);
+    const last = new Date(`${localDate(conference.end, tz)}T12:00:00Z`);
+    for (let d = new Date(first.getTime() - 86_400_000); d.getTime() <= last.getTime() + 86_400_000; d = new Date(d.getTime() + 86_400_000)) {
+      set.add(d.toISOString().slice(0, 10));
     }
-  }
-
-  const days = conferenceDays(conference).map((day) => {
-    const date = day.start.slice(0, 10);
-    const hallway: DayEvent[] = feed.calendar
-      .filter((c) => localDate(c.start, tz) === date)
-      .map((c) => ({
-        id: c.id,
-        title: c.title,
-        time: timeIn(c.start, tz),
-        day: date,
-        place: c.location ?? "",
-        allDay: false,
-        minutes: minutesIn(c.start, tz),
-        start: c.start,
-        source: "hallway",
-        kind: c.kind === "busy" ? "Busy" : c.kind === "meeting" ? "Meeting" : c.kind === "event" ? "Event" : "Talk",
-        clash: clashIds.has(c.id),
-      }));
-    const theirs: DayEvent[] = google
-      .filter((g) => (g.allDay ? g.start.slice(0, 10) : localDate(g.start, tz)) === date)
-      .map((g) => ({
-        ...g,
-        source: "google",
-        ...(g.allDay ? {} : { minutes: minutesIn(g.start, tz), time: timeIn(g.start, tz) }),
-      }));
-    return { label: dayIn(day.start, tz), events: [...hallway, ...theirs].sort((a, b) => (a.minutes ?? -1) - (b.minutes ?? -1)) };
-  });
+    return [...set].sort();
+  })();
 
   return (
     <main className={styles.page}>
@@ -85,15 +57,7 @@ export default async function FeedPage() {
         </section>
       ) : null}
 
-      {googleConfigured() && !session ? (
-        <a href="/api/auth/google" className={styles.muted}>
-          Connect Google Calendar to see your own events here →
-        </a>
-      ) : null}
-
-      {days.map((day) => (
-        <DayCalendar key={day.label} label={day.label} events={day.events} />
-      ))}
+      <DayView items={feed.calendar} tz={tz} days={dayList} clashIds={[...clashIds]} />
       {feed.clashes.length ? <p className={styles.warning}>{feed.clashes.length} clash{feed.clashes.length > 1 ? "es" : ""} in your plan</p> : null}
 
       <h2 className={styles.sectionTitle}>Confirmed</h2>
