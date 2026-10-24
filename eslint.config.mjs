@@ -8,4 +8,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...nextVitals.map((c) => ({ ...c, files: ["apps/web/**/*.{ts,tsx}"] })),
   { settings: { next: { rootDir: "apps/web" } } },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
+    },
+  },
 );

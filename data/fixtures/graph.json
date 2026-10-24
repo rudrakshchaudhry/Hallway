@@ -1,0 +1,419 @@
+{
+ "nodes": [
+  {
+   "label": "Person",
+   "id": "person:demo",
+   "handle": "demo",
+   "name": "Demo Dev",
+   "role": "Full-stack engineer",
+   "optedIn": true,
+   "github": "demo"
+  },
+  {
+   "label": "Person",
+   "id": "person:priya",
+   "handle": "priya-r",
+   "name": "Priya Raman",
+   "role": "Staff engineer, Acme",
+   "optedIn": false,
+   "github": "priya-r"
+  },
+  {
+   "label": "Person",
+   "id": "person:marco",
+   "handle": "marco-v",
+   "name": "Marco Vitale",
+   "role": "Platform lead, Graphly",
+   "optedIn": false,
+   "github": "marco-v"
+  },
+  {
+   "label": "Person",
+   "id": "person:lena",
+   "handle": "lena-k",
+   "name": "Lena Koch",
+   "role": "OSS maintainer",
+   "optedIn": false,
+   "github": "lena-k"
+  },
+  {
+   "label": "Person",
+   "id": "person:sam",
+   "handle": "sam-o",
+   "name": "Sam Okafor",
+   "role": "Developer advocate",
+   "optedIn": false
+  },
+  {
+   "label": "Person",
+   "id": "person:jo",
+   "handle": "jo-t",
+   "name": "Jo Tanaka",
+   "role": "Research engineer",
+   "optedIn": false
+  },
+  {
+   "label": "Repo",
+   "id": "repo:demo/hallway-api",
+   "fullName": "demo/hallway-api",
+   "stars": 42
+  },
+  {
+   "label": "Repo",
+   "id": "repo:demo/notes-app",
+   "fullName": "demo/notes-app",
+   "stars": 7
+  },
+  {
+   "label": "Package",
+   "id": "pkg:npm/zod",
+   "name": "zod",
+   "ecosystem": "npm"
+  },
+  {
+   "label": "Package",
+   "id": "pkg:npm/react",
+   "name": "react",
+   "ecosystem": "npm"
+  },
+  {
+   "label": "Package",
+   "id": "pkg:npm/fastify",
+   "name": "fastify",
+   "ecosystem": "npm"
+  },
+  {
+   "label": "Package",
+   "id": "pkg:npm/left-pad-ng",
+   "name": "left-pad-ng",
+   "ecosystem": "npm"
+  },
+  {
+   "label": "Talk",
+   "id": "talk:typesafe-apis",
+   "title": "Type-safe APIs end to end",
+   "abstract": "Schemas as the single source of truth from database to browser.",
+   "start": "2026-10-28T14:00:00-07:00",
+   "room": "Cowell Theater"
+  },
+  {
+   "label": "Talk",
+   "id": "talk:agents-in-ci",
+   "title": "Agents in your CI pipeline",
+   "abstract": "Letting coding agents fix flaky tests before humans notice.",
+   "start": "2026-10-28T15:00:00-07:00",
+   "room": "Festival Pavilion A"
+  },
+  {
+   "label": "Talk",
+   "id": "talk:graph-search",
+   "title": "Searching code as a graph",
+   "abstract": "Dependency graphs make code search smarter.",
+   "start": "2026-10-28T14:00:00-07:00",
+   "room": "Festival Pavilion B"
+  },
+  {
+   "label": "PastTalk",
+   "id": "pasttalk:priya-2025",
+   "title": "End-to-end type safety with schemas",
+   "conf": "JSConf",
+   "year": 2025,
+   "url": "https://www.youtube.com/watch?v=fixture-priya"
+  },
+  {
+   "label": "PastTalk",
+   "id": "pasttalk:sam-2026",
+   "title": "Graphs of code for agents",
+   "conf": "DevOpsDays",
+   "year": 2026,
+   "url": "https://www.youtube.com/watch?v=fixture-sam"
+  },
+  {
+   "label": "PastTalk",
+   "id": "pasttalk:jo-2024",
+   "title": "Embeddings for search",
+   "conf": "PyCon",
+   "year": 2024,
+   "url": "https://www.youtube.com/watch?v=fixture-jo"
+  },
+  {
+   "label": "SideEvent",
+   "id": "event:git-together",
+   "name": "Git-Together",
+   "start": "2026-10-28T18:00:00-07:00",
+   "venue": "Fort Mason Gallery 308",
+   "url": "https://luma.com/fixture-git-together"
+  },
+  {
+   "label": "SideEvent",
+   "id": "event:ai-breakfast",
+   "name": "AI Builders Breakfast",
+   "start": "2026-10-29T08:00:00-07:00",
+   "venue": "Marina Cafe"
+  },
+  {
+   "label": "Company",
+   "id": "company:acme",
+   "name": "Acme Cloud",
+   "funding": "Series C",
+   "booth": "B12"
+  },
+  {
+   "label": "Company",
+   "id": "company:graphly",
+   "name": "Graphly",
+   "funding": "Series A",
+   "booth": "B4"
+  },
+  {
+   "label": "Company",
+   "id": "company:quietco",
+   "name": "QuietCo"
+  },
+  {
+   "label": "Skill",
+   "id": "skill:typescript",
+   "name": "TypeScript"
+  },
+  {
+   "label": "Skill",
+   "id": "skill:go",
+   "name": "Go"
+  },
+  {
+   "label": "Skill",
+   "id": "skill:graphql",
+   "name": "GraphQL"
+  },
+  {
+   "label": "Skill",
+   "id": "skill:python",
+   "name": "Python"
+  },
+  {
+   "label": "Topic",
+   "id": "topic:ai",
+   "name": "AI"
+  },
+  {
+   "label": "Topic",
+   "id": "topic:devtools",
+   "name": "Developer tools"
+  },
+  {
+   "label": "Topic",
+   "id": "topic:security",
+   "name": "Security"
+  }
+ ],
+ "edges": [
+  {
+   "type": "OWNS",
+   "from": "person:demo",
+   "to": "repo:demo/hallway-api"
+  },
+  {
+   "type": "OWNS",
+   "from": "person:demo",
+   "to": "repo:demo/notes-app"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/hallway-api",
+   "to": "pkg:npm/zod"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/hallway-api",
+   "to": "pkg:npm/fastify"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/hallway-api",
+   "to": "pkg:npm/left-pad-ng"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/notes-app",
+   "to": "pkg:npm/zod"
+  },
+  {
+   "type": "DEPENDS_ON",
+   "from": "repo:demo/notes-app",
+   "to": "pkg:npm/react"
+  },
+  {
+   "type": "MAINTAINS",
+   "from": "person:priya",
+   "to": "pkg:npm/zod"
+  },
+  {
+   "type": "MAINTAINS",
+   "from": "person:marco",
+   "to": "pkg:npm/fastify"
+  },
+  {
+   "type": "MAINTAINS",
+   "from": "person:lena",
+   "to": "pkg:npm/react"
+  },
+  {
+   "type": "MET",
+   "from": "person:demo",
+   "to": "person:lena",
+   "props": {
+    "at": 1793120400000,
+    "via": "fixture"
+   }
+  },
+  {
+   "type": "SPEAKS_AT",
+   "from": "person:priya",
+   "to": "talk:typesafe-apis"
+  },
+  {
+   "type": "SPEAKS_AT",
+   "from": "person:sam",
+   "to": "talk:agents-in-ci"
+  },
+  {
+   "type": "SPEAKS_AT",
+   "from": "person:jo",
+   "to": "talk:graph-search"
+  },
+  {
+   "type": "GAVE",
+   "from": "person:priya",
+   "to": "pasttalk:priya-2025"
+  },
+  {
+   "type": "GAVE",
+   "from": "person:sam",
+   "to": "pasttalk:sam-2026"
+  },
+  {
+   "type": "GAVE",
+   "from": "person:jo",
+   "to": "pasttalk:jo-2024"
+  },
+  {
+   "type": "SIMILAR_TO",
+   "from": "talk:typesafe-apis",
+   "to": "pasttalk:priya-2025",
+   "props": {
+    "score": 0.91
+   }
+  },
+  {
+   "type": "SIMILAR_TO",
+   "from": "talk:agents-in-ci",
+   "to": "pasttalk:sam-2026",
+   "props": {
+    "score": 0.6
+   }
+  },
+  {
+   "type": "SIMILAR_TO",
+   "from": "talk:graph-search",
+   "to": "pasttalk:sam-2026",
+   "props": {
+    "score": 0.88
+   }
+  },
+  {
+   "type": "ATTENDING",
+   "from": "person:marco",
+   "to": "event:git-together"
+  },
+  {
+   "type": "ATTENDING",
+   "from": "person:sam",
+   "to": "event:ai-breakfast"
+  },
+  {
+   "type": "WORKS_AT",
+   "from": "person:priya",
+   "to": "company:acme"
+  },
+  {
+   "type": "WORKS_AT",
+   "from": "person:marco",
+   "to": "company:graphly"
+  },
+  {
+   "type": "SKILLED_IN",
+   "from": "person:demo",
+   "to": "skill:typescript"
+  },
+  {
+   "type": "SKILLED_IN",
+   "from": "person:demo",
+   "to": "skill:go"
+  },
+  {
+   "type": "SKILLED_IN",
+   "from": "person:demo",
+   "to": "skill:graphql"
+  },
+  {
+   "type": "SKILLED_IN",
+   "from": "person:demo",
+   "to": "skill:python"
+  },
+  {
+   "type": "HIRING_FOR",
+   "from": "company:acme",
+   "to": "skill:typescript"
+  },
+  {
+   "type": "HIRING_FOR",
+   "from": "company:acme",
+   "to": "skill:go"
+  },
+  {
+   "type": "HIRING_FOR",
+   "from": "company:graphly",
+   "to": "skill:graphql"
+  },
+  {
+   "type": "HIRING_FOR",
+   "from": "company:quietco",
+   "to": "skill:python"
+  },
+  {
+   "type": "ABOUT",
+   "from": "talk:typesafe-apis",
+   "to": "topic:devtools"
+  },
+  {
+   "type": "ABOUT",
+   "from": "talk:agents-in-ci",
+   "to": "topic:ai"
+  },
+  {
+   "type": "ABOUT",
+   "from": "talk:graph-search",
+   "to": "topic:devtools"
+  },
+  {
+   "type": "INTERESTED_IN",
+   "from": "person:demo",
+   "to": "topic:devtools"
+  },
+  {
+   "type": "INTERESTED_IN",
+   "from": "person:demo",
+   "to": "topic:ai"
+  },
+  {
+   "type": "PLANS",
+   "from": "person:demo",
+   "to": "talk:typesafe-apis"
+  },
+  {
+   "type": "PLANS",
+   "from": "person:demo",
+   "to": "event:git-together"
+  }
+ ]
+}
