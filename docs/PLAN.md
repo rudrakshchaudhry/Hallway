@@ -99,6 +99,16 @@ Flow: phone or stage view → Next.js API routes → TrueForge (OpenAI model) �
 
 The hallway-tools MCP server exposes about six tools: `people_to_meet`, `explain_path`, `check_rerun`, `rank_booths`, `record_meeting`, `draft_followup`. Each returns its answer plus the node and edge IDs it walked, which the UI animates. `draft_followup` (and any calendar add) is marked as requiring approval in TrueForge. The TrueForge sandbox runs on Daytona, so treat it as optional: use it only if setup takes under 20 minutes, for an "analyse my day" report.
 
+### 5.1 Corrections from the docs check (Oct 24, these override the text above)
+
+- **TrueForge only registers remote MCP servers** (streamable HTTP or SSE, no stdio). `packages/mcp-hallway` runs as a streamable-HTTP MCP server on localhost; the FalkorDB MCP uses the `falkordb/mcpserver` Docker image (HTTP on 8080, `FALKORDB_DEFAULT_READONLY=true` for the agent); Bright Data MCP, if used, is the hosted `https://mcp.brightdata.com/mcp` endpoint. [TrueForge](https://github.com/truefoundry/trueforge) · [FalkorDB MCP](https://github.com/FalkorDB/FalkorDB-MCPServer)
+- **Tool approvals are configured through the API only**, not the UI. A setup script in `apps/web/lib/agent` creates the agent with `requireApprovalForTools: ["draft_followup"]` (literal names, not `@write`) and writes its id to `TRUEFORGE_AGENT_ID`.
+- **Model provider:** OpenAI is registered in the local TrueForge (port 8790) with models `gpt-5-2` (agent) and `gpt-5-mini` (cheap calls); address them as `openai/gpt-5-2`. Model names must be lowercase with hyphens only.
+- **TrueForge → Next.js is SSE on localhost;** `/api/ask` re-emits it to the phone as NDJSON. The tunnel never carries SSE.
+- **`@falkordb/canvas` (v0.3) themes only through colours** (`backgroundColor`, `foregroundColor`, per-node and per-link colours): pass Primer token values resolved at runtime. It throws on import during SSR, so load it in a `'use client'` component with a dynamic import inside `useEffect`.
+- **Primer React v38:** wrap the app in `BaseStyles`, set `data-color-mode="dark" data-dark-theme="dark"` on `<html>`, import `@primer/primitives` functional dark theme CSS. No styled-components, no `sx`.
+- **Versions:** Next 16, React 19, zod 4, vitest 5, `falkordb` client v6 (Node 22+).
+
 ## 6. Graph schema and the four queries that power the app
 
 One graph, eight node types. Every feature is a different walk through it, which is exactly what the FalkorDB judges want to see.
@@ -182,6 +192,17 @@ Bright Data documents scrapers for LinkedIn (profiles, companies, jobs, posts) a
 3. Commit the clean snapshots to the repo by 12:00. From then on the app never waits on a scraper.
 4. One "Refresh side events" button triggers a live Bright Data call on stage. On failure or timeout (8 s), it shows the cached result with a "last updated" time. That is the failure-handling story for the Bright Data judges.
 5. Scope the scrape to what the demo touches: about 100 sessions, their speakers, 15–20 sponsors, 20–30 side events. Check credit usage in the Bright Data dashboard after the first run so the $50 lasts the day.
+
+**Bright Data products actually used (Oct 24 decision, $50 budget; overrides the table above)**
+
+| Product | Use | Notes |
+| --- | --- | --- |
+| Web Unlocker, zone `hallway_unlocker` | Session catalog, Luma and sponsor event pages, live "Refresh side events" | `POST https://api.brightdata.com/request` with `{zone, url, format: "raw"}`, Bearer API key. Synchronous; CAPTCHA solver and `expect` elements enabled, premium domains off. $1.50 per 1,000 requests |
+| Web Scraper API: LinkedIn profiles, LinkedIn companies, LinkedIn jobs, YouTube videos | Speaker and sponsor profiles, hiring, speakers' past talks | `POST /datasets/v3/trigger?dataset_id=…` then poll `/progress` and download `/snapshot`. Always set `limit_per_input` |
+| Browser API | Not used unless Web Unlocker cannot render the catalog | Billed by bandwidth; ask the human before creating it |
+| SERP API, Crunchbase | Not used | Past talks come from YouTube discover-by-keyword; funding is dropped with the Expo cut risk |
+
+Target about 1,500 records and a few hundred Unlocker requests in total. Never buy Dataset Marketplace data; never start collections from the dashboard.
 
 ## 8. Solo plan: three Claude Code sessions, four gates
 
