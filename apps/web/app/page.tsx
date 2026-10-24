@@ -1,22 +1,11 @@
-"use client";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { Chat } from "@/components/chat/Chat";
+import { IDENTITY_COOKIE, verifyIdentity } from "@/lib/identity";
 
-import { Button, Heading, Label } from "@primer/react";
-import { CommentDiscussionIcon } from "@primer/octicons-react";
-import styles from "./page.module.css";
-
-export default function Home() {
-  return (
-    <main className={styles.main}>
-      <Heading as="h1">Hallway</Heading>
-      <p className={styles.muted}>What should you do next?</p>
-      <div className={styles.labels}>
-        <Label variant="success">Live-only</Label>
-        <Label variant="attention">Rerun</Label>
-        <Label variant="danger">Clash</Label>
-      </div>
-      <Button variant="primary" leadingVisual={CommentDiscussionIcon}>
-        Ask
-      </Button>
-    </main>
-  );
+// Onboarding chat. Signed-in users go to their feed unless they open the chat on purpose (?chat=1).
+export default async function Home({ searchParams }: { searchParams: Promise<{ chat?: string }> }) {
+  const { chat } = await searchParams;
+  if (!chat && verifyIdentity((await cookies()).get(IDENTITY_COOKIE)?.value)) redirect("/feed");
+  return <Chat />;
 }

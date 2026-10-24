@@ -1,3 +1,4 @@
+import "./env";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 

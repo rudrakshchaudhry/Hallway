@@ -5,4 +5,4 @@ export { DEFAULT_EVENT_MINUTES, conferenceDays, findClashes, freeSlots, getCalen
 export { getConference, listConferences } from "./conferences.ts";
 export { addPlan } from "./plans.ts";
 export { SHARED_PROFILE_LABELS, buildProfileSnapshot, handleSlug, slug, type ProfileInput } from "./profile.ts";
-export { findPerson, listTopics } from "./people.ts";
+export { findPerson, getProfileSummary, listTopics } from "./people.ts";
