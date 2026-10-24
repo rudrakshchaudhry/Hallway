@@ -33,6 +33,14 @@ export interface UnlockerOptions {
   expect?: UnlockerExpect;
   /** Per-attempt timeout. Defaults to 30 s; rendered (`expect`) fetches may need longer. */
   timeoutMs?: number;
+  /** Target request method (POST needs the zone's custom features enabled). */
+  method?: 'GET' | 'POST';
+  /** Raw payload sent to the target. */
+  body?: string;
+  /** Headers forwarded to the target (needs "Custom headers & cookies" on the zone). */
+  headers?: Record<string, string>;
+  /** Set false to skip the one retry (e.g. while probing an endpoint). */
+  retry?: boolean;
 }
 
 export interface UnlockerResult {
@@ -45,8 +53,11 @@ export async function unlocker(url: string, opts: UnlockerOptions = {}): Promise
   const zone = process.env.BRIGHTDATA_UNLOCKER_ZONE;
   if (!zone) throw new Error('BRIGHTDATA_UNLOCKER_ZONE is not set');
   let lastError: unknown;
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    await budget.reserve(PRICE.unlockerRequest, `unlocker ${url}`);
+  const target: Record<string, string> = { ...opts.headers };
+  if (opts.expect) target['x-unblock-expect'] = JSON.stringify(opts.expect);
+  const attempts = opts.retry === false ? 1 : 2;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    await budget.reserve(PRICE.unlockerRequest, `unlocker ${opts.method ?? 'GET'} ${url}`);
     usage.unlockerRequests++;
     try {
       const res = await fetch(`${API}/request`, {
@@ -56,7 +67,9 @@ export async function unlocker(url: string, opts: UnlockerOptions = {}): Promise
           zone,
           url,
           format: 'raw',
-          ...(opts.expect ? { headers: { 'x-unblock-expect': JSON.stringify(opts.expect) } } : {}),
+          ...(opts.method ? { method: opts.method } : {}),
+          ...(opts.body !== undefined ? { body: opts.body } : {}),
+          ...(Object.keys(target).length ? { headers: target } : {}),
         }),
         signal: AbortSignal.timeout(opts.timeoutMs ?? UNLOCKER_TIMEOUT_MS),
       });

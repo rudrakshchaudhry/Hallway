@@ -15,4 +15,7 @@ if (speakers.length === 0) {
   const records = await scrape(dataset, inputs, { limitPerInput: 1, discoverBy: 'keyword' });
   const file = await writeRaw('past-talks', { inputs, fetchedAt: new Date().toISOString(), records });
   console.log(`${file}: ${records.length} records (reserved ${usage.scraperRecordsReserved})`);
+  for (const r of records as Record<string, unknown>[]) {
+    console.log(`- ${String(r.title ?? r.error ?? '?')} | ${String(r.youtuber ?? r.channel_name ?? '')} | ${String(r.date_posted ?? '')}`);
+  }
 }

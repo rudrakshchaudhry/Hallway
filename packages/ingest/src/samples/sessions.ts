@@ -1,66 +1,82 @@
-// Sample: GitHub Universe 2026 session catalog (RainFocus attendee portal).
+// Sample: GitHub Universe 2026 sessions from the RainFocus catalog.
 //
-// Findings (2026-10-24):
-// - Catalog page: reg.githubuniverse.com/flow/github/universe26/attendee-portal/page/sessioncatalog
-//   is a client-rendered RainFocus workflow SPA; the HTML has no sessions.
-// - GET flow/loadPage?pageUri=sessioncatalog&workflowApiToken=github.universe26.attendee-portal
-//   works unauthenticated and returns the page config: catalog widget id + apiProfileToken.
-// - Sessions come from POST https://events.githubuniverse.com/api/search with headers
-//   rfWidgetId / rfApiProfileId. The Unlocker zone returns an empty body for POST bodies and
-//   needs "custom headers" enabled for target headers, so that route is closed for now.
-// - Workflow GET routes (flow/common/sessions/*, flow/common/speaker/loadEventSpeakers) answer
-//   error.api.invalid.csrf.token: the rfcsrf token is bound to the session cookie.
-// - A rendered fetch (x-unblock-expect element [data-session-id]) fails with expect_element /
-//   req_timeout: the widget never renders inside the Unlocker.
+// Route (found 2026-10-24):
+// 1. GET  reg.githubuniverse.com/flow/loadPage?pageUri=sessioncatalog&workflowApiToken=github.universe26.attendee-portal
+//    -> catalog widget id (div#rf-catalog data-widgetid) + widgetConf.apiProfileToken. Unauthenticated.
+// 2. POST events.githubuniverse.com/api/search (form body) with headers rfWidgetId / rfApiProfileId
+//    -> sessions. Needs "Custom headers & cookies" enabled on the Unlocker zone.
+// Workflow GET routes (flow/common/sessions/*) are CSRF-bound and the rendered catalog never loads
+// in the Unlocker, so this is the only working route.
 //
-// This script records the reachable catalog config; pass --render to retry the rendered fetch
-// (costs up to 2 Unlocker requests).
+// Usage: pnpm sample:sessions [--size N]   (default 3; writes the raw items, not a full run)
 import { unlocker, usage } from '../brightdata.ts';
-import { writeRaw } from '../paths.ts';
+import { readLatestRaw, writeRaw } from '../paths.ts';
 
-const PORTAL = 'https://reg.githubuniverse.com/flow/github/universe26/attendee-portal';
 const LOAD_PAGE =
   'https://reg.githubuniverse.com/flow/loadPage?pageUri=sessioncatalog&workflowApiToken=github.universe26.attendee-portal';
+const SEARCH = 'https://events.githubuniverse.com/api/search';
 
-interface LoadPage {
-  data: {
-    responseCode: string;
-    timeZone?: string;
-    eventsettings?: { eventStartDate?: string };
-    widgetConf?: { widgetId: string; apiProfileToken: string; workflowId: string };
-    eventsUrl?: string;
-  };
+interface CatalogConfig {
+  catalogWidgetId: string;
+  apiProfileToken: string;
 }
 
-const page = await unlocker(LOAD_PAGE, { expect: { text: '"responseCode"' } });
-const parsed = JSON.parse(page.body) as LoadPage;
-const catalogWidgetId = page.body.match(/id=\\"rf-catalog\\" data-widgetid=\\"(\w+)\\"/)?.[1] ?? null;
-
-const result: Record<string, unknown> = {
-  catalogPage: `${PORTAL}/page/sessioncatalog`,
-  loadPage: LOAD_PAGE,
-  responseCode: parsed.data.responseCode,
-  timeZone: parsed.data.timeZone ?? null,
-  eventStartDate: parsed.data.eventsettings?.eventStartDate ?? null,
-  searchApi: `https://${parsed.data.eventsUrl ?? 'events.githubuniverse.com'}/api/search`,
-  catalogWidgetId,
-  apiProfileToken: parsed.data.widgetConf?.apiProfileToken ?? null,
-  sessions: [] as unknown[],
-  status: 'blocked: sessions load via api/search (POST + rfWidgetId/rfApiProfileId headers)',
-};
-
-if (process.argv.includes('--render')) {
-  try {
-    const rendered = await unlocker(`${PORTAL}/page/sessioncatalog`, {
-      expect: { element: '[data-session-id]' },
-      timeoutMs: 90_000,
-    });
-    result.renderedHtmlLength = rendered.body.length;
-    result.status = 'rendered: parse [data-session-id] tiles';
-  } catch (err) {
-    result.renderError = String(err);
+async function catalogConfig(): Promise<CatalogConfig> {
+  const cached = await readLatestRaw<Partial<CatalogConfig>>('sessions');
+  if (cached?.catalogWidgetId && cached.apiProfileToken) {
+    return { catalogWidgetId: cached.catalogWidgetId, apiProfileToken: cached.apiProfileToken };
   }
+  const page = await unlocker(LOAD_PAGE, { expect: { text: '"responseCode"' } });
+  const widget = page.body.match(/id=\\"rf-catalog\\" data-widgetid=\\"(\w+)\\"/)?.[1];
+  const token = (JSON.parse(page.body) as { data: { widgetConf?: { apiProfileToken?: string } } }).data
+    .widgetConf?.apiProfileToken;
+  if (!widget || !token) throw new Error('sessions: catalog widget id or apiProfileToken not found');
+  return { catalogWidgetId: widget, apiProfileToken: token };
 }
 
-const file = await writeRaw('sessions', result);
-console.log(`${file}: ${result.status} (unlocker requests: ${usage.unlockerRequests})`);
+export interface SearchSection {
+  total?: number;
+  size?: number;
+  numItems?: number;
+  items?: Record<string, unknown>[];
+}
+
+/** One api/search page. RainFocus returns either sectionList[] or items at the top level. */
+export async function searchSessions(
+  cfg: CatalogConfig,
+  from: number,
+  size: number,
+): Promise<{ raw: Record<string, unknown>; section: SearchSection }> {
+  const body = new URLSearchParams({ type: 'session', search: '', from: String(from), size: String(size) });
+  const res = await unlocker(SEARCH, {
+    method: 'POST',
+    body: body.toString(),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      rfWidgetId: cfg.catalogWidgetId,
+      rfApiProfileId: cfg.apiProfileToken,
+    },
+    retry: false,
+  });
+  const raw = JSON.parse(res.body) as Record<string, unknown> & { sectionList?: SearchSection[] };
+  const section = raw.sectionList?.find((s) => Array.isArray(s.items)) ?? (raw as SearchSection);
+  return { raw, section };
+}
+
+const sizeArg = process.argv.indexOf('--size');
+const size = sizeArg >= 0 ? Number(process.argv[sizeArg + 1]) : 3;
+const cfg = await catalogConfig();
+const { raw, section } = await searchSessions(cfg, 0, size);
+const items = (section.items ?? []).slice(0, size);
+
+const file = await writeRaw('sessions', {
+  ...cfg,
+  searchApi: SEARCH,
+  fetchedAt: new Date().toISOString(),
+  responseCode: raw.responseCode ?? null,
+  total: section.total ?? null,
+  pageSize: section.size ?? null,
+  topLevelKeys: Object.keys(raw),
+  sessions: items,
+});
+console.log(`${file}: ${items.length} sessions, total=${section.total ?? '?'} (unlocker requests: ${usage.unlockerRequests})`);

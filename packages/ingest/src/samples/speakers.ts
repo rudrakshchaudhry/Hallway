@@ -15,4 +15,7 @@ if (inputs.length === 0) {
   const records = await scrape(dataset, inputs, { limitPerInput: 1 });
   const file = await writeRaw('speakers', { inputs, fetchedAt: new Date().toISOString(), records });
   console.log(`${file}: ${records.length} records (reserved ${usage.scraperRecordsReserved})`);
+  for (const r of records as Record<string, unknown>[]) {
+    console.log(`- ${String(r.name ?? r.error ?? '?')} | ${String(r.position ?? '')} | ${String((r.current_company as { name?: string } | undefined)?.name ?? '')}`);
+  }
 }
