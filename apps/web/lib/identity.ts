@@ -34,6 +34,11 @@ export function verifyIdentity(value: string | undefined): string | null {
   return given.length === expected.length && timingSafeEqual(given, expected) ? personId : null;
 }
 
+/** The signed-in user from the cookie, or null (no demo fallback). */
+export async function getCookieIdentity(): Promise<string | null> {
+  return verifyIdentity((await cookies()).get(IDENTITY_COOKIE)?.value);
+}
+
 /** The current user's Person id. */
 export async function getMe(): Promise<string> {
   return verifyIdentity((await cookies()).get(IDENTITY_COOKIE)?.value) ?? demoPersonId();

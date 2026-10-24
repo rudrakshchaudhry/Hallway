@@ -8,7 +8,12 @@ import { mergeInto } from "./write.ts";
  * snapshot includes its Conference node. Only the fields the input supplies are written:
  * schema defaults never overwrite stored values.
  */
-export async function upsertSnapshot(db: FalkorDB, name: string, input: GraphSnapshot) {
+export async function upsertSnapshot(
+  db: FalkorDB,
+  name: string,
+  input: GraphSnapshot,
+  { createOnly = new Set<Node["label"]>() }: { createOnly?: ReadonlySet<Node["label"]> } = {},
+) {
   const snapshot = validateSnapshot(input);
   const graph = db.selectGraph(name);
 
@@ -26,7 +31,7 @@ export async function upsertSnapshot(db: FalkorDB, name: string, input: GraphSna
   // Write the raw input objects (validated above) so omitted fields stay as stored.
   const raw = (input.nodes as Node[]).map((n) => ({ ...n }));
   const labelOf = new Map(snapshot.nodes.map((n) => [n.id, n.label]));
-  await mergeInto(graph, raw, snapshot.edges, labelOf);
+  await mergeInto(graph, raw, snapshot.edges, labelOf, createOnly);
   for (const label of new Set(snapshot.nodes.map((n) => n.label))) {
     await graph.createNodeRangeIndex(NodeLabel.parse(label), "id").catch(() => {}); // already indexed
   }

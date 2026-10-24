@@ -1,0 +1,57 @@
+/* Tab bar height: one extra-large control plus small padding. */
+.bar {
+  --tabbar-height: calc(var(--control-xlarge-size) + var(--base-size-8));
+
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--bgColor-default);
+  border-top: var(--borderWidth-thin) solid var(--borderColor-default);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--base-size-4);
+  min-height: var(--tabbar-height);
+  color: var(--fgColor-muted);
+  font-size: var(--text-body-size-small);
+  text-decoration: none;
+}
+
+.tab[aria-current="page"] {
+  color: var(--fgColor-accent);
+}
+
+.tab:focus-visible,
+.chat:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: calc(var(--base-size-4) * -0.5);
+}
+
+.chat {
+  position: fixed;
+  right: var(--base-size-16);
+  bottom: calc(var(--control-xlarge-size) + var(--base-size-8) + var(--base-size-16) + env(safe-area-inset-bottom));
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-xlarge-size);
+  height: var(--control-xlarge-size);
+  border-radius: var(--borderRadius-full);
+  background: var(--button-primary-bgColor-rest);
+  color: var(--button-primary-fgColor-rest);
+  box-shadow: var(--shadow-floating-small);
+}
+
+/* Keeps the last card clear of both the tab bar and the floating chat button. */
+.content {
+  min-height: 100dvh;
+  padding-bottom: calc(2 * var(--control-xlarge-size) + var(--base-size-8) + 2 * var(--base-size-16) + env(safe-area-inset-bottom));
+}

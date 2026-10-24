@@ -8,7 +8,14 @@ type Props = Record<string, string | number | boolean>;
  * relationship types are interpolated only from the zod enums; values are parameters.
  * Every edge endpoint must be in `labelOf` so the MATCH can use the per-label id index.
  */
-export async function mergeInto(graph: Graph, nodes: Node[], edges: Edge[], labelOf: Map<string, Node["label"]>) {
+export async function mergeInto(
+  graph: Graph,
+  nodes: Node[],
+  edges: Edge[],
+  labelOf: Map<string, Node["label"]>,
+  /** Labels whose existing nodes are left untouched (only created when missing). */
+  createOnly: ReadonlySet<Node["label"]> = new Set(),
+) {
   for (const label of NodeLabel.options) {
     const rows = nodes
       .filter((n) => n.label === label)
@@ -20,7 +27,8 @@ export async function mergeInto(graph: Graph, nodes: Node[], edges: Edge[], labe
         return row;
       });
     if (!rows.length) continue;
-    await graph.query(`UNWIND $rows AS row MERGE (n:${label} {id: row.id}) SET n += row`, { params: { rows } });
+    const set = createOnly.has(label) ? "ON CREATE SET n += row" : "SET n += row";
+    await graph.query(`UNWIND $rows AS row MERGE (n:${label} {id: row.id}) ${set}`, { params: { rows } });
   }
 
   const groups = new Map<string, { from: string; to: string; props: Props }[]>();
