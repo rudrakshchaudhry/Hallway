@@ -5,7 +5,7 @@ services:
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
-      - falkordb-data:/data
+      - falkordb-data:/var/lib/falkordb/data # the image's FALKORDB_DATA_PATH
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -26,7 +26,15 @@ services:
       falkordb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/').then(()=>process.exit(0),()=>process.exit(1))"]
+      # Healthy only when an MCP initialize on /mcp succeeds.
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://localhost:8080/mcp',{method:'POST',headers:{'content-type':'application/json',accept:'application/json, text/event-stream'},
+          body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'healthcheck',version:'0'}}})})
+          .then(r=>process.exit(r.ok?0:1),()=>process.exit(1))
       interval: 5s
       timeout: 3s
       retries: 10
