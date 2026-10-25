@@ -18,8 +18,9 @@ describe("snapshotFromTalks", () => {
     const talks = snapshot.nodes.filter((n) => n.label === "Talk");
     expect(talks).toHaveLength(2);
     expect(talks.find((t) => t.label === "Talk" && t.kind === "workshop")).toMatchObject({ end: "2026-11-02T19:30:00.000Z" }); // 90-min default
-    expect(snapshot.nodes.filter((n) => n.label === "Person")).toHaveLength(1);
+    // Same name with and without a company are kept apart (name + company / conference keys).
+    expect(snapshot.nodes.filter((n) => n.label === "Person").map((n) => n.id).sort()).toEqual(["person:ada-lovelace-demo-conf-2026", "person:ada-lovelace-engines-inc"]);
     expect(snapshot.edges.filter((e) => e.type === "PART_OF")).toHaveLength(2);
-    expect(snapshot.edges).toContainEqual(expect.objectContaining({ type: "WORKS_AT", from: "person:ada-lovelace", to: "company:engines-inc" }));
+    expect(snapshot.edges).toContainEqual(expect.objectContaining({ type: "WORKS_AT", from: "person:ada-lovelace-engines-inc", to: "company:engines-inc" }));
   });
 });

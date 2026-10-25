@@ -1,9 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { getDb, graphName, listConferences, getGraph, upsertSnapshot } from "@hallway/graph";
+import { getDb, graphName, listConferences, getGraph, pruneConferenceTalks, upsertSnapshot } from "@hallway/graph";
 import { runLiveIngest } from "@hallway/ingest";
 import type { IngestJobStatus } from "@hallway/types";
+import { allow } from "./ratelimit";
 import { repoRoot } from "./root";
 
 // Live-ingest jobs (PLAN.md 7.3): in memory, one at a time. Kept on globalThis because Next
@@ -23,17 +24,20 @@ export async function startIngest(query: { name?: string; url?: string }): Promi
     if (running.query === label) return running;
     throw new Error(`Another conference is being read right now (${running.query}). Try again in a minute.`);
   }
-  // Already ingested under this name? Then there's nothing to do.
-  const known = (await listConferences(await getGraph())).find((c) => query.name && c.conference.name.toLowerCase().includes(query.name.toLowerCase()));
+  // One global limit for every caller (chat, API, agent): live reads cost credits.
+  if (!allow("ingest:global", 3)) throw new Error("Too many conference reads in the last minute. Try again shortly.");
+  // Reserve the single slot before any await, so concurrent callers can't both start a job.
   const id = `job-${randomBytes(4).toString("hex")}`;
   const job: Job = { id, query: label, stage: "find", status: "running", counts: {}, errors: [], startedAt: Date.now(), note: "Starting…" };
-  if (known) {
-    Object.assign(job, { stage: "done", status: "done", conferenceId: known.conference.id, note: `Already have ${known.conference.name}.` });
-    state.jobs.set(id, job);
-    return job;
-  }
   state.jobs.set(id, job);
   state.running = id;
+  // Already ingested under this name? Then there's nothing to do.
+  const known = (await listConferences(await getGraph())).find((c) => query.name && c.conference.name.toLowerCase().includes(query.name.toLowerCase()));
+  if (known) {
+    Object.assign(job, { stage: "done", status: "done", conferenceId: known.conference.id, note: `Already have ${known.conference.name}.` });
+    state.running = null;
+    return job;
+  }
   void (async () => {
     try {
       const { conference, snapshot } = await runLiveIngest(query, (p) => {
@@ -42,11 +46,12 @@ export async function startIngest(query: { name?: string; url?: string }): Promi
         job.counts = { ...p.counts };
         if (p.error) job.errors.push(p.error);
       });
-      await upsertSnapshot(await getDb(), graphName(), snapshot);
-      // Saved under data/live so a reseed keeps it (seed reads data/live).
+      // File first: a reseed reads data/live, so the conference survives one that starts mid-ingest.
       const dir = path.join(repoRoot(), "data/live");
       mkdirSync(dir, { recursive: true });
       writeFileSync(path.join(dir, `${conference.id.slice("conf:".length)}.json`), JSON.stringify(snapshot));
+      await upsertSnapshot(await getDb(), graphName(), snapshot);
+      await pruneConferenceTalks(await getDb(), graphName(), conference.id, snapshot.nodes.filter((n) => n.label === "Talk").map((n) => n.id));
       Object.assign(job, { status: "done", stage: "done", conferenceId: conference.id });
     } catch (err) {
       console.error("live ingest failed", err);

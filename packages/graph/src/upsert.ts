@@ -37,3 +37,13 @@ export async function upsertSnapshot(
   }
   return { nodes: snapshot.nodes.length, edges: snapshot.edges.length };
 }
+
+/** After re-reading a live conference: removes its talks that are no longer in the new snapshot. */
+export async function pruneConferenceTalks(db: FalkorDB, name: string, conferenceId: string, keepTalkIds: string[]) {
+  if (!(await db.list()).includes(name)) return 0;
+  const res = await db.selectGraph(name).query<{ n: number }>(
+    "MATCH (t:Talk)-[:PART_OF]->(:Conference {id: $conf}) WHERE NOT t.id IN $keep WITH t, count(t) AS n DETACH DELETE t RETURN sum(n) AS n",
+    { params: { conf: conferenceId, keep: keepTalkIds } },
+  );
+  return res.data?.[0]?.n ?? 0;
+}

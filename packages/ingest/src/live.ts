@@ -17,6 +17,18 @@ type Meta = { name: string; officialUrl: string; agendaUrl: string | null; start
 type RawTalk = { title: string; abstract?: string; kind?: string; start: string; end?: string; room?: string; topics?: string[]; speakers?: { name: string; title?: string; company?: string }[] };
 
 const KINDS = new Set(["talk", "workshop", "keynote", "panel", "other"]);
+/** Local wall time at the venue → ISO with that day's UTC offset. */
+export function localIso(day: string, time: string, tz: string): string {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" }).formatToParts(Date.parse(`${day}T12:00:00Z`)).find((x) => x.type === "timeZoneName")?.value;
+  return `${day}T${time}${name?.match(/GMT([+-]\d{2}:\d{2})/)?.[1] ?? "+00:00"}`;
+}
+
+const stableKey = (s: string) => {
+  let h = 2166136261;
+  for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  return h.toString(36);
+};
+
 const withTimeout = <T>(p: Promise<T>, ms: number, label: string) =>
   Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${label} timed out`)), ms))]);
 
@@ -56,8 +68,14 @@ async function findConference(query: { name?: string; url?: string }): Promise<M
     officialUrl = pick.officialUrl;
   }
   const home = await fetchPage(officialUrl);
-  const links = [...home.matchAll(/href="([^"#]+)"[^>]*>([^<]{2,60})</g)]
-    .map((m) => ({ href: new URL(m[1] ?? "", officialUrl).toString(), text: m[2]?.trim() ?? "" }))
+  const links = [...home.matchAll(/href=["']([^"'#]+)["'][^>]*>([^<]{2,60})</g)]
+    .flatMap((m) => {
+      try {
+        return [{ href: new URL(m[1] ?? "", officialUrl).toString(), text: m[2]?.trim() ?? "" }];
+      } catch {
+        return [];
+      }
+    })
     .filter((l) => /agenda|schedule|program|sessions|speakers/i.test(`${l.href} ${l.text}`))
     .slice(0, 15);
   const meta = await chatJson<Omit<Meta, "officialUrl">>(
@@ -76,7 +94,9 @@ async function readSessions(meta: Meta, confId: string): Promise<GraphSnapshot> 
   const html = await fetchPage(url);
   try {
     const fromLd = extractSnapshot(html, url);
-    if (fromLd.nodes.filter((n) => n.label === "Talk").length >= 5) return linkToConference(fromLd, confId);
+    // Date-only schema.org events come back as midnight UTC; they aren't timed sessions.
+    const timed = fromLd.nodes.filter((n) => n.label === "Talk" && !/T00:00:00(\.000)?Z$/.test(n.start));
+    if (timed.length >= 5) return linkToConference(fromLd, confId, new Set(timed.map((t) => t.id)));
   } catch {
     // no usable JSON-LD; fall through to the model
   }
@@ -89,21 +109,25 @@ The conference runs ${meta.start} to ${meta.end} in time zone ${meta.tz}; conver
   return snapshotFromTalks(out.sessions ?? [], confId);
 }
 
-function linkToConference(snapshot: GraphSnapshot, confId: string): GraphSnapshot {
-  const talks = snapshot.nodes.filter((n) => n.label === "Talk").slice(0, MAX_TALKS);
-  return { nodes: [...snapshot.nodes], edges: [...snapshot.edges, ...talks.map((t) => ({ type: "PART_OF" as const, from: t.id, to: confId }))] };
+function linkToConference(snapshot: GraphSnapshot, confId: string, timed: Set<string>): GraphSnapshot {
+  const keep = new Set(snapshot.nodes.filter((n) => n.label === "Talk" && timed.has(n.id)).slice(0, MAX_TALKS).map((t) => t.id));
+  const dropped = new Set(snapshot.nodes.filter((n) => n.label === "Talk" && !keep.has(n.id)).map((t) => t.id));
+  const edges = snapshot.edges.filter((e) => !dropped.has(e.from) && !dropped.has(e.to));
+  const used = new Set(edges.flatMap((e) => [e.from, e.to]));
+  const nodes = snapshot.nodes.filter((n) => keep.has(n.id) || (n.label !== "Talk" && used.has(n.id)));
+  return { nodes, edges: [...edges, ...[...keep].map((id) => ({ type: "PART_OF" as const, from: id, to: confId }))] };
 }
 
 export function snapshotFromTalks(talks: RawTalk[], confId: string): GraphSnapshot {
   const nodes: GraphSnapshot["nodes"] = [];
   const edges: GraphSnapshot["edges"] = [];
   const confSlug = confId.slice("conf:".length);
-  for (const [i, t] of talks.slice(0, MAX_TALKS).entries()) {
+  for (const t of talks.slice(0, MAX_TALKS)) {
     const start = Date.parse(t.start);
     if (!t.title || Number.isNaN(start)) continue;
     const kind = (KINDS.has(t.kind ?? "") ? t.kind : "talk") as "talk" | "workshop" | "keynote" | "panel" | "other";
     const endMs = t.end && !Number.isNaN(Date.parse(t.end)) && Date.parse(t.end) > start ? Date.parse(t.end) : start + (kind === "workshop" ? 90 : 45) * 60_000;
-    const id = `talk:${confSlug}-${i}-${slugify(t.title).slice(0, 50)}`;
+    const id = `talk:${confSlug}-${slugify(t.title).slice(0, 50)}-${stableKey(`${t.title}|${t.start}`)}`;
     nodes.push({ label: "Talk", id, title: t.title, abstract: (t.abstract ?? "").slice(0, 1000), kind, start: t.start, end: new Date(endMs).toISOString(), ...(t.room ? { room: t.room } : {}) });
     edges.push({ type: "PART_OF", from: id, to: confId });
     for (const topic of (t.topics ?? []).slice(0, 3)) {
@@ -113,7 +137,8 @@ export function snapshotFromTalks(talks: RawTalk[], confId: string): GraphSnapsh
     }
     for (const s of t.speakers ?? []) {
       if (!s.name) continue;
-      const handle = slugify(s.name);
+      // Name + company (or this conference) so two different people who share a name stay apart.
+      const handle = `${slugify(s.name)}-${s.company ? slugify(s.company) : confSlug}`.slice(0, 80);
       const pid = `person:${handle}`;
       nodes.push({ label: "Person", id: pid, handle, name: s.name, ...(s.title ? { headline: s.title } : {}), optedIn: false, isUser: false });
       edges.push({ type: "SPEAKS_AT", from: pid, to: id });
@@ -140,8 +165,8 @@ async function readSideEvents(meta: Meta, confId: string): Promise<GraphSnapshot
   const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
   if (!m?.[1]) return { nodes: [], edges: [] };
   const entries = ((JSON.parse(m[1]) as { props?: { pageProps?: { initialData?: { data?: { events?: LumaEntry[] } } } } }).props?.pageProps?.initialData?.data?.events ?? []) as LumaEntry[];
-  const from = Date.parse(`${meta.start}T00:00:00Z`) - 86_400_000;
-  const to = Date.parse(`${meta.end}T23:59:59Z`) + 86_400_000;
+  const from = Date.parse(localIso(meta.start, "00:00:00", meta.tz)) - 86_400_000;
+  const to = Date.parse(localIso(meta.end, "23:59:59", meta.tz)) + 86_400_000;
   const nodes: GraphSnapshot["nodes"] = [];
   const edges: GraphSnapshot["edges"] = [];
   for (const e of entries.filter((x) => x.event.visibility !== "private" && Date.parse(x.event.start_at) >= from && Date.parse(x.event.start_at) <= to).slice(0, MAX_EVENTS)) {
@@ -164,12 +189,7 @@ export async function runLiveIngest(query: { name?: string; url?: string }, repo
   report({ stage: "find", note: query.url ? "Reading the conference site…" : `Searching for ${query.name}…`, counts });
   const meta = await withTimeout(findConference(query), 150_000, "finding the conference");
   const confId = `conf:${slugify(`${meta.name}-${meta.start.slice(0, 4)}`)}`;
-  // Local wall time at the venue → ISO with that day's UTC offset.
-  const offset = (day: string, time: string) => {
-    const name = new Intl.DateTimeFormat("en-US", { timeZone: meta.tz, timeZoneName: "longOffset" }).formatToParts(Date.parse(`${day}T12:00:00Z`)).find((x) => x.type === "timeZoneName")?.value;
-    const off = name?.match(/GMT([+-]\d{2}:\d{2})/)?.[1] ?? "+00:00";
-    return `${day}T${time}${off}`;
-  };
+  const offset = (day: string, time: string) => localIso(day, time, meta.tz);
   const conference: Conference = {
     label: "Conference",
     id: confId,
