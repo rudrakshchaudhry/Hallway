@@ -143,7 +143,7 @@ export async function chatTurn(sessionId: string, input: { message: string; chip
       return askIdentity(state, emit);
     }
     case "linkedin": {
-      const url = message.split("?")[0] ?? "";
+      const url = message.trim().split(/[?#]/)[0] ?? "";
       if (!LINKEDIN_URL.test(url)) {
         emit({ type: "text", delta: "That doesn't look like a LinkedIn profile URL (linkedin.com/in/…). Try again?" });
         return emit({ type: "input", accept: "url", placeholder: "https://www.linkedin.com/in/your-name" });

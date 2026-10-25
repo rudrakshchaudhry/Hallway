@@ -9,6 +9,7 @@ type LinkedInRecord = {
   about?: string | null;
   city?: string | null;
   current_company?: { name?: string } | null;
+  current_company_name?: string | null;
   experience?: { company?: string; title?: string }[] | null;
   education?: { title?: string }[] | null;
   error?: string;
@@ -24,19 +25,23 @@ export async function fetchLinkedInProfile(url: string, onStep: (summary: string
   return cached("linkedin", url, async () => {
     const dataset = process.env.BRIGHTDATA_DATASET_LINKEDIN_PROFILES;
     if (!dataset) return null;
-    const [record] = (await scrape(dataset, [{ url }], { limitPerInput: 1 })) as LinkedInRecord[];
+    // Bright Data can queue a profile; don't hold the chat open for its full polling window.
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("LinkedIn scrape timed out")), 150_000));
+    const [record] = (await Promise.race([scrape(dataset, [{ url }], { limitPerInput: 1 }), timeout])) as LinkedInRecord[];
     if (!record?.name || record.error) return null;
     onStep(`Found ${record.name}${record.position ? `, ${record.position}` : ""}`);
+    const current = record.current_company?.name ?? record.current_company_name ?? undefined;
     const companies = [
-      ...(record.current_company?.name ? [{ name: record.current_company.name, current: true }] : []),
+      ...(current ? [{ name: current, current: true }] : []),
       ...(record.experience ?? [])
-        .filter((e) => e.company && e.company !== record.current_company?.name)
+        .filter((e) => e.company && e.company !== current)
         .slice(0, 5)
         .map((e) => ({ name: e.company!, current: false })),
     ];
     const text = [record.position, record.about, (record.experience ?? []).map((e) => `${e.title ?? ""} at ${e.company ?? ""}`).join("; ")]
       .filter(Boolean)
-      .join("\n");
+      .join("\n")
+      .slice(0, 4000); // keep the extraction request small and reliable
     const extracted = text.length > 20 ? await extractProfile(text).catch(() => null) : null;
     return {
       name: record.name,
