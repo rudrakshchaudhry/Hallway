@@ -64,6 +64,7 @@ export type Contributions = { total: number; days: { date: string; count: number
 
 /** Last year of contributions (the profile heatmap), via GitHub GraphQL. Cached for an hour. */
 export async function fetchContributions(login: string): Promise<Contributions | null> {
+  if (!process.env.GITHUB_TOKEN) return null;
   const hit = contributionsCache.get(login);
   if (hit && Date.now() - hit.at < 3_600_000) return hit.value;
   let value: Contributions | null = null;
@@ -77,12 +78,14 @@ export async function fetchContributions(login: string): Promise<Contributions |
       }),
       signal: AbortSignal.timeout(10_000),
     });
+    if (!res.ok) throw new Error(`GitHub GraphQL ${res.status}`);
     const body = (await res.json()) as ContributionsQuery;
     const cal = body.data?.user?.contributionsCollection.contributionCalendar;
     if (cal) value = { total: cal.totalContributions, days: cal.weeks.flatMap((w) => w.contributionDays.map((d) => ({ date: d.date, count: d.contributionCount }))) };
   } catch {
     value = null;
   }
-  contributionsCache.set(login, { at: Date.now(), value });
+  // Only successes are cached, so a transient failure doesn't hide the heatmap for an hour.
+  if (value) contributionsCache.set(login, { at: Date.now(), value });
   return value;
 }

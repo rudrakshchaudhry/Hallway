@@ -48,7 +48,9 @@ export function AddButton({
   async function remove() {
     setBusy(true);
     try {
-      await fetch("/api/calendar", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ targetId }) });
+      const res = await fetch("/api/calendar", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ targetId }) });
+      const body = (await res.json().catch(() => null)) as { removed?: boolean } | null;
+      if (!res.ok || !body?.removed) return; // keep showing it as added
       setAdded(false);
       setNewClashes([]);
       router.refresh();

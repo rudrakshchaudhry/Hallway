@@ -8,32 +8,42 @@ import { dayIn, localDate, minutesIn, timeIn } from "@/components/tabs/format";
 import styles from "./dayview.module.css";
 
 const HOUR_PX = 56;
-const START_HOUR = 6;
+const DEFAULT_START_HOUR = 6;
 const END_HOUR = 24;
+const MIN_BLOCK_PX = 24;
+/** Minutes a minimum-height block occupies on screen; lanes use this so short blocks never overlap. */
+const MIN_BLOCK_MIN = (MIN_BLOCK_PX / HOUR_PX) * 60;
 const KIND_LABEL: Record<CalendarItem["kind"], string> = { talk: "Session", event: "Side event", meeting: "Meeting", busy: "Busy" };
 
 type Placed = { item: CalendarItem; top: number; height: number; lane: number; lanes: number; clash: boolean };
 
+/** Minutes of `iso` relative to midnight of `day` in tz (negative = earlier day, >1440 = later). */
+function minutesOnDay(iso: string, day: string, tz: string): number {
+  const d = localDate(iso, tz);
+  const offsetDays = Math.round((Date.parse(`${d}T12:00:00Z`) - Date.parse(`${day}T12:00:00Z`)) / 86_400_000);
+  return offsetDays * 1440 + minutesIn(iso, tz);
+}
+
+/** Items overlapping `day` (including ones that started the day before), clipped to that day. */
+function spansFor(items: CalendarItem[], day: string, tz: string) {
+  return items
+    .map((item) => ({ item, start: Math.max(0, minutesOnDay(item.start, day, tz)), end: Math.min(1440, minutesOnDay(item.end, day, tz)) }))
+    .filter((s) => s.end > s.start || (s.start === s.end && s.start < 1440 && localDate(s.item.start, tz) === day));
+}
+
 /** Lays out one day's items: position by time, overlapping items side by side in lanes. */
-function layout(items: CalendarItem[], tz: string, clashIds: Set<string>): Placed[] {
-  const spans = items
-    .map((item) => {
-      const start = Math.max(minutesIn(item.start, tz), START_HOUR * 60);
-      const sameDay = localDate(item.end, tz) === localDate(item.start, tz);
-      const end = sameDay ? Math.min(Math.max(minutesIn(item.end, tz), start + 15), END_HOUR * 60) : END_HOUR * 60;
-      return { item, start, end };
-    })
-    .sort((a, b) => a.start - b.start || b.end - a.end);
+function layout(spans: ReturnType<typeof spansFor>, startHour: number, clashIds: Set<string>): Placed[] {
+  const sorted = spans.map((s) => ({ ...s, visualEnd: Math.max(s.end, s.start + MIN_BLOCK_MIN) })).sort((a, b) => a.start - b.start || b.end - a.end);
   const placed: Placed[] = [];
-  let group: { span: (typeof spans)[number]; lane: number }[] = [];
+  let group: { span: (typeof sorted)[number]; lane: number }[] = [];
   let groupEnd = -1;
   const flush = () => {
     const lanes = Math.max(1, ...group.map((g) => g.lane + 1));
     for (const { span, lane } of group) {
       placed.push({
         item: span.item,
-        top: ((span.start - START_HOUR * 60) / 60) * HOUR_PX,
-        height: Math.max(((span.end - span.start) / 60) * HOUR_PX, 24),
+        top: ((span.start - startHour * 60) / 60) * HOUR_PX,
+        height: Math.max(((span.end - span.start) / 60) * HOUR_PX, MIN_BLOCK_PX),
         lane,
         lanes,
         clash: clashIds.has(span.item.id),
@@ -41,16 +51,16 @@ function layout(items: CalendarItem[], tz: string, clashIds: Set<string>): Place
     }
     group = [];
   };
-  for (const span of spans) {
+  for (const span of sorted) {
     if (span.start >= groupEnd) {
       flush();
       groupEnd = -1;
     }
-    const used = new Set(group.filter((g) => g.span.end > span.start).map((g) => g.lane));
+    const used = new Set(group.filter((g) => g.span.visualEnd > span.start).map((g) => g.lane));
     let lane = 0;
     while (used.has(lane)) lane++;
     group.push({ span, lane });
-    groupEnd = Math.max(groupEnd, span.end);
+    groupEnd = Math.max(groupEnd, span.visualEnd);
   }
   flush();
   return placed;
@@ -64,23 +74,35 @@ function layout(items: CalendarItem[], tz: string, clashIds: Set<string>): Place
 export function DayView({ items, tz, days, clashIds }: { items: CalendarItem[]; tz: string; days: string[]; clashIds: string[] }) {
   const today = localDate(new Date().toISOString(), tz);
   const initial = days.includes(today) ? today : (days.find((d) => items.some((i) => localDate(i.start, tz) === d)) ?? days[0]!);
-  const [day, setDay] = useState(initial);
+  const [picked, setDay] = useState(initial);
+  // If refreshed props drop the selected day (e.g. its only plan was removed), fall back.
+  const day = days.includes(picked) ? picked : initial;
+  // The now-line moves every minute.
+  const [nowIso, setNowIso] = useState(() => new Date().toISOString());
+  useEffect(() => {
+    const t = setInterval(() => setNowIso(new Date().toISOString()), 60_000);
+    return () => clearInterval(t);
+  }, []);
   const [open, setOpen] = useState<CalendarItem | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const swipeStart = useRef<number | null>(null);
   const clashes = useMemo(() => new Set(clashIds), [clashIds]);
-  const dayItems = useMemo(() => items.filter((i) => localDate(i.start, tz) === day), [items, tz, day]);
-  const placed = useMemo(() => layout(dayItems, tz, clashes), [dayItems, tz, clashes]);
+  const spans = useMemo(() => spansFor(items, day, tz), [items, day, tz]);
+  const dayItems = spans.map((s) => s.item);
+  // Start the grid earlier when something is planned before 6 AM.
+  const startHour = Math.min(DEFAULT_START_HOUR, ...spans.map((s) => Math.floor(s.start / 60)));
+  const placed = useMemo(() => layout(spans, startHour, clashes), [spans, startHour, clashes]);
   const index = days.indexOf(day);
-  const now = new Date();
-  const nowMinutes = minutesIn(now.toISOString(), tz);
-  const showNow = day === today && nowMinutes >= START_HOUR * 60;
+  const nowMinutes = minutesIn(nowIso, tz);
+  const showNow = day === localDate(nowIso, tz) && nowMinutes >= startHour * 60;
 
   // Scroll to "now" on today, else to the first item (or 8 AM).
   useEffect(() => {
-    const target = showNow ? nowMinutes : (placed[0] ? START_HOUR * 60 + (placed[0].top / HOUR_PX) * 60 : 8 * 60);
-    scroller.current?.scrollTo({ top: Math.max(0, ((target - START_HOUR * 60) / 60) * HOUR_PX - HOUR_PX), behavior: "smooth" });
-  }, [day, placed, showNow, nowMinutes]);
+    const target = showNow ? nowMinutes : (placed[0] ? startHour * 60 + (placed[0].top / HOUR_PX) * 60 : 8 * 60);
+    scroller.current?.scrollTo({ top: Math.max(0, ((target - startHour * 60) / 60) * HOUR_PX - HOUR_PX), behavior: "smooth" });
+    // Re-scroll when the day changes, not on every minute tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day, placed.length, startHour]);
 
   const go = (delta: number) => {
     const next = days[index + delta];
@@ -96,7 +118,7 @@ export function DayView({ items, tz, days, clashIds }: { items: CalendarItem[]; 
     if (Math.abs(dx) > 70) go(dx < 0 ? 1 : -1);
   };
   const label = (d: string) => dayIn(`${d}T12:00:00Z`, "UTC");
-  const counts = (d: string) => items.filter((i) => localDate(i.start, tz) === d).length;
+  const counts = (d: string) => spansFor(items, d, tz).length;
 
   return (
     <section className={styles.wrap} aria-label="Your day">
@@ -121,10 +143,10 @@ export function DayView({ items, tz, days, clashIds }: { items: CalendarItem[]; 
       </div>
 
       <div className={styles.scroller} ref={scroller} onPointerDown={onDown} onPointerUp={onUp}>
-        <div className={styles.grid} style={{ height: (END_HOUR - START_HOUR) * HOUR_PX }}>
-          {Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i).map((h) => (
-            <div key={h} className={styles.hour} style={{ top: (h - START_HOUR) * HOUR_PX }}>
-              <span className={styles.hourLabel}>{h === 12 ? "12 PM" : h > 12 ? `${h - 12} PM` : `${h} AM`}</span>
+        <div className={styles.grid} style={{ height: (END_HOUR - startHour) * HOUR_PX }}>
+          {Array.from({ length: END_HOUR - startHour }, (_, i) => startHour + i).map((h) => (
+            <div key={h} className={styles.hour} style={{ top: (h - startHour) * HOUR_PX }}>
+              <span className={styles.hourLabel}>{h === 0 ? "12 AM" : h === 12 ? "12 PM" : h > 12 ? `${h - 12} PM` : `${h} AM`}</span>
             </div>
           ))}
           <div className={styles.lanes}>
@@ -148,7 +170,7 @@ export function DayView({ items, tz, days, clashIds }: { items: CalendarItem[]; 
                 ) : null}
               </button>
             ))}
-            {showNow ? <div className={styles.now} style={{ top: ((nowMinutes - START_HOUR * 60) / 60) * HOUR_PX }} aria-label="Now" /> : null}
+            {showNow ? <div className={styles.now} style={{ top: ((nowMinutes - startHour * 60) / 60) * HOUR_PX }} aria-label="Now" /> : null}
           </div>
         </div>
       </div>

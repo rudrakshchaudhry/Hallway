@@ -24,7 +24,7 @@ loadRootEnv();
  * Guest lists are not requested.
  */
 export class UnlockError extends Error {
-  readonly code: "missing_key" | "timeout" | "unlock_failed" | "empty_page" | "rejected_key" | "bad_zone";
+  readonly code: "missing_key" | "timeout" | "unlock_failed" | "empty_page" | "rejected_key" | "bad_zone" | "budget";
 
   constructor(code: UnlockError["code"], message: string) {
     super(message);
@@ -42,7 +42,8 @@ export async function unlockPage(url: string): Promise<string> {
   try {
     await budget.reserve(PRICE.unlockerRequest, `suggest ${url}`);
   } catch (err) {
-    throw new UnlockError("timeout", `Scraping budget reached: ${(err as Error).message}`);
+    console.error("suggest: Bright Data budget guard refused the request", err);
+    throw new UnlockError("budget", `Scraping budget reached: ${(err as Error).message}`);
   }
   try {
     const response = await fetch("https://api.brightdata.com/request", {

@@ -110,6 +110,8 @@ export const Meeting = z.object({
   /** Up to 3 start times the requester offers; the invitee picks one when accepting. */
   proposed: z.array(isoDate).min(1).max(3),
   durationMinutes: z.number().int().positive().default(30),
+  /** Time zone of the conference the slots were offered for. */
+  tz: z.string().optional(),
   /** Set when accepted (the picked slot). */
   start: isoDate.optional(),
   end: isoDate.optional(),

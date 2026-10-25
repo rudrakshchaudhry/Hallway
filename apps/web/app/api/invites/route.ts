@@ -8,12 +8,13 @@ import { gcalUrl, hashToken, newToken, publicOrigin } from "@/lib/invites";
 export async function POST(req: Request) {
   const body = InviteCreateRequest.safeParse(await req.json().catch(() => null));
   if (!body.success) return Response.json({ error: body.error.issues[0]?.message }, { status: 400 });
-  const { graph, me } = await context();
+  const { graph, me, conference } = await context();
   const token = newToken();
   const meeting = await createMeeting(graph, me, {
     ...body.data,
     tokenHash: hashToken(token),
     id: `meeting:${randomBytes(6).toString("hex")}`,
+    ...(conference ? { tz: conference.tz } : {}),
   });
   if (!meeting) return Response.json({ error: "unknown person" }, { status: 404 });
   const url = `${publicOrigin(req)}/invite/${token}`;
