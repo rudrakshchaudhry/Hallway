@@ -27,6 +27,26 @@ export function identityValue(personId: string): string {
   return `${personId}.${sign(personId)}`;
 }
 
+/**
+ * A short-lived key the agent passes to its tools. It is signed for a different purpose than the
+ * identity cookie, so a key seen by the model (or its provider) can't be used as a login cookie.
+ */
+export function agentKey(personId: string, ttlMs: number): string {
+  const exp = Date.now() + ttlMs;
+  return `agent.${exp}.${personId}.${sign(`agent|${exp}|${personId}`)}`;
+}
+
+/** The person id an unexpired agent key was issued for, or null. */
+export function verifyAgentKey(key: string | undefined): string | null {
+  const m = key?.match(/^agent\.(\d+)\.(.+)\.([^.]+)$/);
+  if (!m) return null;
+  const [, exp, personId, mac] = m as unknown as [string, string, string, string];
+  if (Number(exp) < Date.now()) return null;
+  const given = Buffer.from(mac);
+  const expected = Buffer.from(sign(`agent|${exp}|${personId}`));
+  return given.length === expected.length && timingSafeEqual(given, expected) ? personId : null;
+}
+
 export function verifyIdentity(value: string | undefined): string | null {
   if (!value) return null;
   const dot = value.lastIndexOf(".");

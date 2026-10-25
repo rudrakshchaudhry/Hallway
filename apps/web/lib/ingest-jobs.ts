@@ -31,8 +31,16 @@ export async function startIngest(query: { name?: string; url?: string }): Promi
   const job: Job = { id, query: label, stage: "find", status: "running", counts: {}, errors: [], startedAt: Date.now(), note: "Starting…" };
   state.jobs.set(id, job);
   state.running = id;
-  // Already ingested under this name? Then there's nothing to do.
-  const known = (await listConferences(await getGraph())).find((c) => query.name && c.conference.name.toLowerCase().includes(query.name.toLowerCase()));
+  // Already ingested under this name? Then there's nothing to do. A failed lookup frees the slot.
+  let known;
+  try {
+    known = (await listConferences(await getGraph())).find((c) => query.name && c.conference.name.toLowerCase().includes(query.name.toLowerCase()));
+  } catch (err) {
+    Object.assign(job, { status: "failed", note: "Couldn't check the conference list." });
+    job.errors.push((err as Error).message);
+    state.running = null;
+    throw err;
+  }
   if (known) {
     Object.assign(job, { stage: "done", status: "done", conferenceId: known.conference.id, note: `Already have ${known.conference.name}.` });
     state.running = null;
