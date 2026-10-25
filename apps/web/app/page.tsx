@@ -1,11 +1,16 @@
+import { getGraph, getProfileSummary } from "@hallway/graph";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Chat } from "@/components/chat/Chat";
 import { IDENTITY_COOKIE, verifyIdentity } from "@/lib/identity";
 
-// Onboarding chat. Signed-in users go to their feed unless they open the chat on purpose (?chat=1).
+// "/" is the chat. Not signed in → onboarding. Signed in → feed, unless the chat button opened it
+// (?chat=1 → the Hallway agent) or the user chose to redo onboarding (?chat=onboarding).
 export default async function Home({ searchParams }: { searchParams: Promise<{ chat?: string }> }) {
   const { chat } = await searchParams;
-  if (!chat && verifyIdentity((await cookies()).get(IDENTITY_COOKIE)?.value)) redirect("/feed");
-  return <Chat />;
+  const me = verifyIdentity((await cookies()).get(IDENTITY_COOKIE)?.value);
+  if (!me || chat === "onboarding") return <Chat key="onboarding" />;
+  if (!chat) redirect("/feed");
+  const profile = await getProfileSummary(await getGraph(), me);
+  return <Chat key="agent" mode="agent" name={profile?.name ?? undefined} />;
 }

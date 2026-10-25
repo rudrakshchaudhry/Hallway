@@ -27,3 +27,9 @@ export async function removePlan(graph: Graph, me: string, targetId: string): Pr
   );
   return (res.data?.[0]?.n ?? 0) > 0;
 }
+
+/** Display name of any node by id (talk title, event or person name) for approval previews. */
+export async function nodeTitle(graph: Graph, id: string): Promise<string | null> {
+  const res = await graph.roQuery<{ t: string | null }>("MATCH (x {id: $id}) RETURN coalesce(x.title, x.name) AS t LIMIT 1", { params: { id } });
+  return res.data?.[0]?.t ?? null;
+}

@@ -1,10 +1,11 @@
 "use client";
 
 import { ChatEvent, type Chip, type ProfileDraft } from "@hallway/types";
-import { Button, Label, Spinner, TextInput } from "@primer/react";
+import { Button, Dialog, Label, Spinner, TextInput } from "@primer/react";
 import { AlertIcon, CheckIcon, SyncIcon } from "@primer/octicons-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Heatmap } from "@/components/Heatmap";
 import styles from "./chat.module.css";
 
@@ -17,8 +18,41 @@ type Entry =
 let seq = 0;
 const nextId = () => `e${++seq}`;
 
-/** Onboarding chat (PLAN.md 2.1): reads the NDJSON stream from POST /api/chat. */
-export function Chat() {
+const SUGGESTIONS = ["Who should I meet?", "What clashes on Wednesday?", "Find me a talk on AI agents", "Which side events fit me?"];
+
+/** Minimal markdown for agent answers: **bold** and "- " bullets. */
+function rich(text: string): ReactNode {
+  const inline = (line: string) =>
+    line.split(/(\*\*[^*]+\*\*)/g).map((part, i) => (part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : part));
+  const lines = text.split("\n");
+  const out: ReactNode[] = [];
+  let bullets: ReactNode[] = [];
+  const flush = () => {
+    if (bullets.length) out.push(<ul key={`ul-${out.length}`} className={styles.bullets}>{bullets}</ul>);
+    bullets = [];
+  };
+  lines.forEach((line, i) => {
+    const m = line.match(/^\s*[-*•]\s+(.*)$/);
+    if (m) bullets.push(<li key={i}>{inline(m[1] ?? "")}</li>);
+    else {
+      flush();
+      if (line.trim()) out.push(<p key={i} className={styles.line}>{inline(line)}</p>);
+    }
+  });
+  flush();
+  return out;
+}
+
+type Approval = { threadId: string; toolCallId: string; tool: string; preview: string };
+
+/**
+ * The Hallway chat. Onboarding mode (PLAN.md 2.1) reads POST /api/chat; agent mode (the chat
+ * button, after onboarding) talks to the TrueForge agent via POST /api/agent, with approvals.
+ */
+export function Chat({ mode = "onboarding", name }: { mode?: "onboarding" | "agent"; name?: string }) {
+  const agent = mode === "agent";
+  const [approval, setApproval] = useState<Approval | null>(null);
+  const streamRef = useRef<string | null>(null);
   const router = useRouter();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [chips, setChips] = useState<{ chips: Chip[]; multi: boolean } | null>(null);
@@ -32,8 +66,18 @@ export function Chat() {
   const handle = useCallback(
     (event: ChatEvent) => {
       switch (event.type) {
-        case "text":
-          return setEntries((e) => [...e, { kind: "bot", id: nextId(), text: event.delta }]);
+        case "text": {
+          // Agent answers stream in deltas: grow one bubble. Onboarding sends whole lines.
+          if (agent && streamRef.current) {
+            const id = streamRef.current;
+            return setEntries((e) => e.map((x) => (x.id === id && x.kind === "bot" ? { ...x, text: x.text + event.delta } : x)));
+          }
+          const id = nextId();
+          if (agent) streamRef.current = id;
+          return setEntries((e) => [...e, { kind: "bot", id, text: event.delta }]);
+        }
+        case "approval_required":
+          return setApproval({ threadId: event.threadId, toolCallId: event.toolCallId, tool: event.tool, preview: event.preview });
         case "chips":
           return setChips({ chips: event.chips, multi: event.multi });
         case "input":
@@ -59,22 +103,20 @@ export function Chat() {
           return undefined;
       }
     },
-    [router],
+    [router, agent],
   );
 
-  const send = useCallback(
-    async (body: { message?: string; chipIds?: string[] }, echo?: string) => {
-      if (echo) setEntries((e) => [...e, { kind: "user", id: nextId(), text: echo }]);
-      setChips(null);
-      setInput(null);
-      setSelected([]);
+  const read = useCallback(
+    async (url: string, payload: unknown) => {
+      streamRef.current = null;
       setBusy(true);
       try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ message: body.message ?? "", chipIds: body.chipIds }),
-        });
+        const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+        if (!res.ok || !res.body) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          handle({ type: "error", message: body?.error ?? "Something went wrong." });
+          return;
+        }
         const reader = res.body?.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -90,19 +132,49 @@ export function Chat() {
           }
         }
       } catch {
-        handle({ type: "error", message: "Connection lost. Tap restart to try again." });
+        handle({ type: "error", message: "Connection lost. Try again." });
       } finally {
+        streamRef.current = null;
         setBusy(false);
       }
     },
     [handle],
   );
 
+  const send = useCallback(
+    async (body: { message?: string; chipIds?: string[] }, echo?: string) => {
+      if (echo) setEntries((e) => [...e, { kind: "user", id: nextId(), text: echo }]);
+      if (!agent) {
+        setChips(null);
+        setInput(null);
+      }
+      setSelected([]);
+      await read(agent ? "/api/agent" : "/api/chat", { message: body.message ?? "", chipIds: body.chipIds });
+    },
+    [agent, read],
+  );
+
+  const decide = async (decision: "allow" | "deny") => {
+    if (!approval) return;
+    const pending = approval;
+    setApproval(null);
+    setEntries((e) => [...e, { kind: "user", id: nextId(), text: decision === "allow" ? `Allowed: ${pending.preview}` : "Not now" }]);
+    await read("/api/agent/approve", { threadId: pending.threadId, toolCallId: pending.toolCallId, decision });
+  };
+
   useEffect(() => {
     if (started.current) return;
     started.current = true;
+    if (agent) {
+      // Greeting and suggested questions are local; nothing is sent until the user asks.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEntries([{ kind: "bot", id: nextId(), text: `Hi${name ? ` ${name.split(" ")[0]}` : ""}! Ask me about people to meet, sessions, side events or your calendar. I'll ask before changing anything.` }]);
+      setChips({ chips: SUGGESTIONS.map((label) => ({ id: label, label })), multi: false });
+      setInput({ placeholder: "Ask Hallway…" });
+      return;
+    }
     void send({ chipIds: ["restart"] });
-  }, [send]);
+  }, [send, agent, name]);
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
@@ -117,6 +189,10 @@ export function Chat() {
   };
 
   const restart = () => {
+    if (agent) {
+      router.push("/?chat=onboarding");
+      return;
+    }
     setEntries([]);
     void send({ chipIds: ["restart"] });
   };
@@ -126,10 +202,17 @@ export function Chat() {
   return (
     <main className={styles.screen}>
       <header className={styles.header}>
-        <h1 className={styles.brand}>Hallway</h1>
-        <Button size="small" variant="invisible" leadingVisual={SyncIcon} onClick={restart} disabled={busy}>
-          Restart
-        </Button>
+        <h1 className={styles.brand}>{agent ? "Ask Hallway" : "Hallway"}</h1>
+        <div className={styles.row}>
+          {agent ? (
+            <Link href="/feed" className={styles.muted}>
+              Back to my feed
+            </Link>
+          ) : null}
+          <Button size="small" variant="invisible" leadingVisual={SyncIcon} onClick={restart} disabled={busy}>
+            {agent ? "Redo onboarding" : "Restart"}
+          </Button>
+        </div>
       </header>
 
       <div className={styles.log} ref={logRef} aria-live="polite">
@@ -137,9 +220,9 @@ export function Chat() {
           switch (entry.kind) {
             case "bot":
               return (
-                <p key={entry.id} className={`${styles.bubble} ${styles.bot}`}>
-                  {entry.text}
-                </p>
+                <div key={entry.id} className={`${styles.bubble} ${styles.bot}`}>
+                  {agent ? rich(entry.text) : entry.text}
+                </div>
               );
             case "user":
               return (
@@ -187,7 +270,11 @@ export function Chat() {
                   {chip.label}
                 </Button>
               ) : (
-                <Button key={chip.id} onClick={() => void send({ chipIds: [chip.id] }, chip.label)} disabled={busy}>
+                <Button
+                  key={chip.id}
+                  onClick={() => void (agent ? send({ message: chip.label }, chip.label) : send({ chipIds: [chip.id] }, chip.label))}
+                  disabled={busy}
+                >
                   {chip.label}
                 </Button>
               ),
@@ -219,6 +306,20 @@ export function Chat() {
           </form>
         ) : null}
       </div>
+      {approval ? (
+        <Dialog
+          title="Allow this?"
+          onClose={() => void decide("deny")}
+          position={{ narrow: "bottom", regular: "center" }}
+          footerButtons={[
+            { content: "Not now", onClick: () => void decide("deny") },
+            { content: "Allow", buttonType: "primary", onClick: () => void decide("allow") },
+          ]}
+        >
+          <p>{approval.preview}</p>
+          <p className={styles.muted}>Hallway asks before changing your calendar or creating invites.</p>
+        </Dialog>
+      ) : null}
     </main>
   );
 }
