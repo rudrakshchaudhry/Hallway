@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { validateSnapshot, type GraphSnapshot } from "@hallway/types";
@@ -39,6 +40,7 @@ const MESSAGES = {
   rejected_key: "The Bright Data API key was rejected.",
   bad_zone: "The Bright Data unlocker zone was not found.",
   timeout: "The conference site took too long to answer.",
+  budget: "Live scraping is paused: today's Bright Data budget is used up.",
   unlock_failed: "The conference site could not be opened.",
   empty_page: "The conference page came back empty.",
   no_events: "That page has no published sessions we can read.",
@@ -152,5 +154,7 @@ function writeLive(url: string, html: string, snapshot: GraphSnapshot) {
 /** Cache key from host and path, so two conferences on one site don't share results. */
 function cacheSlug(url: string): string {
   const u = new URL(url);
-  return slugify(`${u.hostname.replace(/^www\./, "")}${u.pathname}`.replace(/\/+$/, ""));
+  const key = `${u.hostname.replace(/^www\./, "")}${u.pathname}`.replace(/\/+$/, "");
+  // Readable prefix plus a hash of the exact host + path, so distinct paths never collide.
+  return `${slugify(key).slice(0, 60)}-${createHash("sha256").update(key).digest("hex").slice(0, 10)}`;
 }

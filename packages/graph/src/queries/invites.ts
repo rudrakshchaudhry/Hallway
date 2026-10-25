@@ -30,7 +30,7 @@ export async function suggestInvite(graph: Graph, me: string, personId: string, 
 export async function createMeeting(
   graph: Graph,
   me: string,
-  input: { personId: string; slots: { start: string; end: string }[]; place: string; note: string; tokenHash: string; id: string },
+  input: { personId: string; slots: { start: string; end: string }[]; place: string; note: string; tokenHash: string; id: string; tz?: string },
   now = Date.now(),
 ): Promise<MeetingPublic | null> {
   const meeting: Meeting = {
@@ -41,6 +41,7 @@ export async function createMeeting(
     durationMinutes: Math.round((Date.parse(input.slots[0]!.end) - Date.parse(input.slots[0]!.start)) / 60_000) || 30,
     place: input.place,
     note: input.note,
+    ...(input.tz ? { tz: input.tz } : {}),
     status: "pending",
     createdAt: now,
   };
@@ -90,7 +91,7 @@ export async function viewInvite(graph: Graph, tokenHash: string): Promise<Invit
     { params: { id: requester.id } },
   );
   return {
-    tz: tzRes.data?.[0]?.tz ?? "America/Los_Angeles",
+    tz: meeting.tz ?? tzRes.data?.[0]?.tz ?? "America/Los_Angeles",
     requester: { name: requester.name, ...(requester.headline ? { headline: requester.headline } : {}), ...(requester.avatar ? { avatar: requester.avatar } : {}) },
     reason: meeting.note || `${requester.name} would like to meet`,
     slots: slotsOf(meeting),

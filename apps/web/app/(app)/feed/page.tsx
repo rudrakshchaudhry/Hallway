@@ -2,6 +2,7 @@ import { getProfileSummary } from "@hallway/graph";
 import { feedFor } from "@hallway/graph/queries/feed";
 import { Label } from "@primer/react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Heatmap } from "@/components/Heatmap";
 import { DayView } from "@/components/calendar/DayView";
 import { AddButton } from "@/components/tabs/AddButton";
@@ -29,7 +30,6 @@ export default async function FeedPage() {
     );
   }
   const [feed, profile] = await Promise.all([feedFor(graph, me, conference), getProfileSummary(graph, me)]);
-  const contributions = profile?.github ? await fetchContributions(profile.github) : null;
   const tz = conference.tz;
   const clashIds = new Set(feed.clashes.flatMap((c) => [c.itemId, c.withId]));
 
@@ -51,10 +51,10 @@ export default async function FeedPage() {
         <h1 className={styles.title}>My Feed</h1>
       </div>
 
-      {contributions ? (
-        <section className={styles.card}>
-          <Heatmap total={contributions.total} days={contributions.days} label={`contributions by @${profile?.github} in the last year`} />
-        </section>
+      {profile?.github ? (
+        <Suspense fallback={null}>
+          <GitHubHeatmap login={profile.github} />
+        </Suspense>
       ) : null}
 
       <DayView items={feed.calendar} tz={tz} days={dayList} clashIds={[...clashIds]} />
@@ -137,5 +137,16 @@ export default async function FeedPage() {
         })}
       </ul>
     </main>
+  );
+}
+
+/** Streams in after the feed renders, so a slow GitHub call never holds up the page. */
+async function GitHubHeatmap({ login }: { login: string }) {
+  const contributions = await fetchContributions(login);
+  if (!contributions) return null;
+  return (
+    <section className={styles.card}>
+      <Heatmap total={contributions.total} days={contributions.days} label={`contributions by @${login} in the last year`} />
+    </section>
   );
 }
