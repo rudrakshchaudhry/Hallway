@@ -17,6 +17,8 @@ const TOOL_LABEL: Record<string, string> = {
   list_conferences: "Listing conferences",
   add_to_calendar: "Adding to your calendar",
   create_invite: "Creating an invite",
+  start_conference_ingest: "Reading a new conference",
+  get_ingest_status: "Checking the conference read",
 };
 
 type Emit = (event: ChatEvent) => void;

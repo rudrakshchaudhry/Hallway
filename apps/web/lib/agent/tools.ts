@@ -9,6 +9,7 @@ import { Tag } from "@hallway/types";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { verifyIdentity } from "../identity";
+import { getJob, publicJob, startIngest } from "../ingest-jobs";
 import { hashToken, newToken } from "../invites";
 
 // Hallway tools for the TrueForge agent (PLAN.md 5.2). Every tool acts for `me`, which must be an
@@ -89,6 +90,30 @@ export function registerHallwayTools(server: McpServer, publicOrigin: string) {
     "list_conferences",
     { description: "Conferences Hallway has data for, with session/speaker/event counts.", inputSchema: {}, annotations: { readOnlyHint: true } },
     async () => text((await listConferences(await getGraph())).map((c) => ({ id: c.conference.id, name: c.conference.name, source: c.conference.source, ...c.counts }))),
+  );
+
+  server.registerTool(
+    "start_conference_ingest",
+    { description: "Start reading a conference Hallway doesn't have yet (by name or official https URL): sessions, speakers and side events. Returns a job id; check it with get_ingest_status.", inputSchema: { name: z.string().optional(), url: z.string().optional() }, annotations: { readOnlyHint: false, destructiveHint: false } },
+    async (args) => {
+      if (!args.name && !args.url) return fail("give a name or an https url");
+      if (args.url && !args.url.startsWith("https://")) return fail("url must start with https://");
+      try {
+        const job = await startIngest({ ...(args.name ? { name: args.name } : {}), ...(args.url ? { url: args.url } : {}) });
+        return text({ jobId: job.id, status: job.status, note: job.note });
+      } catch (err) {
+        return fail((err as Error).message);
+      }
+    },
+  );
+
+  server.registerTool(
+    "get_ingest_status",
+    { description: "Progress of a live conference ingest started with start_conference_ingest.", inputSchema: { jobId: z.string() }, annotations: { readOnlyHint: true } },
+    async (args) => {
+      const job = getJob(args.jobId);
+      return job ? text({ ...publicJob(job), note: job.note }) : fail("unknown job");
+    },
   );
 
   server.registerTool(

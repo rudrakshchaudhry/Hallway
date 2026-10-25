@@ -2,6 +2,7 @@ import { getGraph, getProfileSummary, listConferences, listTopics } from "@hallw
 import { GoalId, type ChatEvent, type ProfileDraft } from "@hallway/types";
 import { demoPersonId } from "./identity";
 import { fetchGitHubProfile } from "./github";
+import { getJob, publicJob, startIngest } from "./ingest-jobs";
 import { LINKEDIN_URL, fetchLinkedInProfile } from "./linkedin";
 import { extractProfile, parseIntent } from "./llm";
 import { saveProfile } from "./profile";
@@ -34,7 +35,7 @@ async function askConference(state: State, emit: Emit) {
   state.step = "conference";
   emit({ type: "text", delta: "Hi! I'm Hallway. Which conference are you focusing on?" });
   emit({ type: "chips", multi: false, chips: conferences.map((c) => ({ id: c.conference.id, label: c.conference.name })) });
-  emit({ type: "input", accept: "text", placeholder: "Or type a conference name" });
+  emit({ type: "input", accept: "text", placeholder: "Or type any conference name or paste its link" });
 }
 
 function askGoals(state: State, emit: Emit) {
@@ -76,6 +77,46 @@ async function demoDraft(): Promise<ProfileDraft> {
   };
 }
 
+/**
+ * Live ingest of a conference we don't have (PLAN.md 7.3), streaming progress into the chat.
+ * Returns the new conference, or null if it couldn't be read.
+ */
+async function ingestLive(text: string, emit: Emit): Promise<{ id: string; name: string } | null> {
+  const isUrl = /^https:\/\//i.test(text);
+  emit({ type: "text", delta: `I don't have ${isUrl ? "that conference" : `"${text}"`} yet. Let me read it now. This takes a minute or two.` });
+  let job;
+  try {
+    job = await startIngest(isUrl ? { url: text } : { name: text });
+  } catch (err) {
+    emit({ type: "text", delta: (err as Error).message });
+    return null;
+  }
+  const deadline = Date.now() + 6 * 60_000;
+  let lastNote = "";
+  while (Date.now() < deadline) {
+    const current = getJob(job.id);
+    if (!current) break;
+    if (current.note !== lastNote) {
+      lastNote = current.note;
+      emit({ type: "ingest_progress", job: publicJob(current) });
+      emit({ type: "step", id: "ingest", tool: "ingest", status: current.status === "failed" ? "error" : current.status === "done" ? "done" : "running", summary: current.note });
+    }
+    if (current.status === "done" && current.conferenceId) {
+      const conf = (await listConferences(await getGraph())).find((c) => c.conference.id === current.conferenceId);
+      if (conf && conf.counts.talks > 0) return { id: conf.conference.id, name: conf.conference.name };
+      emit({ type: "text", delta: "I found the conference but couldn't read any sessions from its site. Try pasting the agenda page link." });
+      return null;
+    }
+    if (current.status === "failed") {
+      emit({ type: "text", delta: "I couldn't read that one. Try pasting the conference's agenda link, or pick one I know." });
+      return null;
+    }
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  emit({ type: "text", delta: "That's taking too long. It'll keep going in the background; try it again in a minute." });
+  return null;
+}
+
 /** Advances the conversation by one user turn, emitting chat events. */
 export async function chatTurn(sessionId: string, input: { message: string; chipIds?: string[] }, emit: Emit) {
   const chips = input.chipIds ?? [];
@@ -95,8 +136,12 @@ export async function chatTurn(sessionId: string, input: { message: string; chip
         ? conferences.find((c) => c.id === chip)
         : conferences.find((c) => message && c.name.toLowerCase().includes(message.toLowerCase()));
       if (!match) {
-        emit({ type: "text", delta: `I don't have "${message}" yet. Live ingest for new conferences is coming soon. For now, pick one I know.` });
-        return askConference(state, emit);
+        if (message.length < 3) return askConference(state, emit);
+        const conf = await ingestLive(message, emit);
+        if (!conf) return askConference(state, emit);
+        state.conferenceId = conf.id;
+        state.conferenceName = conf.name;
+        return askGoals(state, emit);
       }
       state.conferenceId = match.id;
       state.conferenceName = match.name;
