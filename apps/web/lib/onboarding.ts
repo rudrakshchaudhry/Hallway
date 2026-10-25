@@ -2,12 +2,13 @@ import { getGraph, getProfileSummary, listConferences, listTopics } from "@hallw
 import { GoalId, type ChatEvent, type ProfileDraft } from "@hallway/types";
 import { demoPersonId } from "./identity";
 import { fetchGitHubProfile } from "./github";
+import { LINKEDIN_URL, fetchLinkedInProfile } from "./linkedin";
 import { extractProfile, parseIntent } from "./llm";
 import { saveProfile } from "./profile";
 
 // The onboarding chat as a deterministic step machine (PLAN.md 2.1). The LLM only reads
 // free text; every step works with chips alone.
-type Step = "conference" | "goals" | "identity" | "github" | "about" | "confirm" | "done";
+type Step = "conference" | "goals" | "identity" | "linkedin" | "github" | "about" | "confirm" | "done";
 type State = { step: Step; conferenceId?: string; conferenceName?: string; goals?: GoalId[]; topics?: string[]; draft?: ProfileDraft };
 
 const sessions = new Map<string, State>();
@@ -22,6 +23,7 @@ const GOAL_CHIPS = [
   { id: "goal:fundraise", label: "Fundraise" },
 ];
 const IDENTITY_CHIPS = [
+  { id: "id:linkedin", label: "LinkedIn profile URL" },
   { id: "id:github", label: "GitHub username" },
   { id: "id:about", label: "Tell you about myself" },
   { id: "id:demo", label: "Use demo profile" },
@@ -44,7 +46,7 @@ function askGoals(state: State, emit: Emit) {
 
 function askIdentity(state: State, emit: Emit) {
   state.step = "identity";
-  emit({ type: "text", delta: "Now, who are you? I'll read your public GitHub, or you can tell me about yourself." });
+  emit({ type: "text", delta: "Now, who are you? I'll read your public LinkedIn or GitHub, or you can tell me about yourself." });
   emit({ type: "chips", multi: false, chips: IDENTITY_CHIPS });
 }
 
@@ -123,6 +125,11 @@ export async function chatTurn(sessionId: string, input: { message: string; chip
     }
     case "identity": {
       if (chips.includes("id:demo")) return showDraft(state, await demoDraft(), emit);
+      if (chips.includes("id:linkedin")) {
+        state.step = "linkedin";
+        emit({ type: "text", delta: "Paste your LinkedIn profile URL." });
+        return emit({ type: "input", accept: "url", placeholder: "https://www.linkedin.com/in/your-name" });
+      }
       if (chips.includes("id:github")) {
         state.step = "github";
         emit({ type: "text", delta: "What's your GitHub username?" });
@@ -134,6 +141,24 @@ export async function chatTurn(sessionId: string, input: { message: string; chip
         return emit({ type: "input", accept: "text", placeholder: "I'm a backend engineer at…" });
       }
       return askIdentity(state, emit);
+    }
+    case "linkedin": {
+      const url = message.trim().split(/[?#]/)[0] ?? "";
+      if (!LINKEDIN_URL.test(url)) {
+        emit({ type: "text", delta: "That doesn't look like a LinkedIn profile URL (linkedin.com/in/…). Try again?" });
+        return emit({ type: "input", accept: "url", placeholder: "https://www.linkedin.com/in/your-name" });
+      }
+      emit({ type: "step", id: "linkedin", tool: "linkedin", status: "running", summary: "Reading your public LinkedIn profile… this can take a minute or two" });
+      try {
+        const draft = await fetchLinkedInProfile(url, (summary) => emit({ type: "step", id: "linkedin", tool: "linkedin", status: "running", summary }));
+        if (!draft) throw new Error("no profile");
+        emit({ type: "step", id: "linkedin", tool: "linkedin", status: "done", summary: "LinkedIn profile read" });
+        return showDraft(state, { ...draft, topics: [...new Set([...(state.topics ?? []), ...draft.topics])] }, emit);
+      } catch (err) {
+        console.error("linkedin fetch failed", err);
+        emit({ type: "step", id: "linkedin", tool: "linkedin", status: "error", summary: "Couldn't read that profile" });
+        return askIdentity(state, emit);
+      }
     }
     case "github": {
       if (!/^[A-Za-z0-9-]{1,39}$/.test(message)) {
