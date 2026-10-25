@@ -8,7 +8,7 @@ import { targetConference } from "@hallway/graph/queries/shared";
 import { Tag } from "@hallway/types";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { verifyIdentity } from "../identity";
+import { verifyAgentKey } from "../identity";
 import { getJob, publicJob, startIngest } from "../ingest-jobs";
 import { hashToken, newToken } from "../invites";
 
@@ -19,11 +19,11 @@ const text = (value: unknown) => ({ content: [{ type: "text" as const, text: JSO
 const fail = (message: string) => ({ content: [{ type: "text" as const, text: JSON.stringify({ error: message }) }], isError: true });
 
 /**
- * `me` is the signed session key from the agent's instructions (the same HMAC-signed value as the
- * identity cookie), not a person id: a user can't make the agent act for someone else by naming them.
+ * `me` is the short-lived agent key from the agent's instructions, not a person id: a user can't
+ * make the agent act for someone else by naming them, and the key can't be used as a login cookie.
  */
 async function forUser(key: string) {
-  const me = verifyIdentity(key);
+  const me = verifyAgentKey(key);
   if (!me) return null;
   const graph = await getGraph();
   const person = await findPerson(graph, me);

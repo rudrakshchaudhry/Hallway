@@ -2,7 +2,7 @@ import { getGraph, nodeTitle } from "@hallway/graph";
 import { targetConference } from "@hallway/graph/queries/shared";
 import type { ChatEvent } from "@hallway/types";
 import { TrueForge } from "@truefoundry/trueforge-sdk";
-import { identityValue } from "../identity";
+import { agentKey } from "../identity";
 
 // Hallway agent on TrueForge (PLAN.md 5.1–5.2): an OpenAI model with Hallway's MCP tools;
 // writes (calendar adds, invites) need the user's approval in the chat.
@@ -23,7 +23,7 @@ const TOOL_LABEL: Record<string, string> = {
 
 type Emit = (event: ChatEvent) => void;
 type ToolCallInfo = { name: string; args: Record<string, unknown>; raw: string };
-type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string>; usedAt: number };
+type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string>; usedAt: number; createdAt: number };
 
 // Next bundles each route separately, so module-level state isn't shared between /api/agent and
 // /api/agent/approve. Keep it on globalThis, which is one per server process.
@@ -61,6 +61,9 @@ function ensureMcpRegistered(): Promise<void> {
 }
 
 const IDLE_MS = 24 * 60 * 60_000;
+// The tool key in a session's instructions is valid this long; the session is replaced before it lapses.
+const KEY_TTL_MS = 12 * 60 * 60_000;
+const MAX_AGE_MS = KEY_TTL_MS - 30 * 60_000;
 const MAX_SESSIONS = 500;
 
 /** One TrueForge session per chat cookie *and* user; concurrent requests share the same creation. */
@@ -70,7 +73,7 @@ function sessionFor(chatId: string, me: string): Promise<Session> {
   // Drop idle sessions, and the oldest if there are too many.
   for (const [k, p] of sessions) {
     void p.then((s) => {
-      if (now - s.usedAt > IDLE_MS) sessions.delete(k);
+      if (now - s.usedAt > IDLE_MS || now - s.createdAt > MAX_AGE_MS) sessions.delete(k);
     }, () => sessions.delete(k));
   }
   while (sessions.size >= MAX_SESSIONS) sessions.delete(sessions.keys().next().value!);
@@ -83,6 +86,11 @@ function sessionFor(chatId: string, me: string): Promise<Session> {
     sessions.set(key, pending);
   }
   return pending.then((s) => {
+    // Its tool key is close to expiry: start a fresh session instead.
+    if (Date.now() - s.createdAt > MAX_AGE_MS) {
+      if (sessions.get(key) === pending) sessions.delete(key);
+      return sessionFor(chatId, me);
+    }
     s.usedAt = Date.now();
     return s;
   });
@@ -96,7 +104,7 @@ async function createSession(me: string): Promise<Session> {
   const instructions = [
     `You are Hallway, a conference planning assistant for ${name} (person id: ${me}).`,
     conference ? `They are attending ${conference.name} (${conference.city ?? ""}, ${conference.venue ?? ""}); times are in ${conference.tz}.` : "",
-    `Always pass me="${identityValue(me)}" (the session key) to tools; never pass anything else as me. Use the tools for every fact about people, sessions, events and the calendar; never invent any.`,
+    `Always pass me="${agentKey(me, KEY_TTL_MS)}" (the session key) to tools; never pass anything else as me. Use the tools for every fact about people, sessions, events and the calendar; never invent any.`,
     "Keep answers short and scannable: a one-line answer, then up to 5 bullets with names, times and why.",
     "Don't ask clarifying questions: pick the best match from tool results (use plan_sessions with a query to find a talk's id) and act.",
     "Calendar adds and invites are approved by the user in the app; just call the tool.",
@@ -106,7 +114,7 @@ async function createSession(me: string): Promise<Session> {
   const created = (await client().sessions.create({
     agent: { spec: { model: { name: "openai/gpt-5-2" }, instructions, mcpServers: [{ name: MCP_NAME, preload: true, requireApprovalForTools: APPROVAL_TOOLS }] } },
   } as never)) as unknown as { data?: { id: string }; id?: string };
-  return { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), byIndex: new Map(), seen: new Set(), usedAt: Date.now() };
+  return { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), byIndex: new Map(), seen: new Set(), usedAt: Date.now(), createdAt: Date.now() };
 }
 
 function argsOf(call: ToolCallInfo): Record<string, unknown> {

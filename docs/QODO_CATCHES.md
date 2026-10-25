@@ -31,3 +31,8 @@ Real findings from Qodo's PR reviews that we fixed. Used in the demo (section 12
 | [#14](https://github.com/rudrakshchaudhry/Hallway/pull/14) | A queued LinkedIn scrape could hold the onboarding chat open for 20 minutes | 150 s cap with a retry prompt |
 | [#16](https://github.com/rudrakshchaudhry/Hallway/pull/16) | The agent's tools trusted a model-supplied user id: anyone could ask the assistant to read or change another attendee's calendar | Tools take an HMAC-signed session key; verified the spoof is refused |
 | [#16](https://github.com/rudrakshchaudhry/Hallway/pull/16) | Signed-out visitors could drive the paid agent as the demo user | Agent routes require a signed-in identity |
+
+## PR #16/#17 follow-up (fix/qodo-agent-token)
+
+- **The model saw a reusable login token (High, security).** The agent's instructions carried the same signed value as the `hallway_user` cookie, with no expiry. Anyone who read it from model output or provider logs could sign in as that attendee. Fix: tools now take a purpose-bound agent key (`agent.<exp>.<id>.<hmac("agent|exp|id")>`) that expires after 12 h and can't verify as a cookie; sessions are replaced before their key lapses.
+- **A database error blocked all future ingests (High, reliability).** The single ingest slot was reserved before the conference lookup, outside the worker's `try/finally`. A failed lookup left it marked running forever. Fix: the lookup failure marks the job failed and frees the slot.
