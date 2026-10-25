@@ -2,6 +2,7 @@ import { getGraph, nodeTitle } from "@hallway/graph";
 import { targetConference } from "@hallway/graph/queries/shared";
 import type { ChatEvent } from "@hallway/types";
 import { TrueForge } from "@truefoundry/trueforge-sdk";
+import { identityValue } from "../identity";
 
 // Hallway agent on TrueForge (PLAN.md 5.1–5.2): an OpenAI model with Hallway's MCP tools;
 // writes (calendar adds, invites) need the user's approval in the chat.
@@ -20,13 +21,13 @@ const TOOL_LABEL: Record<string, string> = {
 
 type Emit = (event: ChatEvent) => void;
 type ToolCallInfo = { name: string; args: Record<string, unknown>; raw: string };
-type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string> };
+type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string>; usedAt: number };
 
 // Next bundles each route separately, so module-level state isn't shared between /api/agent and
 // /api/agent/approve. Keep it on globalThis, which is one per server process.
-const store = globalThis as typeof globalThis & { __hallwayAgent?: { sessions: Map<string, Session>; registered: Promise<void> | null } };
-store.__hallwayAgent ??= { sessions: new Map(), registered: null };
-const state = store.__hallwayAgent;
+const store = globalThis as typeof globalThis & { __hallwayAgentV2?: { sessions: Map<string, Promise<Session>>; registered: Promise<void> | null } };
+store.__hallwayAgentV2 ??= { sessions: new Map(), registered: null };
+const state = store.__hallwayAgentV2;
 const sessions = state.sessions;
 
 function client() {
@@ -48,7 +49,7 @@ function ensureMcpRegistered(): Promise<void> {
     const tf = client();
     const list = (await tf.settings.mcpServers.list()) as unknown as { data?: { manifest?: { name?: string } }[] };
     const exists = (list.data ?? []).some((s) => s.manifest?.name === MCP_NAME);
-    if (exists) await tf.settings.mcpServers.createOrUpdate({ manifest } as never).catch(() => {});
+    if (exists) await tf.settings.mcpServers.createOrUpdate({ manifest } as never);
     else await tf.settings.mcpServers.create({ manifest } as never);
   })().catch((err) => {
     state.registered = null;
@@ -57,9 +58,35 @@ function ensureMcpRegistered(): Promise<void> {
   return state.registered;
 }
 
-async function sessionFor(chatId: string, me: string): Promise<Session> {
-  const existing = sessions.get(chatId);
-  if (existing) return existing;
+const IDLE_MS = 24 * 60 * 60_000;
+const MAX_SESSIONS = 500;
+
+/** One TrueForge session per chat cookie *and* user; concurrent requests share the same creation. */
+function sessionFor(chatId: string, me: string): Promise<Session> {
+  const key = `${chatId}|${me}`;
+  const now = Date.now();
+  // Drop idle sessions, and the oldest if there are too many.
+  for (const [k, p] of sessions) {
+    void p.then((s) => {
+      if (now - s.usedAt > IDLE_MS) sessions.delete(k);
+    }, () => sessions.delete(k));
+  }
+  while (sessions.size >= MAX_SESSIONS) sessions.delete(sessions.keys().next().value!);
+  let pending = sessions.get(key);
+  if (!pending) {
+    pending = createSession(me).catch((err) => {
+      sessions.delete(key);
+      throw err;
+    });
+    sessions.set(key, pending);
+  }
+  return pending.then((s) => {
+    s.usedAt = Date.now();
+    return s;
+  });
+}
+
+async function createSession(me: string): Promise<Session> {
   await ensureMcpRegistered();
   const graph = await getGraph();
   const conference = await targetConference(graph, me);
@@ -67,7 +94,7 @@ async function sessionFor(chatId: string, me: string): Promise<Session> {
   const instructions = [
     `You are Hallway, a conference planning assistant for ${name} (person id: ${me}).`,
     conference ? `They are attending ${conference.name} (${conference.city ?? ""}, ${conference.venue ?? ""}); times are in ${conference.tz}.` : "",
-    `Always pass me="${me}" to tools. Use the tools for every fact about people, sessions, events and the calendar; never invent any.`,
+    `Always pass me="${identityValue(me)}" (the session key) to tools; never pass anything else as me. Use the tools for every fact about people, sessions, events and the calendar; never invent any.`,
     "Keep answers short and scannable: a one-line answer, then up to 5 bullets with names, times and why.",
     "Don't ask clarifying questions: pick the best match from tool results (use plan_sessions with a query to find a talk's id) and act.",
     "Calendar adds and invites are approved by the user in the app; just call the tool.",
@@ -77,9 +104,7 @@ async function sessionFor(chatId: string, me: string): Promise<Session> {
   const created = (await client().sessions.create({
     agent: { spec: { model: { name: "openai/gpt-5-2" }, instructions, mcpServers: [{ name: MCP_NAME, preload: true, requireApprovalForTools: APPROVAL_TOOLS }] } },
   } as never)) as unknown as { data?: { id: string }; id?: string };
-  const session: Session = { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), byIndex: new Map(), seen: new Set() };
-  sessions.set(chatId, session);
-  return session;
+  return { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), byIndex: new Map(), seen: new Set(), usedAt: Date.now() };
 }
 
 function argsOf(call: ToolCallInfo): Record<string, unknown> {
@@ -157,9 +182,25 @@ async function relay(session: Session, events: AsyncIterable<Record<string, unkn
   }
 }
 
+/** After a TrueForge restart the cached session/registration are gone: forget them and retry once. */
+async function withRecovery(chatId: string, me: string, run: (s: Session) => Promise<void>) {
+  try {
+    await run(await sessionFor(chatId, me));
+  } catch (err) {
+    const status = (err as { statusCode?: number }).statusCode;
+    if (status !== 404 && status !== 400 && status !== 422) throw err;
+    sessions.delete(`${chatId}|${me}`);
+    state.registered = null;
+    await run(await sessionFor(chatId, me));
+  }
+}
+
 /** One user message to the agent: a new turn continuing the conversation. */
 export async function agentTurn(chatId: string, me: string, message: string, emit: Emit) {
-  const session = await sessionFor(chatId, me);
+  await withRecovery(chatId, me, (session) => turn(session, message, emit));
+}
+
+async function turn(session: Session, message: string, emit: Emit) {
   const events = await client().sessions.createTurnStream(session.sessionId, {
     input: [{ type: "user.message", content: message }],
     ...(session.lastTurnId ? { previousTurnId: session.lastTurnId } : {}),
@@ -168,15 +209,21 @@ export async function agentTurn(chatId: string, me: string, message: string, emi
 }
 
 /** The user's answer to an approval request; the agent continues the same conversation. */
-export async function agentApprove(chatId: string, me: string, decision: { threadId: string; toolCallId: string; decision: "allow" | "deny"; reason?: string }, emit: Emit) {
+export async function agentApprove(chatId: string, me: string, decisions: { threadId: string; toolCallId: string; decision: "allow" | "deny"; reason?: string }[], emit: Emit) {
   const session = await sessionFor(chatId, me);
   if (!session.lastTurnId) throw new Error("no paused turn to approve");
-  const approval = decision.decision === "allow" ? { status: "allow" } : { status: "deny", reason: decision.reason ?? "The user declined." };
+  // Every pending approval of the paused turn is answered in one input.
+  const input = decisions.map((d) => ({
+    type: "user.tool_approval",
+    threadId: d.threadId,
+    toolCallId: d.toolCallId,
+    approval: d.decision === "allow" ? { status: "allow" } : { status: "deny", reason: d.reason ?? "The user declined." },
+  }));
   // A turn waiting for approval ends as done with a required action; the decision starts a new
   // turn continuing it (verified against TrueForge 0.180).
   const events = await client().sessions.createTurnStream(session.sessionId, {
     previousTurnId: session.lastTurnId,
-    input: [{ type: "user.tool_approval", threadId: decision.threadId, toolCallId: decision.toolCallId, approval }],
+    input,
   } as never);
   await relay(session, events as unknown as AsyncIterable<Record<string, unknown>>, emit);
 }

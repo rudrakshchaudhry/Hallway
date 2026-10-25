@@ -51,7 +51,10 @@ type Approval = { threadId: string; toolCallId: string; tool: string; preview: s
  */
 export function Chat({ mode = "onboarding", name }: { mode?: "onboarding" | "agent"; name?: string }) {
   const agent = mode === "agent";
-  const [approval, setApproval] = useState<Approval | null>(null);
+  // Pending approvals for the current turn, answered one by one and sent together.
+  const [approvals, setApprovals] = useState<Approval[]>([]);
+  const decisions = useRef<{ threadId: string; toolCallId: string; decision: "allow" | "deny" }[]>([]);
+  const approval = approvals[0] ?? null;
   const streamRef = useRef<string | null>(null);
   const router = useRouter();
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -77,12 +80,14 @@ export function Chat({ mode = "onboarding", name }: { mode?: "onboarding" | "age
           return setEntries((e) => [...e, { kind: "bot", id, text: event.delta }]);
         }
         case "approval_required":
-          return setApproval({ threadId: event.threadId, toolCallId: event.toolCallId, tool: event.tool, preview: event.preview });
+          return setApprovals((a) => [...a, { threadId: event.threadId, toolCallId: event.toolCallId, tool: event.tool, preview: event.preview }]);
         case "chips":
           return setChips({ chips: event.chips, multi: event.multi });
         case "input":
           return setInput({ placeholder: event.placeholder });
         case "step":
+          // Text after a tool step is the answer: start a new bubble below the steps.
+          streamRef.current = null;
           return setEntries((e) => {
             const id = `step-${event.id}`;
             const entry: Entry = { kind: "step", id, status: event.status, text: event.summary };
@@ -157,9 +162,14 @@ export function Chat({ mode = "onboarding", name }: { mode?: "onboarding" | "age
   const decide = async (decision: "allow" | "deny") => {
     if (!approval) return;
     const pending = approval;
-    setApproval(null);
-    setEntries((e) => [...e, { kind: "user", id: nextId(), text: decision === "allow" ? `Allowed: ${pending.preview}` : "Not now" }]);
-    await read("/api/agent/approve", { threadId: pending.threadId, toolCallId: pending.toolCallId, decision });
+    decisions.current.push({ threadId: pending.threadId, toolCallId: pending.toolCallId, decision });
+    setEntries((e) => [...e, { kind: "user", id: nextId(), text: decision === "allow" ? `Allowed: ${pending.preview}` : `Not now: ${pending.preview}` }]);
+    const rest = approvals.slice(1);
+    setApprovals(rest);
+    if (rest.length) return; // answer the next one first
+    const all = decisions.current;
+    decisions.current = [];
+    await read("/api/agent/approve", { decisions: all });
   };
 
   useEffect(() => {

@@ -8,7 +8,10 @@ export const IDENTITY_COOKIE = "hallway_user";
 
 // Without COOKIE_SECRET, a random per-process secret: cookies reset on restart, but nobody
 // can forge one from the source code.
-const fallbackSecret = randomBytes(32).toString("hex");
+// Shared via globalThis: Next bundles routes separately, and every route must sign and verify alike.
+const g = globalThis as typeof globalThis & { __hallwayCookieSecret?: string };
+g.__hallwayCookieSecret ??= randomBytes(32).toString("hex");
+const fallbackSecret = g.__hallwayCookieSecret;
 
 function sign(personId: string): string {
   const secret = process.env.COOKIE_SECRET || fallbackSecret;
