@@ -398,6 +398,13 @@ PR #5 (merged before the track split) added a separate `frontend/` app, `backend
 - **Not built (cut list):** stage view (stub route), TrueForge agent behind the chat button (the button reopens onboarding), LinkedIn URL/PDF onboarding, full live ingest (the Explore form covers single-page conference links).
 - **Demo on the production build** (`pnpm --filter web build && pnpm --filter web start`): `next dev` reload-loops in browsers here because its watcher sees Next's own log writes.
 
+### 10.2 Running the agent
+
+- TrueForge must be started with localhost allowed for outbound MCP calls (it blocks private hosts by default):
+  `OUTBOUND_URL_ALLOWED_HOSTS='["localhost","127.0.0.1"]' npx @truefoundry/trueforge@latest`
+- `.env`: `TRUEFORGE_URL=http://localhost:8790`, `MCP_HALLWAY_TOKEN=<random>`. The app registers its MCP server (`http://localhost:3000/api/mcp`, header `x-hallway-token`) on the first agent message.
+- The OpenAI provider must exist in TrueForge with models `gpt-5-2` and `gpt-5-mini` (Settings → Models, or the SDK).
+
 ## 11. Repo layout
 
 ```text

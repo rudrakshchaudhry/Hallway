@@ -29,3 +29,5 @@ Real findings from Qodo's PR reviews that we fixed. Used in the demo (section 12
 | [#12](https://github.com/rudrakshchaudhry/Hallway/pull/12) | The public suggestion form bypassed the Bright Data budget guard and had no rate limit | Budget reserve on every call; 5/min per IP |
 | [#13](https://github.com/rudrakshchaudhry/Hallway/pull/13) | Day view: short back-to-back plans overlapped, overnight plans vanished on day two, plans before 6 AM showed at the wrong hour | Visual-height lanes, overlap-based day selection, adaptive grid start |
 | [#14](https://github.com/rudrakshchaudhry/Hallway/pull/14) | A queued LinkedIn scrape could hold the onboarding chat open for 20 minutes | 150 s cap with a retry prompt |
+| [#16](https://github.com/rudrakshchaudhry/Hallway/pull/16) | The agent's tools trusted a model-supplied user id: anyone could ask the assistant to read or change another attendee's calendar | Tools take an HMAC-signed session key; verified the spoof is refused |
+| [#16](https://github.com/rudrakshchaudhry/Hallway/pull/16) | Signed-out visitors could drive the paid agent as the demo user | Agent routes require a signed-in identity |
