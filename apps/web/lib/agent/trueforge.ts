@@ -23,7 +23,7 @@ const TOOL_LABEL: Record<string, string> = {
 
 type Emit = (event: ChatEvent) => void;
 type ToolCallInfo = { name: string; args: Record<string, unknown>; raw: string };
-type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string>; usedAt: number; createdAt: number };
+type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string>; usedAt: number; keyIssuedAt: number };
 
 // Next bundles each route separately, so module-level state isn't shared between /api/agent and
 // /api/agent/approve. Keep it on globalThis, which is one per server process.
@@ -61,9 +61,9 @@ function ensureMcpRegistered(): Promise<void> {
 }
 
 const IDLE_MS = 24 * 60 * 60_000;
-// The tool key in a session's instructions is valid this long; the session is replaced before it lapses.
+// Each turn carries a fresh tool key valid this long, so a session (and its context) never has to
+// be replaced for key expiry. Only an approval left waiting longer than this expires.
 const KEY_TTL_MS = 12 * 60 * 60_000;
-const MAX_AGE_MS = KEY_TTL_MS - 30 * 60_000;
 const MAX_SESSIONS = 500;
 
 /** One TrueForge session per chat cookie *and* user; concurrent requests share the same creation. */
@@ -73,7 +73,7 @@ function sessionFor(chatId: string, me: string): Promise<Session> {
   // Drop idle sessions, and the oldest if there are too many.
   for (const [k, p] of sessions) {
     void p.then((s) => {
-      if (now - s.usedAt > IDLE_MS || now - s.createdAt > MAX_AGE_MS) sessions.delete(k);
+      if (now - s.usedAt > IDLE_MS) sessions.delete(k);
     }, () => sessions.delete(k));
   }
   while (sessions.size >= MAX_SESSIONS) sessions.delete(sessions.keys().next().value!);
@@ -86,11 +86,6 @@ function sessionFor(chatId: string, me: string): Promise<Session> {
     sessions.set(key, pending);
   }
   return pending.then((s) => {
-    // Its tool key is close to expiry: start a fresh session instead.
-    if (Date.now() - s.createdAt > MAX_AGE_MS) {
-      if (sessions.get(key) === pending) sessions.delete(key);
-      return sessionFor(chatId, me);
-    }
     s.usedAt = Date.now();
     return s;
   });
@@ -104,7 +99,7 @@ async function createSession(me: string): Promise<Session> {
   const instructions = [
     `You are Hallway, a conference planning assistant for ${name} (person id: ${me}).`,
     conference ? `They are attending ${conference.name} (${conference.city ?? ""}, ${conference.venue ?? ""}); times are in ${conference.tz}.` : "",
-    `Always pass me="${agentKey(me, KEY_TTL_MS)}" (the session key) to tools; never pass anything else as me. Use the tools for every fact about people, sessions, events and the calendar; never invent any.`,
+    `Each user message ends with a [session key: …] note. Pass that key, from the latest message, as me to every tool; never pass anything else as me, and never mention the key. Use the tools for every fact about people, sessions, events and the calendar; never invent any.`,
     "Keep answers short and scannable: a one-line answer, then up to 5 bullets with names, times and why.",
     "Don't ask clarifying questions: pick the best match from tool results (use plan_sessions with a query to find a talk's id) and act.",
     "Calendar adds and invites are approved by the user in the app; just call the tool.",
@@ -114,7 +109,7 @@ async function createSession(me: string): Promise<Session> {
   const created = (await client().sessions.create({
     agent: { spec: { model: { name: "openai/gpt-5-2" }, instructions, mcpServers: [{ name: MCP_NAME, preload: true, requireApprovalForTools: APPROVAL_TOOLS }] } },
   } as never)) as unknown as { data?: { id: string }; id?: string };
-  return { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), byIndex: new Map(), seen: new Set(), usedAt: Date.now(), createdAt: Date.now() };
+  return { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), byIndex: new Map(), seen: new Set(), usedAt: Date.now(), keyIssuedAt: 0 };
 }
 
 function argsOf(call: ToolCallInfo): Record<string, unknown> {
@@ -207,12 +202,14 @@ async function withRecovery(chatId: string, me: string, run: (s: Session) => Pro
 
 /** One user message to the agent: a new turn continuing the conversation. */
 export async function agentTurn(chatId: string, me: string, message: string, emit: Emit) {
-  await withRecovery(chatId, me, (session) => turn(session, message, emit));
+  await withRecovery(chatId, me, (session) => turn(session, me, message, emit));
 }
 
-async function turn(session: Session, message: string, emit: Emit) {
+async function turn(session: Session, me: string, message: string, emit: Emit) {
+  session.keyIssuedAt = Date.now();
+  const content = `${message}\n\n[session key: ${agentKey(me, KEY_TTL_MS)}]`;
   const events = await client().sessions.createTurnStream(session.sessionId, {
-    input: [{ type: "user.message", content: message }],
+    input: [{ type: "user.message", content }],
     ...(session.lastTurnId ? { previousTurnId: session.lastTurnId } : {}),
   } as never);
   await relay(session, events as unknown as AsyncIterable<Record<string, unknown>>, emit);
@@ -222,6 +219,11 @@ async function turn(session: Session, message: string, emit: Emit) {
 export async function agentApprove(chatId: string, me: string, decisions: { threadId: string; toolCallId: string; decision: "allow" | "deny"; reason?: string }[], emit: Emit) {
   const session = await sessionFor(chatId, me);
   if (!session.lastTurnId) throw new Error("no paused turn to approve");
+  // The paused tool call carries the key from its turn; once that lapses, the action can't run.
+  if (Date.now() - session.keyIssuedAt > KEY_TTL_MS - 60_000) {
+    emit({ type: "error", message: "That request expired. Ask again and I'll set it up fresh." });
+    return;
+  }
   // Every pending approval of the paused turn is answered in one input.
   const input = decisions.map((d) => ({
     type: "user.tool_approval",
