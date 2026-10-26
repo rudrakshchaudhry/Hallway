@@ -22,7 +22,8 @@ const TOOL_LABEL: Record<string, string> = {
 };
 
 type Emit = (event: ChatEvent) => void;
-type ToolCallInfo = { name: string; args: Record<string, unknown>; raw: string };
+// keyAt: when the tool key of the turn that made this call was issued.
+type ToolCallInfo = { name: string; args: Record<string, unknown>; raw: string; keyAt: number };
 type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string>; usedAt: number; keyIssuedAt: number };
 
 // Next bundles each route separately, so module-level state isn't shared between /api/agent and
@@ -139,6 +140,18 @@ async function preview(call: ToolCallInfo | undefined): Promise<string> {
 
 /** Maps TrueForge turn events to ChatEvents (skipping any already shown). */
 async function relay(session: Session, events: AsyncIterable<Record<string, unknown>>, emit: Emit) {
+  const awaiting = new Set<string>();
+  try {
+    await relayEvents(session, events, emit, awaiting);
+  } finally {
+    // Per-stream bookkeeping is done; keep only the calls still waiting for the user's decision.
+    session.seen.clear();
+    session.byIndex.clear();
+    for (const id of session.calls.keys()) if (!awaiting.has(id)) session.calls.delete(id);
+  }
+}
+
+async function relayEvents(session: Session, events: AsyncIterable<Record<string, unknown>>, emit: Emit, awaiting: Set<string>) {
   for await (const raw of events) {
     // Deltas of one message share an id, so only whole events are de-duplicated (subscribe can replay).
     const eventId = raw.type === "model.message.delta" ? undefined : (raw.id as string | undefined);
@@ -153,7 +166,7 @@ async function relay(session: Session, events: AsyncIterable<Record<string, unkn
         const key = `${raw.id as string}:${d.index}`;
         const name = d.function?.name;
         if (d.id && name && !session.calls.has(d.id)) {
-          session.calls.set(d.id, { name, args: {}, raw: "" });
+          session.calls.set(d.id, { name, args: {}, raw: "", keyAt: session.keyIssuedAt });
           session.byIndex.set(key, d.id);
           emit({ type: "step", id: d.id, tool: name, status: "running", summary: `${TOOL_LABEL[name] ?? name}…` });
         }
@@ -172,7 +185,7 @@ async function relay(session: Session, events: AsyncIterable<Record<string, unkn
           args = {};
         }
         const seen = session.calls.has(call.id);
-        session.calls.set(call.id, { name, args, raw: call.function?.arguments ?? "" });
+        session.calls.set(call.id, { name, args, raw: call.function?.arguments ?? "", keyAt: session.calls.get(call.id)?.keyAt ?? session.keyIssuedAt });
         if (!seen) emit({ type: "step", id: call.id, tool: name, status: "running", summary: `${TOOL_LABEL[name] ?? name}…` });
       }
     } else if (type === "tool.response") {
@@ -181,6 +194,7 @@ async function relay(session: Session, events: AsyncIterable<Record<string, unkn
     } else if (type === "tool.approval_required") {
       for (const ref of (raw.toolCalls as { id: string }[] | undefined) ?? []) {
         const call = session.calls.get(ref.id);
+        awaiting.add(ref.id);
         emit({ type: "approval_required", threadId: raw.threadId as string, toolCallId: ref.id, tool: call?.name ?? "tool", preview: await preview(call) });
       }
     }
@@ -219,8 +233,12 @@ async function turn(session: Session, me: string, message: string, emit: Emit) {
 export async function agentApprove(chatId: string, me: string, decisions: { threadId: string; toolCallId: string; decision: "allow" | "deny"; reason?: string }[], emit: Emit) {
   const session = await sessionFor(chatId, me);
   if (!session.lastTurnId) throw new Error("no paused turn to approve");
-  // The paused tool call carries the key from its turn; once that lapses, the action can't run.
-  if (Date.now() - session.keyIssuedAt > KEY_TTL_MS - 60_000) {
+  // Each paused call carries the key from the turn that made it; once that lapses, it can't run.
+  const expired = decisions.some((d) => {
+    const call = session.calls.get(d.toolCallId);
+    return !call || Date.now() - call.keyAt > KEY_TTL_MS - 60_000;
+  });
+  if (expired) {
     emit({ type: "error", message: "That request expired. Ask again and I'll set it up fresh." });
     return;
   }
