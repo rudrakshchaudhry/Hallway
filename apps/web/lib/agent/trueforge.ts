@@ -24,7 +24,7 @@ const TOOL_LABEL: Record<string, string> = {
 type Emit = (event: ChatEvent) => void;
 // keyAt: when the tool key of the turn that made this call was issued.
 type ToolCallInfo = { name: string; args: Record<string, unknown>; raw: string; keyAt: number };
-type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; byIndex: Map<string, string>; seen: Set<string>; usedAt: number; keyIssuedAt: number };
+type Session = { sessionId: string; lastTurnId: string | null; calls: Map<string, ToolCallInfo>; usedAt: number; keyIssuedAt: number };
 
 // Next bundles each route separately, so module-level state isn't shared between /api/agent and
 // /api/agent/approve. Keep it on globalThis, which is one per server process.
@@ -110,7 +110,7 @@ async function createSession(me: string): Promise<Session> {
   const created = (await client().sessions.create({
     agent: { spec: { model: { name: "openai/gpt-5-2" }, instructions, mcpServers: [{ name: MCP_NAME, preload: true, requireApprovalForTools: APPROVAL_TOOLS }] } },
   } as never)) as unknown as { data?: { id: string }; id?: string };
-  return { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), byIndex: new Map(), seen: new Set(), usedAt: Date.now(), keyIssuedAt: 0 };
+  return { sessionId: created.data?.id ?? created.id!, lastTurnId: null, calls: new Map(), usedAt: Date.now(), keyIssuedAt: 0 };
 }
 
 function argsOf(call: ToolCallInfo): Record<string, unknown> {
@@ -140,23 +140,24 @@ async function preview(call: ToolCallInfo | undefined): Promise<string> {
 
 /** Maps TrueForge turn events to ChatEvents (skipping any already shown). */
 async function relay(session: Session, events: AsyncIterable<Record<string, unknown>>, emit: Emit) {
-  const awaiting = new Set<string>();
+  // Bookkeeping is per stream, so overlapping requests on one chat never touch each other's calls.
+  const stream: Stream = { seen: new Set(), byIndex: new Map(), mine: new Set(), awaiting: new Set() };
   try {
-    await relayEvents(session, events, emit, awaiting);
+    await relayEvents(session, events, emit, stream);
   } finally {
-    // Per-stream bookkeeping is done; keep only the calls still waiting for the user's decision.
-    session.seen.clear();
-    session.byIndex.clear();
-    for (const id of session.calls.keys()) if (!awaiting.has(id)) session.calls.delete(id);
+    // Keep only this stream's calls that still wait for the user's decision.
+    for (const id of stream.mine) if (!stream.awaiting.has(id)) session.calls.delete(id);
   }
 }
 
-async function relayEvents(session: Session, events: AsyncIterable<Record<string, unknown>>, emit: Emit, awaiting: Set<string>) {
+type Stream = { seen: Set<string>; byIndex: Map<string, string>; mine: Set<string>; awaiting: Set<string> };
+
+async function relayEvents(session: Session, events: AsyncIterable<Record<string, unknown>>, emit: Emit, stream: Stream) {
   for await (const raw of events) {
     // Deltas of one message share an id, so only whole events are de-duplicated (subscribe can replay).
     const eventId = raw.type === "model.message.delta" ? undefined : (raw.id as string | undefined);
-    if (eventId && session.seen.has(eventId)) continue;
-    if (eventId) session.seen.add(eventId);
+    if (eventId && stream.seen.has(eventId)) continue;
+    if (eventId) stream.seen.add(eventId);
     const type = raw.type as string;
     if (type === "turn.created") session.lastTurnId = (raw.turnId as string) ?? session.lastTurnId;
     else if (type === "model.message.delta") {
@@ -167,10 +168,11 @@ async function relayEvents(session: Session, events: AsyncIterable<Record<string
         const name = d.function?.name;
         if (d.id && name && !session.calls.has(d.id)) {
           session.calls.set(d.id, { name, args: {}, raw: "", keyAt: session.keyIssuedAt });
-          session.byIndex.set(key, d.id);
+          stream.byIndex.set(key, d.id);
+          stream.mine.add(d.id);
           emit({ type: "step", id: d.id, tool: name, status: "running", summary: `${TOOL_LABEL[name] ?? name}…` });
         }
-        const id = d.id ?? session.byIndex.get(key);
+        const id = d.id ?? stream.byIndex.get(key);
         const call = id ? session.calls.get(id) : undefined;
         if (call && d.function?.arguments) call.raw += d.function.arguments;
       }
@@ -185,16 +187,18 @@ async function relayEvents(session: Session, events: AsyncIterable<Record<string
           args = {};
         }
         const seen = session.calls.has(call.id);
+        stream.mine.add(call.id);
         session.calls.set(call.id, { name, args, raw: call.function?.arguments ?? "", keyAt: session.calls.get(call.id)?.keyAt ?? session.keyIssuedAt });
         if (!seen) emit({ type: "step", id: call.id, tool: name, status: "running", summary: `${TOOL_LABEL[name] ?? name}…` });
       }
     } else if (type === "tool.response") {
       const call = session.calls.get(raw.toolCallId as string);
+      stream.mine.add(raw.toolCallId as string);
       emit({ type: "step", id: raw.toolCallId as string, tool: call?.name ?? "tool", status: "done", summary: TOOL_LABEL[call?.name ?? ""] ?? "Done" });
     } else if (type === "tool.approval_required") {
       for (const ref of (raw.toolCalls as { id: string }[] | undefined) ?? []) {
         const call = session.calls.get(ref.id);
-        awaiting.add(ref.id);
+        stream.awaiting.add(ref.id);
         emit({ type: "approval_required", threadId: raw.threadId as string, toolCallId: ref.id, tool: call?.name ?? "tool", preview: await preview(call) });
       }
     }
@@ -255,5 +259,10 @@ export async function agentApprove(chatId: string, me: string, decisions: { thre
     previousTurnId: session.lastTurnId,
     input,
   } as never);
-  await relay(session, events as unknown as AsyncIterable<Record<string, unknown>>, emit);
+  try {
+    await relay(session, events as unknown as AsyncIterable<Record<string, unknown>>, emit);
+  } finally {
+    // Decided calls (allowed or denied) no longer wait for anything.
+    for (const d of decisions) session.calls.delete(d.toolCallId);
+  }
 }
