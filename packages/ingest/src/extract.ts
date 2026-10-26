@@ -27,7 +27,7 @@ export function extractSnapshot(html: string, pageUrl: string): GraphSnapshot {
       abstract: text(event.description) ?? "",
       kind: "talk",
       start,
-      // v2 contract: end is required; a missing end gets start + 45 min (PLAN.md 6.1).
+      // End is required; a missing end gets start + 45 min (docs/ARCHITECTURE.md#universe-snapshot).
       end: toIso(event.endDate) ?? new Date(Date.parse(start) + 45 * 60_000).toISOString(),
       ...(room ? { room } : {}),
     });

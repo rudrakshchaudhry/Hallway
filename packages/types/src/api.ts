@@ -37,7 +37,7 @@ export const Clash = z.object({
 export const AddToCalendarRequest = z.object({ targetId: z.string() });
 export const AddToCalendarResponse = z.object({ item: CalendarItem, clashes: z.array(Clash) });
 
-// ---------- People deck (Track B) ----------
+// ---------- People deck ----------
 
 export const Tag = z.enum(["shared-stack", "same-topic", "speaker", "hiring", "ex-colleague", "in-your-sessions", "host"]);
 
@@ -61,7 +61,7 @@ export const PeopleResponse = z.object({ cards: z.array(DeckCard), swipes: z.num
 export const SwipeRequest = z.object({ personId: z.string(), dir: z.enum(["right", "left"]) });
 export const SwipeResponse = z.object({ ok: z.literal(true), updatedPreferences: z.array(z.string()) });
 
-// ---------- Meetings and invites (Track B; shown in Track A's feed) ----------
+// ---------- Meetings and invites ----------
 
 export const MeetingPublic = Meeting.omit({ tokenHash: true });
 
@@ -108,7 +108,7 @@ export const InviteRespondResponse = z.object({ status: MeetingStatus, gcalUrl: 
 
 export const MeetingActionResponse = z.object({ meeting: MeetingPublic });
 
-// ---------- Agenda (Track A) ----------
+// ---------- Agenda ----------
 
 export const AgendaItem = z.object({
   talk: Talk,
@@ -123,7 +123,7 @@ export const AgendaItem = z.object({
 
 export const AgendaResponse = z.object({ conference: Conference, items: z.array(AgendaItem) });
 
-// ---------- Explore (Track B) ----------
+// ---------- Explore ----------
 
 export const ExploreItem = z.object({
   event: SideEvent,
@@ -138,7 +138,7 @@ export const ExploreItem = z.object({
 
 export const ExploreResponse = z.object({ items: z.array(ExploreItem) });
 
-// ---------- Feed (Track A) ----------
+// ---------- Feed ----------
 
 export const FeedCard = z.object({
   item: CalendarItem,
@@ -163,7 +163,7 @@ export const FeedResponse = z.object({
   suggestions: z.array(FeedSuggestion),
 });
 
-// ---------- Past graph and stage (Track A) ----------
+// ---------- Past graph ----------
 
 export const PastGraphResponse = z.object({
   nodes: z.array(
@@ -189,9 +189,8 @@ export const PastGraphResponse = z.object({
   ),
 });
 
-export const StagePathResponse = z.object({ path: GraphPath.nullable(), at: z.number().int().nullable() });
 
-// ---------- Conferences and live ingest (Main) ----------
+// ---------- Conferences and live ingest ----------
 
 export const IngestStage = z.enum(["find", "sessions", "speakers", "past-talks", "side-events", "done"]);
 
@@ -216,7 +215,7 @@ export const ConferenceSummary = z.object({
 });
 export const ConferencesResponse = z.object({ conferences: z.array(ConferenceSummary) });
 
-// ---------- Onboarding chat and profile (Main) ----------
+// ---------- Onboarding chat and profile ----------
 
 export const ProfileSource = z.enum(["linkedin", "linkedin-pdf", "github", "text", "demo"]);
 
@@ -330,7 +329,6 @@ export type FeedCard = z.infer<typeof FeedCard>;
 export type FeedSuggestion = z.infer<typeof FeedSuggestion>;
 export type FeedResponse = z.infer<typeof FeedResponse>;
 export type PastGraphResponse = z.infer<typeof PastGraphResponse>;
-export type StagePathResponse = z.infer<typeof StagePathResponse>;
 export type IngestStage = z.infer<typeof IngestStage>;
 export type IngestJobStatus = z.infer<typeof IngestJobStatus>;
 export type StartIngestRequest = z.infer<typeof StartIngestRequest>;

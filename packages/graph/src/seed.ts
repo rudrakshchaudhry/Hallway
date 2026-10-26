@@ -43,7 +43,7 @@ type RawNode = { labels: string[]; properties: Record<string, unknown> };
 const asNode = (raw: RawNode) => Node.safeParse({ label: raw.labels[0], ...raw.properties });
 
 /**
- * The user's runtime subgraph (PLAN.md 6.4): every isUser Person, every edge out of them,
+ * The user's runtime subgraph (docs/ARCHITECTURE.md#seed-and-runtime-writes): every isUser Person, every edge out of them,
  * the nodes those edges reach, and Meeting-[:WITH]->Person edges. Nodes that fail the
  * contract are skipped with a warning rather than blocking the reseed.
  */

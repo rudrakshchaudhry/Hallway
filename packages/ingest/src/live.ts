@@ -3,7 +3,7 @@ import { unlocker } from "./brightdata.ts";
 import { extractSnapshot, slugify } from "./extract.ts";
 import { chatJson, htmlToText } from "./openai.ts";
 
-// Live ingest of a conference Hallway doesn't have yet (PLAN.md 7.3). Every Bright Data call goes
+// Live ingest of a conference Hallway doesn't have yet (docs/ARCHITECTURE.md#live-ingest). Every Bright Data call goes
 // through the budget guard (unlocker → budget.reserve); each stage is time-boxed and a failed
 // stage is recorded and skipped, never fatal.
 

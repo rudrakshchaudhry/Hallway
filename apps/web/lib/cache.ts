@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { repoRoot } from "./root";
 
-// DEMO_CACHE=record saves results to data/cache/<key>.json; DEMO_CACHE=1 replays them (PLAN.md 10).
+// DEMO_CACHE=record saves results to data/cache/<key>.json; DEMO_CACHE=1 replays them (docs/ARCHITECTURE.md#configuration).
 export async function cached<T>(namespace: string, input: unknown, compute: () => Promise<T>): Promise<T> {
   const mode = process.env.DEMO_CACHE;
   if (mode !== "1" && mode !== "record") return compute();

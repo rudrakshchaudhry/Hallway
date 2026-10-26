@@ -12,7 +12,7 @@ import styles from "./tabs.module.css";
 
 const KIND: Record<string, string> = { talk: "Talk", workshop: "Workshop", keynote: "Keynote", panel: "Panel", other: "Session" };
 
-/** Agenda (PLAN.md 2.2): Now = prioritised sessions with + and clash warnings; Past = memory graph. */
+/** Agenda (docs/ARCHITECTURE.md#tabs): Now = prioritised sessions with + and clash warnings; Past = memory graph. */
 export function Agenda({ items, tz, past, googlePast }: { items: AgendaItem[]; tz: string; past: PastGraphResponse; googlePast: CalendarEvent[] | null }) {
   const router = useRouter();
   const pane = useSearchParams().get("pane") === "past" ? "past" : "now";

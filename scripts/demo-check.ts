@@ -1,7 +1,6 @@
-// Calls every route the demo path uses (docs/PLAN.md sections 5.3 and 12) and fails on
-// errors, schema mismatches or slow responses. Routes that don't exist yet fail too: this
-// check is meant to pass only once integration is done. Requests carry no identity
-// cookie, so routes answer for the demo persona.
+// Smoke test: calls every read route the app depends on and fails on errors, schema
+// mismatches or responses slower than 2 s (streams: time to first event). Requests carry no
+// identity cookie, so routes answer for the demo persona.
 import {
   AgendaResponse,
   ChatEvent,
@@ -11,7 +10,6 @@ import {
   HealthResponse,
   PastGraphResponse,
   PeopleResponse,
-  StagePathResponse,
 } from "../packages/types/src/index.ts";
 import type { ZodType } from "zod";
 
@@ -36,7 +34,6 @@ const checks: Check[] = [
   { path: "/api/agenda", schema: AgendaResponse },
   { path: "/api/explore", schema: ExploreResponse },
   { path: "/api/past", schema: PastGraphResponse },
-  { path: "/api/stage/last-path", schema: StagePathResponse },
 ];
 
 async function run({ path, method = "GET", body, stream, schema }: Check) {

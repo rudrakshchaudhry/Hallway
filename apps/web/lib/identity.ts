@@ -2,7 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 
 // "Me" for every API route. Write routes never take the user from the request body
-// (PLAN.md 6.4); they call getMe(). Without a cookie, the demo persona is used, which is
+// (docs/ARCHITECTURE.md#security); they call getMe(). Without a cookie, the demo persona is used, which is
 // what "Use demo profile" means in this single-laptop demo.
 export const IDENTITY_COOKIE = "hallway_user";
 

@@ -7,7 +7,7 @@ type Row = { t: RawNode; speakers: RawNode[]; topics: { id: string; name: string
 type RerunRow = { id: string; old: RawNode; score: number };
 
 /**
- * Session priority (PLAN.md 6.2 #2): the conference's talks scored by topic match, goal
+ * Session priority (docs/ARCHITECTURE.md#queries): the conference's talks scored by topic match, goal
  * boosts and learned preferences, with rerun flags and clashes against the user's calendar.
  */
 export async function agendaFor(graph: Graph, me: string, conference: Conference): Promise<AgendaItem[]> {

@@ -30,7 +30,7 @@ export const EdgeType = z.enum([
 ]);
 export type EdgeType = z.infer<typeof EdgeType>;
 
-/** Which labels each relationship may connect (PLAN.md section 6). */
+/** Which labels each relationship may connect (docs/ARCHITECTURE.md#graph). */
 export const EDGE_RULES: Record<EdgeType, { from: NodeLabel[]; to: NodeLabel[] }> = {
   PART_OF: { from: ["Talk"], to: ["Conference"] },
   NEAR: { from: ["SideEvent"], to: ["Conference"] },

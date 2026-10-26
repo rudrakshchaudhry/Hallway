@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { LIVE_DIR } from './paths.ts';
 
-/** Bright Data pay-as-you-go pricing (PLAN.md 7.4). */
+/** Bright Data pay-as-you-go pricing (docs/ARCHITECTURE.md#budget). */
 export const PRICE = {
   unlockerRequest: 1.5 / 1000,
   scraperRecord: 1.5 / 1000,

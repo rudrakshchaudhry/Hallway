@@ -4,7 +4,7 @@ import { InviteCreateRequest, InviteCreateResponse } from "@hallway/types";
 import { context } from "@/lib/context";
 import { gcalUrl, hashToken, newToken, publicOrigin } from "@/lib/invites";
 
-/** Right swipe → pending meeting + invite link the user shares themselves (PLAN.md 2.3). */
+/** Right swipe → pending meeting + invite link the user shares themselves (docs/ARCHITECTURE.md#invites). */
 export async function POST(req: Request) {
   const body = InviteCreateRequest.safeParse(await req.json().catch(() => null));
   if (!body.success) return Response.json({ error: body.error.issues[0]?.message }, { status: 400 });

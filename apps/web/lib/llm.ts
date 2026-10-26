@@ -23,7 +23,7 @@ async function json(system: string, user: string): Promise<unknown> {
   return JSON.parse(body.choices[0]?.message.content ?? "{}");
 }
 
-// The fixed classification prompt (PLAN.md 2.1). Never rewritten per user; only its JSON is stored.
+// The fixed classification prompt (docs/ARCHITECTURE.md#onboarding). Never rewritten per user; only its JSON is stored.
 const INTENT_PROMPT = `You classify one conference visit. Return JSON only, no explanation.
 Return {"goals": [...], "topics": [...], "summary": "..."}.
 "goals" uses only these ids: ${GoalId.options.join(", ")}.

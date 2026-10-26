@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 const STATUS: Record<string, "attention" | "success" | "danger" | "secondary"> = { pending: "attention", accepted: "success", declined: "danger", met: "secondary" };
 
-/** My Feed (PLAN.md 2.2): calendar on top, confirmed cards, requests sent, suggestions. */
+/** My Feed (docs/ARCHITECTURE.md#tabs): calendar on top, confirmed cards, requests sent, suggestions. */
 export default async function FeedPage() {
   const { graph, me, conference } = await context();
   if (!conference) {

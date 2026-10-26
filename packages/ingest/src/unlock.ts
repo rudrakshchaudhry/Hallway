@@ -38,7 +38,7 @@ export async function unlockPage(url: string): Promise<string> {
   if (!key || !zone) {
     throw new UnlockError("missing_key", "Scraping is not set up yet. Add the Bright Data API key and unlocker zone.");
   }
-  // Every Bright Data call goes through the persisted budget guard (PLAN.md 7.4).
+  // Every Bright Data call goes through the persisted budget guard (docs/ARCHITECTURE.md#budget).
   try {
     await budget.reserve(PRICE.unlockerRequest, `suggest ${url}`);
   } catch (err) {

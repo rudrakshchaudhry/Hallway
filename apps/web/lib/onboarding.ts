@@ -7,7 +7,7 @@ import { LINKEDIN_URL, fetchLinkedInProfile } from "./linkedin";
 import { extractProfile, parseIntent } from "./llm";
 import { saveProfile } from "./profile";
 
-// The onboarding chat as a deterministic step machine (PLAN.md 2.1). The LLM only reads
+// The onboarding chat as a deterministic step machine (docs/ARCHITECTURE.md#onboarding). The LLM only reads
 // free text; every step works with chips alone.
 type Step = "conference" | "goals" | "identity" | "linkedin" | "github" | "about" | "confirm" | "done";
 type State = { step: Step; conferenceId?: string; conferenceName?: string; goals?: GoalId[]; topics?: string[]; draft?: ProfileDraft };
@@ -78,7 +78,7 @@ async function demoDraft(): Promise<ProfileDraft> {
 }
 
 /**
- * Live ingest of a conference we don't have (PLAN.md 7.3), streaming progress into the chat.
+ * Live ingest of a conference we don't have (docs/ARCHITECTURE.md#live-ingest), streaming progress into the chat.
  * Returns the new conference, or null if it couldn't be read.
  */
 async function ingestLive(text: string, emit: Emit): Promise<{ id: string; name: string } | null> {

@@ -21,7 +21,7 @@ export default async function AgendaPage() {
     );
   }
   const [items, past] = await Promise.all([agendaFor(graph, me, conference), pastGraph(graph, me)]);
-  // Past events from Google Calendar (Track A's integration), when signed in.
+  // Past events from Google Calendar, when signed in.
   let googlePast: CalendarEvent[] | null = null;
   const session = googleConfigured() ? await readSession() : null;
   if (session) {

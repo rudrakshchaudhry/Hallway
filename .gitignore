@@ -31,3 +31,6 @@ next-env.d.ts
 # playwright mcp output (screenshots land in the cwd)
 .playwright-mcp/
 /*.png
+
+# replay cache (DEMO_CACHE)
+data/cache/
