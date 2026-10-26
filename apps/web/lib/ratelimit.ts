@@ -1,4 +1,4 @@
-// In-memory per-key token bucket for credit-spending routes (PLAN.md 6.4).
+// In-memory per-key token bucket for credit-spending routes (docs/ARCHITECTURE.md#security).
 const buckets = new Map<string, { tokens: number; at: number }>();
 
 export function allow(key: string, perMinute: number): boolean {

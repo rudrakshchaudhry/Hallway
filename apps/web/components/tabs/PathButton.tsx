@@ -5,7 +5,7 @@ import { Dialog, Label } from "@primer/react";
 import { useState } from "react";
 import styles from "./tabs.module.css";
 
-/** "N hops" chip: the graph walk behind a recommendation (PLAN.md 3, "the path is the proof"). */
+/** "N hops" chip: the graph walk behind a recommendation (docs/ARCHITECTURE.md#tabs). */
 export function PathButton({ path }: { path: GraphPath }) {
   const [open, setOpen] = useState(false);
   return (

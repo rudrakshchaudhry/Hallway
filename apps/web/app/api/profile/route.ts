@@ -1,7 +1,7 @@
 import { SaveProfileRequest, SaveProfileResponse } from "@hallway/types";
 import { saveProfile } from "@/lib/profile";
 
-/** Save the confirmed onboarding profile and sign the user in (PLAN.md 2.1 step 4). */
+/** Save the confirmed onboarding profile and sign the user in (docs/ARCHITECTURE.md#onboarding). */
 export async function POST(req: Request) {
   const body = SaveProfileRequest.safeParse(await req.json().catch(() => null));
   if (!body.success) return Response.json({ error: body.error.issues[0]?.message }, { status: 400 });

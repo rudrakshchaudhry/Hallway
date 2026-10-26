@@ -5,7 +5,7 @@ import { toNode, type RawNode } from "./shared.ts";
 
 const publicMeeting = ({ tokenHash: _t, ...m }: Meeting): MeetingPublic => m;
 
-/** Invite sheet prefill (PLAN.md 2.3): 3 free 30-minute slots, a place, and a note. */
+/** Invite sheet prefill (docs/ARCHITECTURE.md#invites): 3 free 30-minute slots, a place, and a note. */
 export async function suggestInvite(graph: Graph, me: string, personId: string, conference: Conference, now = Date.now()): Promise<InviteSuggestion | null> {
   const res = await graph.roQuery<{ p: RawNode; talks: { start: string; end: string; room: string | null }[] }>(
     `MATCH (p:Person {id: $pid})
@@ -144,7 +144,7 @@ export async function markMet(graph: Graph, me: string, meetingId: string, now =
   return publicMeeting({ ...found.meeting, status: "met" });
 }
 
-/** Requests sent (PLAN.md 6.2 #8), newest first. */
+/** Requests sent (docs/ARCHITECTURE.md#queries), newest first. */
 export async function requestsSent(graph: Graph, me: string): Promise<RequestSent[]> {
   const res = await graph.roQuery<{ m: RawNode; p: RawNode }>(
     "MATCH (:Person {id: $me})-[:ORGANIZES]->(m:Meeting)-[:WITH]->(p:Person) RETURN m, p ORDER BY m.createdAt DESC",

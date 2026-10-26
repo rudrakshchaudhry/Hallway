@@ -52,7 +52,7 @@ export async function feedFor(graph: Graph, me: string, conference: Conference):
   return { conference, calendar, clashes, confirmed, requests, suggestions };
 }
 
-/** Agenda / Past: everything the user did in Hallway, as a graph (PLAN.md 6.2 #6). */
+/** Agenda / Past: everything the user did in Hallway, as a graph (docs/ARCHITECTURE.md#queries). */
 export async function pastGraph(graph: Graph, me: string): Promise<PastGraphResponse> {
   const res = await graph.roQuery<{ a: { id: string; label: string; name: string | null }; type: string; props: Record<string, string | number | boolean>; b: { id: string; label: string; name: string | null; status: string | null } }>(
     `MATCH (u:Person {id: $me})-[r:TARGETS|PLANS|SWIPED|ORGANIZES|MET|HAS_GOAL|PREFERS|INTERESTED_IN|SKILLED_IN|WORKED_AT|WORKS_AT]->(n)

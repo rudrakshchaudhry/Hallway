@@ -19,7 +19,7 @@ const TAGS: { id: Tag; label: string }[] = [
 ];
 const tagLabel = (t: Tag) => TAGS.find((x) => x.id === t)?.label ?? t;
 
-/** People (PLAN.md 2.2, 2.3, 6.3): swipe deck that re-ranks from your picks; right swipe → invite. */
+/** People (docs/ARCHITECTURE.md#tabs, #swipe-learning): swipe deck that re-ranks from your picks; right swipe → invite. */
 export function People({ tz }: { tz: string }) {
   const [cards, setCards] = useState<DeckCard[] | null>(null);
   const [swipes, setSwipes] = useState(0);

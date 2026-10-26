@@ -7,7 +7,7 @@ export async function GET() {
   return Response.json(ConferencesResponse.parse({ conferences: await listConferences(await getGraph()) }));
 }
 
-/** Start a live ingest of a conference by name or official URL (PLAN.md 7.3). */
+/** Start a live ingest of a conference by name or official URL (docs/ARCHITECTURE.md#live-ingest). */
 export async function POST(req: Request) {
   if (!allow(`ingest:${clientKey(req)}`, 3)) return Response.json({ error: "Too many requests" }, { status: 429 });
   const body = StartIngestRequest.safeParse(await req.json().catch(() => null));

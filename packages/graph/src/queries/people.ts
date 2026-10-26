@@ -2,7 +2,7 @@ import { edgeId, type Conference, type DeckCard, type Person, type SideEvent, ty
 import type { Graph } from "falkordb";
 import { loadMe, toNode, walk, type Me, type RawNode } from "./shared.ts";
 
-// Signal weights for the deck (PLAN.md 6.2 #1, 6.3).
+// Signal weights for the deck (docs/ARCHITECTURE.md#queries, #swipe-learning).
 const WEIGHT: Record<Tag, number> = {
   "shared-stack": 3,
   "in-your-sessions": 2.5,
@@ -144,7 +144,7 @@ function pathFor(me: Me, p: Person, s: Signal) {
   }
 }
 
-/** Swipe (PLAN.md 6.3): records SWIPED and nudges PREFERS weights on the person's features. */
+/** Swipe (docs/ARCHITECTURE.md#swipe-learning): records SWIPED and nudges PREFERS weights on the person's features. */
 export async function swipe(graph: Graph, me: string, personId: string, dir: "right" | "left", now = Date.now()): Promise<string[]> {
   await graph.query(
     `MATCH (u:Person {id: $me}), (p:Person {id: $pid})

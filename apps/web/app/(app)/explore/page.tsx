@@ -1,7 +1,7 @@
 import { exploreFor } from "@hallway/graph/queries/explore";
 import { Label } from "@primer/react";
 import Link from "next/link";
-import { SuggestForm } from "@/components/google/SuggestForm";
+import { SuggestForm } from "@/components/explore/SuggestForm";
 import { AddButton } from "@/components/tabs/AddButton";
 import { PathButton } from "@/components/tabs/PathButton";
 import { dayIn, timeIn } from "@/components/tabs/format";
@@ -10,7 +10,7 @@ import { context } from "@/lib/context";
 
 export const dynamic = "force-dynamic";
 
-/** Explore (PLAN.md 2.2): side events around the conference, with clash warnings. */
+/** Explore (docs/ARCHITECTURE.md#tabs): side events around the conference, with clash warnings. */
 export default async function ExplorePage() {
   const { graph, me, conference } = await context();
   if (!conference) {

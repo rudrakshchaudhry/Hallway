@@ -12,7 +12,7 @@ import { verifyAgentKey } from "../identity";
 import { getJob, publicJob, startIngest } from "../ingest-jobs";
 import { hashToken, newToken } from "../invites";
 
-// Hallway tools for the TrueForge agent (PLAN.md 5.2). Every tool acts for `me`, which must be an
+// Hallway tools for the TrueForge agent (docs/ARCHITECTURE.md#agent). Every tool acts for `me`, which must be an
 // onboarded user; answers are compact JSON so the model quotes real data instead of inventing it.
 
 const text = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value) }] });

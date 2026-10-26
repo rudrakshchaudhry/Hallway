@@ -7,7 +7,7 @@ import type { IngestJobStatus } from "@hallway/types";
 import { allow } from "./ratelimit";
 import { repoRoot } from "./root";
 
-// Live-ingest jobs (PLAN.md 7.3): in memory, one at a time. Kept on globalThis because Next
+// Live-ingest jobs (docs/ARCHITECTURE.md#live-ingest): in memory, one at a time. Kept on globalThis because Next
 // bundles routes separately and the chat, the API and the agent tools all read the same jobs.
 type Job = IngestJobStatus & { note: string };
 const store = globalThis as typeof globalThis & { __hallwayIngest?: { jobs: Map<string, Job>; running: string | null } };

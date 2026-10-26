@@ -46,7 +46,7 @@ function rich(text: string): ReactNode {
 type Approval = { threadId: string; toolCallId: string; tool: string; preview: string };
 
 /**
- * The Hallway chat. Onboarding mode (PLAN.md 2.1) reads POST /api/chat; agent mode (the chat
+ * The Hallway chat. Onboarding mode (docs/ARCHITECTURE.md#onboarding) reads POST /api/chat; agent mode (the chat
  * button, after onboarding) talks to the TrueForge agent via POST /api/agent, with approvals.
  */
 export function Chat({ mode = "onboarding", name }: { mode?: "onboarding" | "agent"; name?: string }) {

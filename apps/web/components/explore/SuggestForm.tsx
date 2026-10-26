@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import styles from "./google.module.css";
+import styles from "./explore.module.css";
 
 type Suggestion = { id: string; title: string; reason: string; start: string; room: string };
 type Result = { ok: boolean; message: string; suggestions: Suggestion[] };

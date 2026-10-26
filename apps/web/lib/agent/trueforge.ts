@@ -4,7 +4,7 @@ import type { ChatEvent } from "@hallway/types";
 import { TrueForge } from "@truefoundry/trueforge-sdk";
 import { agentKey } from "../identity";
 
-// Hallway agent on TrueForge (PLAN.md 5.1–5.2): an OpenAI model with Hallway's MCP tools;
+// Hallway agent on TrueForge (docs/ARCHITECTURE.md#agent): an OpenAI model with Hallway's MCP tools;
 // writes (calendar adds, invites) need the user's approval in the chat.
 
 const MCP_NAME = "hallway";

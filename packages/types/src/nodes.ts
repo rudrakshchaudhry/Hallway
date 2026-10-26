@@ -42,7 +42,7 @@ export const Company = z.object({
   id,
   name: z.string(),
   funding: z.string().optional(),
-  /** Optional, unused by the v2 UI. */
+  /** Optional; not shown in the UI. */
   booth: z.string().optional(),
 });
 

@@ -34,7 +34,7 @@ export type ProfileInput = {
 };
 
 /**
- * The onboarded user's profile as a snapshot for upsertSnapshot (PLAN.md 6.2 #7). Pure, so
+ * The onboarded user's profile as a snapshot for upsertSnapshot (docs/ARCHITECTURE.md#queries). Pure, so
  * it is tested without the database. Includes every endpoint node, as upserts require.
  */
 export function buildProfileSnapshot({ handle, draft, goals, conference, existingTopics, now }: ProfileInput): GraphSnapshot {

@@ -5,7 +5,7 @@ import { loadMe, toNode, walk, type RawNode } from "./shared.ts";
 
 type Row = { e: RawNode; hosts: { id: string; label: string; name: string; headline: string | null }[]; speakerHosts: number };
 
-/** Side events near the conference (PLAN.md 6.2 #4), ranked by learned preferences and host fit. */
+/** Side events near the conference (docs/ARCHITECTURE.md#queries), ranked by learned preferences and host fit. */
 export async function exploreFor(graph: Graph, me: string, conference: Conference): Promise<ExploreItem[]> {
   const user = await loadMe(graph, me);
   const res = await graph.roQuery<Row>(
